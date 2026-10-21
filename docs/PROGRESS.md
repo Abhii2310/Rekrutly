@@ -4,7 +4,7 @@ Claude Code updates this file at the end of every prompt. Keep each list honest 
 
 ## Last completed prompt
 
-Prompt 11 (wow layer). Next: `docs/prompts/12-analytics-and-compare.md`
+Prompt 12 (analytics and compare). FEATURE FREEZE. Next: `docs/prompts/13-hardening-and-tests.md`
 
 ## Working (verified end to end)
 
@@ -37,6 +37,8 @@ Prompt 11 (wow layer). Next: `docs/prompts/12-analytics-and-compare.md`
   5. **Demo Director** (`/demo`, DEMO_MODE only; real 404 for the page and 404 for `/api/demo/*` otherwise, checked): checklist (database, AI, email, live links, buttons for the Command Centre, Aarav's link, War Room), Reset (confirmation in plain words, `lib/demo/seed.ts` shared with `npm run db:seed`; reset worked three times in a row), Simulate submissions (real start, answer and submit services with `is_simulated`, one candidate per call 8 to 12 seconds apart, strength from seeded skills, written answers by the fast model with a templated fallback), Seed history (closed Go-job assessment, 3 simulated MCQ submissions; also `npm run db:seed -- --with-history`, run twice without duplicates). After a simulation it waits for scoring and retries failed ones automatically.
   6. **Integrity summary** on War Room rows: a quiet "3 tab switches, 1 paste" line, never red.
 - Checked live: four simulated candidates (Diya, Kabir, Ishita, Rohan) filled in the War Room one after another; all four submissions are `is_simulated`, with objective scores 14, 10, 8 and 10. All four ended scored with a report, but only after retries (see known issues). 210 unit tests (strength profile, signal note, guardrail receipt added).
+- Analytics (`/analytics`, job filter in the URL) and Compare (`/compare?s=a,b[,c,d]`), Prompt 12. All numbers are computed in `lib/analytics/stats.ts` from six parallel reads (`lib/db/queries/analytics.ts`), one pass, no query per row: stat row (Invited, Completion, Average objective score, Median time to finish), Pipeline funnel, Skills, Speed (two sentences), Open work; each chart has a one-sentence takeaway built by code from the numbers; no chart library (`BarList`: 8px ink bars on fog, tabular figures). Definitions: completion = submissions / invitations; average objective % = mean of each submission's objective %; average final % uses scored submissions only; per-skill % = mean of each scored submission's percent for that skill; medians are from link created to start and start to submit (negative gaps are ignored). "Includes demo and simulated data." appears when any included job, candidate or submission is demo or simulated. Compare: results page rows have checkboxes (2 to 4, columns follow the order ticked, no sorting) and a Compare button; the page shows final, objective, written (AI mark), time taken, answered, per-skill score with the strongest evidence quote (expandable, or an honest note when no quote was matched), "Gaps to probe in interview" from each report (AI mark), and the line "Rekrutly doesn't pick a winner. Use the evidence and your judgement." Errors are plain: none chosen, one chosen, too many, invalid link, different assessments (all checked).
+- Checked against a manual check on the live data (3 simulated history submissions plus 2 real ones, 8 invitations): invited 8, 5 submitted = 62.5% (shown 63%), objective % 75, 62.5, 87.5, 14.3, 42.9 averaging 56.4 (shown 56%), final average 61.3, median start-to-submit 17 min (shown 17 min), per-skill averages and stage counts all matched; the Go job filter showed 3 of 3 finished, average 75%, matching (75 + 62.5 + 87.5) / 3. 19 new unit tests (median even/odd/empty, minutes, sentences, compare ids, strongest evidence). Screenshots of Analytics and Compare at 1280px.
 
 ## Simulated or demo-only
 
@@ -48,7 +50,7 @@ Prompt 11 (wow layer). Next: `docs/prompts/12-analytics-and-compare.md`
 
 ## Not built yet / known issues
 
-- Everything in prompts 11–14. The results page has no checkboxes or Compare yet (Prompt 12).
+- Everything in prompts 11–14.
 - The AI report is a snapshot written at scoring time: after a recruiter override the totals and skill bars update but the report text keeps the original AI score until it is regenerated (Retry or rescore).
 - The "Suggested AI score" stat stays the AI's own number on purpose; the Final column on the results list includes overrides.
 - Groq strict mode rejects outputs longer than a schema `maxLength` (HTTP 400), so grading and report schemas are lenient and limits (quote 300, reasoning 400) are enforced in code (`checkGrade`, `checkReport`).
@@ -99,3 +101,7 @@ Prompt 11 (wow layer). Next: `docs/prompts/12-analytics-and-compare.md`
 - Voice input could not be tested with real audio here. Feature detection is the part that was checked: the mic button appears in the in-app browser (which has speech recognition) and is built to stay hidden where it does not exist (Firefox). Please try it once in Chrome with a microphone, and once in Firefox to see no mic.
 - The Demo Director page and routes read DEMO_MODE at request time in dev; on Vercel set `DEMO_MODE=true` before the first deploy. `proxy.ts` checks `process.env.DEMO_MODE === 'true'` for the /demo page.
 - Not tried: the "Use saved demo plan" button was clicked only through the API with models broken; in the browser the saved questions button was clicked (plan fallback was checked by API).
+- History seeding now sets the invitation's created time before its start time (it used to be after, which made "time to start" negative); re-run Seed history if you seeded before 2026-10-22.
+- Analytics "Median time to start" mixes seeded history (hours) with live and simulated runs (seconds) when all jobs are chosen, so the number can look odd in a demo; choose one job for a cleaner reading.
+- Compare "time taken" shows "under 1 min" for submissions made by script or simulation; real candidates show real minutes.
+- Compare and Analytics were checked at 1280px only; a phone view of Compare scrolls sideways.

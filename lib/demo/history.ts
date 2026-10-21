@@ -95,7 +95,7 @@ export async function seedHistory(db: SupabaseClient, options: HistoryOptions): 
     const submitted = started + 17 * 60_000;
     const inv = await db.from('invitations').insert({
       assessment_id: assessmentId, candidate_id: cid(p.n), token_hash: token.hash, token_encrypted: token.encrypted, status: 'submitted',
-      delivery_status: 'unconfigured', expires_at: iso(started + 7 * DAY), consent_at: iso(started), opened_at: iso(started - 60_000),
+      delivery_status: 'unconfigured', created_at: iso(started - 3 * 60 * 60_000), expires_at: iso(started + 7 * DAY), consent_at: iso(started), opened_at: iso(started - 60_000),
       started_at: iso(started), deadline_at: iso(started + 25 * 60_000), submitted_at: iso(submitted), current_question: QUESTIONS.length, last_activity_at: iso(submitted),
     }).select('id').single();
     if (inv.error) throw new Error(`history invitation: ${inv.error.message}`);

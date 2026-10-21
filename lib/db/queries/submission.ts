@@ -19,6 +19,7 @@ export type DetailQuestion = {
 export type SubmissionDetail = {
   id: string;
   submittedAt: string;
+  startedAt: string | null;
   autoSubmitted: boolean;
   isSimulated: boolean;
   objective: { score: number | null; max: number | null };
@@ -50,9 +51,9 @@ export async function getSubmissionDetail(id: string): Promise<Result<Submission
   if (!s.data) return ok(null);
   const sub = s.data as Record<string, unknown>;
 
-  const inv = await db.from('invitations').select('id, assessment_id, candidate_id, candidates(id, full_name, stage), assessments(id, title, run_id, jobs(title))').eq('id', sub.invitation_id as string).single();
+  const inv = await db.from('invitations').select('id, assessment_id, candidate_id, started_at, candidates(id, full_name, stage), assessments(id, title, run_id, jobs(title))').eq('id', sub.invitation_id as string).single();
   if (inv.error || !inv.data) return err('db_error', "Couldn't load the candidate.", inv.error?.message);
-  type InvJoin = { assessment_id: string; candidates: { id: string; full_name: string; stage: Stage } | null; assessments: { id: string; title: string; run_id: string | null; jobs: { title: string } | null } | null };
+  type InvJoin = { assessment_id: string; started_at: string | null; candidates: { id: string; full_name: string; stage: Stage } | null; assessments: { id: string; title: string; run_id: string | null; jobs: { title: string } | null } | null };
   const iv = inv.data as unknown as InvJoin;
 
   const [qs, ans, scores, signals] = await Promise.all([
@@ -87,7 +88,7 @@ export async function getSubmissionDetail(id: string): Promise<Result<Submission
   const sigs = (signals.data as { type: keyof SubmissionDetail['signals'] }[]).reduce((acc, r) => ({ ...acc, [r.type]: acc[r.type] + 1 }), { tab_hidden: 0, paste: 0, window_blur: 0 });
 
   return ok({
-    id, submittedAt: sub.submitted_at as string, autoSubmitted: Boolean(sub.auto_submitted), isSimulated: Boolean(sub.is_simulated),
+    id, submittedAt: sub.submitted_at as string, startedAt: iv.started_at ?? null, autoSubmitted: Boolean(sub.auto_submitted), isSimulated: Boolean(sub.is_simulated),
     objective: { score: num(sub.objective_score), max: num(sub.objective_max) },
     ai: { score: num(sub.ai_suggested_score), max: num(sub.ai_suggested_max) },
     final: { score: num(sub.final_score), max: num(sub.final_max) },
