@@ -19,6 +19,8 @@ type RowProps = {
   /** Right side: a number, short text or a pill. */
   value?: React.ReactNode
   pill?: React.ReactNode
+  /** Plain buttons on the right (for example Copy link). Not used together with href or onClick. */
+  actions?: React.ReactNode
   href?: string
   onClick?: () => void
   className?: string
@@ -27,7 +29,7 @@ type RowProps = {
 const rowBase =
   "focus-ring flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left"
 
-export function ListRow({ leading, title, subtitle, value, pill, href, onClick, className }: RowProps) {
+export function ListRow({ leading, title, subtitle, value, pill, actions, href, onClick, className }: RowProps) {
   const interactive = Boolean(href || onClick)
   const body = (
     <>
@@ -38,6 +40,7 @@ export function ListRow({ leading, title, subtitle, value, pill, href, onClick, 
       </span>
       {value ? <span className="t-callout tabular shrink-0 text-ink-2">{value}</span> : null}
       {pill ? <span className="shrink-0">{pill}</span> : null}
+      {actions ? <span className="flex shrink-0 items-center gap-3">{actions}</span> : null}
       {interactive ? <ChevronRight aria-hidden className="size-4 shrink-0 text-ink-3" strokeWidth={1.75} /> : null}
     </>
   )

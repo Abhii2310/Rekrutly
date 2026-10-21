@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDateTime, formatPercent, formatRelative } from '@/lib/format';
+import { formatDateTime, formatPercent, formatRelative, formatTime } from '@/lib/format';
 
 const now = new Date('2026-11-03T10:00:00Z');
 const ago = (ms: number) => new Date(now.getTime() - ms);
@@ -31,6 +31,12 @@ describe('formatRelative', () => {
 describe('formatDateTime', () => {
   it('formats in en-IN and India time', () => {
     expect(formatDateTime('2026-11-03T10:12:00Z')).toBe('3 Nov, 3:42 pm');
+  });
+});
+
+describe('formatTime', () => {
+  it('formats the time of day in India time', () => {
+    expect(formatTime('2026-11-03T10:12:00Z')).toBe('3:42 pm');
   });
 });
 

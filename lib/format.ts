@@ -12,6 +12,13 @@ export function formatDateTime(d: string | number | Date): string {
   return dateTime.format(toDate(d));
 }
 
+const timeOnly = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: TZ });
+
+/** "3:42 pm" in India time. */
+export function formatTime(d: string | number | Date): string {
+  return timeOnly.format(toDate(d));
+}
+
 /** "just now", "5 min ago", "2 hours ago", "3 days ago", then a date. */
 export function formatRelative(d: string | number | Date, now: string | number | Date = new Date()): string {
   const seconds = Math.round((toDate(now).getTime() - toDate(d).getTime()) / 1000);

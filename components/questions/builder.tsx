@@ -112,11 +112,13 @@ export function QuestionBuilder({ runId, steps, review, editable, autoStart, pla
 
   return (
     <>
-      <Section title="Steps" className="mt-10">
-        <ProgressRail steps={rail} />
-      </Section>
+      {!review || busy || genError ? (
+        <Section title="Steps" className="mt-10">
+          <ProgressRail steps={rail} />
+        </Section>
+      ) : null}
 
-      <Section title="Questions">
+      <Section title="Questions" className={review && !busy && !genError ? "mt-0" : undefined}>
         {busy ? (
           <div role="status">
             <p className="t-callout mb-4 text-ink-2">Writing {plural(plannedCount, "question")}. This takes about 30 seconds.</p>

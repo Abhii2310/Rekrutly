@@ -35,3 +35,14 @@ export async function failStep(s: Starting, message: string, data: Json = {}): P
   await getDb().from('workflow_steps').update({ status: 'failed', error: message, finished_at: new Date().toISOString() }).eq('id', s.stepId);
   await logEvent({ runId: s.runId, stepId: s.stepId, jobId: s.jobId, type: 'step.failed', actor: 'agent', level: 'error', message, data });
 }
+
+/** Marks a step skipped, with the reason as its result. Logged as a normal receipt, not an error. */
+export async function skipStep(s: Starting, message: string, result: Json = {}, data: Json = {}): Promise<void> {
+  const db = getDb();
+  const step = await db.from('workflow_steps').select('title').eq('id', s.stepId).maybeSingle();
+  await db.from('workflow_steps')
+    .update({ status: 'skipped', result: { message, ...result }, finished_at: new Date().toISOString() })
+    .eq('id', s.stepId);
+  // The reason is already in the step's own receipt (for example email.unconfigured), so this one just notes the skip.
+  await logEvent({ runId: s.runId, stepId: s.stepId, jobId: s.jobId, type: 'step.completed', actor: 'agent', level: 'info', message: `Skipped: ${(step.data?.title as string | undefined) ?? 'a step'}`, data });
+}
