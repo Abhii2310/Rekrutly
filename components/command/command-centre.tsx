@@ -265,7 +265,7 @@ function Outcome({
 
       <div className="mt-8">
         <Button asChild>
-          <Link href={`/runs/${runId}`}>{plan.intent === "follow_up_sweep" ? "Review the plan" : "Write the questions"}</Link>
+          <Link href={plan.intent === "follow_up_sweep" ? `/runs/${runId}` : `/runs/${runId}?generate=1`}>{plan.intent === "follow_up_sweep" ? "Review the plan" : "Write the questions"}</Link>
         </Button>
       </div>
     </div>

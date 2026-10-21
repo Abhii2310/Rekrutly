@@ -4,7 +4,7 @@ Claude Code updates this file at the end of every prompt. Keep each list honest 
 
 ## Last completed prompt
 
-Prompt 05 (Command Centre). Next: `docs/prompts/06-question-builder.md`
+Prompt 06 (question builder). Next: `docs/prompts/07-approve-and-execute.md`
 
 ## Working (verified end to end)
 
@@ -20,6 +20,7 @@ Prompt 05 (Command Centre). Next: `docs/prompts/06-question-builder.md`
 - Overview (stats, needs attention, active workflows, recent activity), Jobs, Job detail, Candidates with URL-backed filters and search, and a candidate profile sheet (`?c=`) with add-email and allowed-stage changes. `PATCH /api/candidates/[id]` validates with Zod and `assertTransition`, logs `candidate.stage_changed` / `candidate.updated`. Checked in the browser: Rohan Nair email added, stage moved to Interview, both shown in Activity, reload kept the sheet open. API error cases checked with curl (401, 400, 404, 409 twice). 46 unit tests.
 - Command Centre (`/command`): `POST /api/agent/plan` runs guardrail, then the planner (Gemini via `lib/ai/client.ts`), then `resolvePlan` (code) and `buildSteps` (code), then creates a draft run with 6 steps and logs `plan.created` (and `guardrail.triggered`). Live checks on the real API: the demo sentence gives `create_assessment_workflow`, 5 candidates, 1 without email, 30 minutes, React/APIs/SQL/Debugging, preview true, 6 steps; "only invite candidates under 30" gives a guardrail notice and a valid plan; "Book a flight to Goa" gives unsupported (no run created); the follow-up sentence gives a 2-step sweep. Plan, guardrail notice, unsupported and clarification screens checked in the browser. `/runs/[id]` shows the run and its steps. 104 unit tests.
 - AI client: provider switch, retry on the same provider's fast model then the fallback provider, 429 backoff 2s then 5s, 55s total budget, `ai_provider` / `ai_model` recorded in `plan.created`.
+- Question builder: `POST /api/runs/[id]/questions` runs the generate step with receipts (`step.started`, `step.completed` "Wrote 10 questions across 4 skills"), writes a draft assessment, questions and separate answer keys; regenerate-all with `{ replace: true }`; `POST /api/questions/[id]/regenerate`; `PATCH`/`DELETE /api/questions/[id]`; `POST /api/assessments/[id]/questions`; `PATCH /api/assessments/[id]`. Everything refuses once the assessment is not a draft (409). Live checks: 10 questions, 7 multiple-choice + 3 written, all four skills, correct answers spread 2/2/2/2 (and 2/2/2/1 on the replace run), 10 keys for 10 questions; edit saved and logged; regenerate replaced one question; deletes renumber positions and stop at 3 (409); add works (201) and bad input gives plain messages; signed-out gives 401. UI: expandable list with Edit, Regenerate, Delete (confirm popover), Add question, rename, generating skeleton with a live rail, retry on failure. `getQuestionsForCandidate` exists with an explicit no-keys column list (unit-tested). 123 unit tests.
 
 ## Simulated or demo-only
 
@@ -27,7 +28,11 @@ Prompt 05 (Command Centre). Next: `docs/prompts/06-question-builder.md`
 
 ## Not built yet / known issues
 
-- Everything in prompts 06–14. War Room and Analytics are honest placeholders until their prompts.
+- Everything in prompts 07–14. Approving, the right-hand summary column and links come in Prompt 07.
+- Gemini free tier: `gemini-3.5-flash` often returns 429 (rate limit) or hangs. Full generation took 20 to 35s when it worked, and once ended with 9 of 10 questions plus a visible warning because the top-up call was rate limited. Single-question regenerate now uses the fast model. For reliable demos set `AI_FALLBACK_PROVIDER`, or move `AI_MODEL_SMART` to a model with spare quota, and re-run `npm run ai:check`.
+- Model-facing schemas must not put min/max on arrays of nested objects (Gemini returns HTTP 400); counts are enforced in code. Noted in ARCHITECTURE.md.
+- If question generation fails the run stays `draft` and the step is `failed` (inline Retry), instead of the run becoming `failed`.
+- The Steps rail sits above the questions for now; Prompt 07 moves the layout to two columns. War Room and Analytics are honest placeholders until their prompts.
 - "Write the questions" currently just opens `/runs/[id]`; Prompt 06 connects it to question generation.
 - Planning latency on the Gemini free tier: 5 to 11s when it works first time, up to ~16s when `gemini-3.5-flash` returns 503 and the call retries on `gemini-3.5-flash-lite` (about 1 in 3 calls in testing). Re-check before the demo; set `AI_FALLBACK_PROVIDER` for more resilience.
 - The clarification screen was verified with a stubbed API response (the real planner always found a job in testing).

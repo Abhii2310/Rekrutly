@@ -179,6 +179,8 @@ GeneratedQuestion = z.discriminatedUnion('type', [
     max_score: z.number().min(2).max(10) }),
 ]);
 QuestionSet = z.object({ questions: z.array(GeneratedQuestion).min(3).max(20) });
+// Note: Gemini returns HTTP 400 for minItems/maxItems on an array of these objects. The schema sent to the
+// model uses an unbounded array (lib/ai/questions.ts); count limits are enforced by postValidate.
 
 ShortAnswerGrade = z.object({
   score: z.number().min(0),                          // clamp to max_score in code
