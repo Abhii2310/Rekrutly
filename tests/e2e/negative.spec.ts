@@ -5,12 +5,20 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000';
 
 test.describe('signed out', () => {
   test('recruiter pages send you to sign in and keep where you were going', async ({ page }) => {
-    for (const path of ['/', '/jobs', '/candidates', '/command', '/analytics', '/war-room', '/demo']) {
+    for (const path of ['/jobs', '/candidates', '/command', '/analytics', '/war-room', '/demo']) {
       await page.goto(path);
       await expect(page).toHaveURL(/\/login/);
     }
     await page.goto('/jobs');
     await expect(page).toHaveURL(/next=%2Fjobs/);
+  });
+
+  test('the root address shows the public landing page, not the app', async ({ page }) => {
+    await page.goto('/');
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole('heading', { level: 1, name: 'The hiring agent that shows its work.' })).toBeVisible();
+    await page.getByRole('link', { name: 'Sign in' }).first().click();
+    await expect(page).toHaveURL(/\/login/);
   });
 
   test('recruiter APIs answer 401 with the standard error shape', async () => {

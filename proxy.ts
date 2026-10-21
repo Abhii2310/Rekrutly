@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { SESSION_COOKIE, verifySessionValue } from '@/lib/security/session';
 
-const PUBLIC_PREFIXES = ['/login', '/api/auth/', '/a/', '/api/c/', '/api/health', '/_next/'];
+const PUBLIC_PREFIXES = ['/welcome', '/login', '/api/auth/', '/a/', '/api/c/', '/api/health', '/_next/'];
 
 function isPublic(pathname: string): boolean {
   return pathname === '/favicon.ico' || PUBLIC_PREFIXES.some((p) => pathname === p.replace(/\/$/, '') || pathname.startsWith(p));
@@ -14,6 +14,9 @@ export function proxy(request: NextRequest): NextResponse {
     return NextResponse.rewrite(new URL('/not-found-demo', request.url), { status: 404 });
   }
   const signedIn = verifySessionValue(request.cookies.get(SESSION_COOKIE)?.value);
+
+  // Visitors who are not signed in see the landing page at the root address. Signed-in people get the Overview.
+  if (pathname === '/' && !signedIn) return NextResponse.rewrite(new URL('/welcome', request.url));
 
   if (pathname === '/login' && signedIn) {
     const next = request.nextUrl.searchParams.get('next');
