@@ -27,12 +27,12 @@ export function PageHeader({ title, description, actions }: { title: string; des
         scrolled ? "border-hairline bg-white/70 backdrop-blur-[20px] backdrop-saturate-[180%]" : "border-transparent bg-canvas"
       )}
     >
-      <div className="mx-auto flex w-full max-w-[1120px] items-end justify-between gap-6 px-4 pb-4 pt-10 md:px-6 lg:px-10">
+      <div className="mx-auto flex w-full max-w-[1120px] flex-wrap items-end justify-between gap-x-6 gap-y-3 px-4 pb-4 pt-10 md:px-6 lg:px-10">
         <div className="min-w-0">
           <h1 className="t-large truncate text-ink">{title}</h1>
           {description ? <p className="t-callout mt-1 text-ink-2">{description}</p> : null}
         </div>
-        {actions ? <div className="flex shrink-0 items-center gap-3 pb-1">{actions}</div> : null}
+        {actions ? <div className="flex shrink-0 flex-wrap items-center gap-3 pb-1">{actions}</div> : null}
       </div>
     </header>
   )

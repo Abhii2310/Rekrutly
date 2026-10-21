@@ -4,6 +4,7 @@ import { withInvitation } from '@/lib/portal/http';
 import { markOpened, questionCount } from '@/lib/portal/service';
 import { getPortalState, toIso } from '@/lib/portal/state';
 import { getDb } from '@/lib/db/server';
+import { runPostSubmitPipeline } from '@/lib/scoring/pipeline';
 import { afterSubmit, submitAssessment } from '@/lib/scoring/submit';
 
 export const dynamic = 'force-dynamic';
@@ -22,7 +23,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tok
     const done = await submitAssessment(inv, now);
     if (done.ok) {
       const finished = inv
-      after(() => afterSubmit(finished, done.data))
+      after(async () => {
+        await afterSubmit(finished, done.data)
+        await runPostSubmitPipeline(done.data.submissionId)
+      })
       autoSubmitted = true;
       inv = { ...inv, status: 'submitted', submitted_at: done.data.submittedAt };
     } else if (done.error.code !== 'already_submitted') {

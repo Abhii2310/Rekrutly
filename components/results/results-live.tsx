@@ -1,0 +1,72 @@
+"use client"
+
+import Link from "next/link"
+import { ChevronRight } from "lucide-react"
+import { AIMark } from "@/components/ui/ai-mark"
+import { Pill } from "@/components/ui/status-pill"
+import { usePoll } from "@/hooks/use-poll"
+import type { AssessmentResults } from "@/lib/db/queries/results"
+import { Stat } from "@/components/ui/stat"
+
+const pct = (n: number | null): string => (n === null ? "–" : `${n}%`)
+
+function Cols({ objective, ai, final }: { objective: string; ai: string; final: string }) {
+  return (
+    <span className="t-callout tabular grid shrink-0 grid-cols-3 gap-4 text-right sm:w-[260px]">
+      <span className="text-ink-2">{objective}</span>
+      <span className="text-ink-2">{ai}</span>
+      <span className="font-medium text-ink">{final}</span>
+    </span>
+  )
+}
+
+/** The candidates of one assessment, updating every 2 seconds while the tab is visible. */
+export function ResultsLive({ assessmentId, initial }: { assessmentId: string; initial: AssessmentResults }) {
+  const { data = initial, reconnecting } = usePoll<AssessmentResults>(`/api/assessments/${assessmentId}/live`, { initial })
+
+  return (
+    <div>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-4">
+        <Stat value={data.counts.invited} label="Invited" />
+        <Stat value={data.counts.started} label="Started" />
+        <Stat value={data.counts.submitted} label="Submitted" />
+        <Stat value={data.counts.ready} label="Reports ready" />
+      </div>
+
+      <div className="mt-10">
+        <div className="t-callout hidden items-center gap-3 px-5 pb-2 text-ink-2 sm:flex">
+          <span className="flex-1">Candidate</span>
+          <span className="w-[110px]" />
+          <span className="grid w-[260px] grid-cols-3 gap-4 text-right">
+            <span>Objective</span>
+            <span className="inline-flex justify-end"><AIMark label="Written" /></span>
+            <span>Final</span>
+          </span>
+          <span className="w-4" />
+        </div>
+        <div className="rounded-group bg-mist p-1">
+          <ul className="overflow-hidden rounded-[10px] bg-canvas">
+            {data.rows.map((r) => {
+              const body = (
+                <>
+                  <span className="t-headline min-w-0 flex-1 truncate text-ink">{r.name}</span>
+                  <span className="w-[110px] shrink-0 text-right sm:text-left"><Pill tone={r.state.tone}>{r.state.label}</Pill></span>
+                  <Cols objective={pct(r.objectivePct)} ai={pct(r.aiPct)} final={pct(r.finalPct)} />
+                  {r.submissionId ? <ChevronRight aria-hidden className="size-4 shrink-0 text-ink-3" strokeWidth={1.75} /> : <span className="w-4 shrink-0" />}
+                </>
+              )
+              const cls = "focus-ring flex min-h-14 w-full flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-left sm:flex-nowrap sm:px-5"
+              return (
+                <li key={r.invitationId} className="relative list-none after:absolute after:bottom-0 after:left-4 after:right-0 after:h-px after:bg-hairline/70 last:after:hidden">
+                  {r.submissionId ? <Link href={`/submissions/${r.submissionId}`} className={`${cls} transition-colors hover:bg-mist/60`}>{body}</Link> : <div className={cls}>{body}</div>}
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+        <p className="t-callout mt-3 text-ink-2">Percentages are shares of the points available. Written scores are AI suggestions until you review them.</p>
+        {reconnecting ? <p className="t-callout mt-2 text-ink-2" aria-live="polite">Reconnecting…</p> : null}
+      </div>
+    </div>
+  )
+}

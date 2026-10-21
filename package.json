@@ -17,7 +17,8 @@
     "db:check": "tsx --env-file=.env.local scripts/check-db.ts",
     "ai:check": "tsx --env-file=.env.local scripts/check-ai.ts",
     "ai:models": "tsx --env-file=.env.local scripts/list-models.ts",
-    "screenshot": "tsx --env-file=.env.local scripts/screenshot.ts"
+    "screenshot": "tsx --env-file=.env.local scripts/screenshot.ts",
+    "dev:live-run": "tsx --conditions=react-server --env-file=.env.local scripts/dev-live-run.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "4.0.85",

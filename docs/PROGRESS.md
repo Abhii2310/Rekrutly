@@ -4,7 +4,7 @@ Claude Code updates this file at the end of every prompt. Keep each list honest 
 
 ## Last completed prompt
 
-Prompt 08 (candidate portal). Next: `docs/prompts/09-scoring-and-results.md`
+Prompt 09 (scoring, reports, results). Next: `docs/prompts/10-war-room-and-followups.md`
 
 ## Working (verified end to end)
 
@@ -25,6 +25,8 @@ Prompt 08 (candidate portal). Next: `docs/prompts/09-scoring-and-results.md`
 - Checked: `npm run smoke:executor` passes 16 checks (refuses without approval, approve twice gives no duplicates, 5 unique links, receipts, no token in any receipt). In the browser: plan, write questions, edit one, add Rohan's email in the panel, approve, watch the rail fill in, links listed, copy link receipt logged. API: link is `/a/<43 characters>` (the page is a 404 until Prompt 08), signed-out gets 401, bad bodies get plain messages, cancel is idempotent, pause/resume/retry work. 142 unit tests.
 - Candidate portal (`/a/[token]`, `/api/c/[token]/*`): personal link, consent notice, server-owned timer (deadline set on the server at Start, never reset by a refresh), autosave (multiple-choice at once, text after 600ms and on blur, "Saving…", "Saved", "Not saved. Retrying…" with backoff), refresh-proof (answers and timer restored), keys 1 to 4 and Enter, question dots, review and submit with a confirm dialog, "Submitted." screen, calm one-sentence screens for invalid, expired and revoked links, tab-switch and paste signals in batches. Multiple-choice is scored by plain code (`lib/scoring/objective.ts`, `submit.ts`); the unique constraint on `submissions.invitation_id` is the real guard against a second submission. The recruiter run page shows "1 of 5 candidates have submitted", "Question 4 of 10" and Submitted live.
 - Checked through the API: closed before start, consent required, same deadline after a second Start, no key fields in any candidate response, invalid option / too-long text / option on a written question rejected, upsert (no duplicate answers), reload restores answers, submit scores correctly (8 of 14), second submit 409, saves after submit 409, another candidate's link shows only their own name, malformed and unknown tokens all 404, 30-second grace accepts a save 10s after the deadline and rejects one 40s after, opening a link after time-up finishes it automatically (auto_submitted), expired and revoked links. In the browser at 375px: intro, consent, start, answer with mouse and keys, reload mid-test (timer continued), written answer autosave, review list, confirm dialog, "Submitted." 160 unit tests.
+- Scoring and results (Prompt 09): after a submit, `runPostSubmitPipeline` (in `after()`, never throws) grades written answers with the fast model (blank answers score 0 with no model call; the evidence quote must be an exact span of the answer or it is dropped and confidence set low), recomputes totals in code (`lib/scoring/aggregate.ts`: objective, AI-suggested, final, per-skill whole percents), then writes a report with the smart model (strengths, gaps, interview questions, missing evidence; every evidence line is checked against real scores and skills). Pages: `/assessments/[id]/results` (live list: Objective, Written "Suggested by AI", Final) and `/submissions/[id]` (stats, skills, questions, report, signals shown as "not proof", Save as PDF via print CSS). Evidence sheet: the answer with the quote highlighted, rubric ticks, reasoning, confidence and an override form (score 0..max plus a reason of 3+ characters). `POST /api/submissions/[id]/rescore` is the Retry for a failed or stuck run.
+- Checked live (Aarav): objective 10 of 14 = 71%; written q8 6 of 6, q9 unanswered, q10 "Use a key." 0 of 6, AI 33%, final 47% after the override. Override of q8 6 to 5 with a reason: totals and SQL skill moved (80% to 70%), row shows "Adjusted", `score.overridden` receipt holds old, new and reason. A failed scoring run was recovered with Retry. Reports regenerated with the evidence format. Mobile (390px) screenshot checked after letting the page header wrap. 181 unit tests; typecheck, lint and production build pass.
 
 ## Simulated or demo-only
 
@@ -32,7 +34,12 @@ Prompt 08 (candidate portal). Next: `docs/prompts/09-scoring-and-results.md`
 
 ## Not built yet / known issues
 
-- Everything in prompts 09–14. Written answers are saved but not graded yet (`scoring_status` stays `pending`, no final score) until Prompt 09; there is no recruiter results page yet. The follow-up sweep cannot be approved until Prompt 10.
+- Everything in prompts 10–14. The follow-up sweep cannot be approved until Prompt 10. The results page has no checkboxes or Compare yet (Prompt 12).
+- The AI report is a snapshot written at scoring time: after a recruiter override the totals and skill bars update but the report text keeps the original AI score until it is regenerated (Retry or rescore).
+- The "Suggested AI score" stat stays the AI's own number on purpose; the Final column on the results list includes overrides.
+- Groq strict mode rejects outputs longer than a schema `maxLength` (HTTP 400), so grading and report schemas are lenient and limits (quote 300, reasoning 400) are enforced in code (`checkGrade`, `checkReport`).
+- Scoring of 3 written answers takes about 10 to 40s on the free Gemini tier (grading runs one at a time on Google to avoid 429s); the submission page shows a skeleton and updates itself while it works.
+- Not verified: print/PDF output was not inspected in a real print preview; the Assessments list in the candidate profile sheet was checked through code and query, not visually.
 - Hosted database latency is 0.6 to 4s per query from this machine, so work after a candidate action runs after the response (`after()`): Submitted appears in about 1.5s, while the candidate's stage change, receipts and the run counter land 10 to 40s later in dev. Occasional 12 to 13s outliers were seen on GET questions.
 - The candidate fetch helper times out after 12s (30s for start and submit) and retries twice, because the in-app browser pane sometimes left a request hanging; every candidate endpoint is safe to repeat.
 - Candidate screens were checked on a 375px emulated viewport and with a desktop screenshot, not on a physical phone. Please try your own phone link once.
@@ -51,7 +58,6 @@ Prompt 08 (candidate portal). Next: `docs/prompts/09-scoring-and-results.md`
 - The clarification screen was verified with a stubbed API response (the real planner always found a job in testing).
 - Test runs created while building were removed by reseeding.
 - Overview, job and run links point to `/runs/[id]`, which is built in Prompt 05; no runs exist yet, so no link is dead.
-- Candidate profile "Assessments" shows an empty note until Prompt 09.
 - Seed now clears old `system.seeded` receipts so the Overview activity list stays clean.
 - Added a token `--color-action-tint` (blue tint) for status pills; DESIGN.md lists no tint for the `action` tone.
 - Tertiary text token `ink-3` (#86868B) is below 4.5:1 on white; it is only used for placeholders and chevrons. Rail timestamps use `ink-2`.

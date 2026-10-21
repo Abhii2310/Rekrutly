@@ -28,6 +28,7 @@ export type ProfileData = {
   jobTitle: string | null
   nextStages: Stage[]
   events: { id: number; message: string; when: string }[]
+  assessments: { invitationId: string; title: string; status: string; submissionId: string | null; finalPct: number | null; scored: boolean }[]
 }
 
 async function patch(id: string, body: { email?: string | null; stage?: Stage }): Promise<string | null> {
@@ -163,7 +164,21 @@ export function CandidateSheet({ candidate }: { candidate: ProfileData }) {
           </Block>
 
           <Block title="Assessments">
-            <p className="t-body text-ink-2">No assessments yet.</p>
+            {candidate.assessments.length === 0 ? (
+              <p className="t-body text-ink-2">No assessments yet.</p>
+            ) : (
+              <GroupedList>
+                {candidate.assessments.map((a) => (
+                  <ListRow
+                    key={a.invitationId}
+                    title={<span className="t-body font-medium">{a.title}</span>}
+                    subtitle={a.submissionId ? (a.scored ? "Scored" : "Submitted, scoring") : a.status === "started" ? "In progress" : "Not started"}
+                    value={a.finalPct !== null ? `${a.finalPct}%` : undefined}
+                    href={a.submissionId ? `/submissions/${a.submissionId}` : undefined}
+                  />
+                ))}
+              </GroupedList>
+            )}
           </Block>
 
           <Block title="Activity">

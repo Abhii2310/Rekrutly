@@ -59,6 +59,7 @@ export default async function CandidatesPage({ searchParams }: { searchParams: P
       jobTitle: c.job_title,
       nextStages: [...allowedTransitions("candidate", c.stage)],
       events: c.events.map((e) => ({ id: e.id, message: e.message, when: formatRelative(e.created_at, now) })),
+      assessments: c.assessments,
     }
   }
 

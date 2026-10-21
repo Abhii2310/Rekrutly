@@ -142,3 +142,9 @@
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+@media print {
+  body { background: var(--color-canvas); }
+  li { break-inside: avoid; }
+  main { padding: 0; }
+}

@@ -29,6 +29,9 @@ export function classifyError(e: unknown): AiError {
   if (['TimeoutError', 'AbortError'].includes(name) || ['TimeoutError', 'AbortError'].includes(causeName)) {
     return { code: 'timeout', message: FRIENDLY.timeout };
   }
+  if (APICallError.isInstance(e) && /does not match the expected schema|failed_generation|json_validate_failed/i.test(`${e.message} ${e.responseBody ?? ''}`)) {
+    return { code: 'invalid_output', message: FRIENDLY.invalid_output };
+  }
   if (APICallError.isInstance(e)) {
     return { code: 'provider_error', message: `${FRIENDLY.provider_error} ${scrub(e.message)}`.trim(), status: e.statusCode };
   }

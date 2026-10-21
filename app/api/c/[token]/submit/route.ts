@@ -2,6 +2,7 @@ import { after } from 'next/server';
 import { apiError, apiOk } from '@/lib/api';
 import { withInvitation } from '@/lib/portal/http';
 import { getPortalState } from '@/lib/portal/state';
+import { runPostSubmitPipeline } from '@/lib/scoring/pipeline';
 import { afterSubmit, submitAssessment } from '@/lib/scoring/submit';
 
 export const maxDuration = 60;
@@ -23,6 +24,10 @@ export async function POST(_request: Request, { params }: { params: Promise<{ to
     if (done.error.code === 'already_submitted') return apiError('already_submitted', 'This assessment was already submitted.', 409);
     return apiError('server_error', 'Something went wrong submitting. Try again.', 500);
   }
-  after(() => afterSubmit(inv, done.data));
+  // The submission and the multiple-choice score are saved. Everything else runs after the response and can fail safely.
+  after(async () => {
+    await afterSubmit(inv, done.data);
+    await runPostSubmitPipeline(done.data.submissionId);
+  });
   return apiOk({ submittedAt: done.data.submittedAt, autoSubmitted: done.data.autoSubmitted });
 }

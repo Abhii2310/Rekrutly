@@ -114,7 +114,7 @@ const MAP = {
       waiting: 'action', completed: 'success', failed: 'danger', skipped: 'neutral', cancelled: 'neutral',
     },
     transitions: {
-      planned: ['awaiting_approval', 'queued', 'skipped', 'cancelled'],
+      planned: ['awaiting_approval', 'queued', 'waiting', 'skipped', 'cancelled'], // waiting: steps driven by candidate activity
       awaiting_approval: ['queued', 'cancelled'],
       queued: ['executing', 'skipped', 'cancelled'],
       executing: ['completed', 'waiting', 'failed', 'skipped'],

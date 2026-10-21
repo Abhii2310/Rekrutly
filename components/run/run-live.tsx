@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { GroupedList, ListRow } from "@/components/ui/grouped-list"
 import { ProgressRail, type RailStep } from "@/components/ui/progress-rail"
@@ -129,7 +130,11 @@ export function RunLive({ runId, initial }: { runId: string; initial: RunLiveDat
       </div>
 
       <div className="min-w-0">
-        <Section title="Candidate links" className="mt-0">
+        <Section
+          title="Candidate links"
+          className="mt-0"
+          action={live.assessment ? <Button asChild variant="plain" size="sm"><Link href={`/assessments/${live.assessment.id}/results`}>View results</Link></Button> : undefined}
+        >
           {live.invitations.length === 0 ? (
             <p className="t-body py-2 text-ink-2">Links appear here once they are created.</p>
           ) : (
