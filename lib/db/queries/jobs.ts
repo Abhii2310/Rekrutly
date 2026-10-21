@@ -11,7 +11,7 @@ export type JobWithCounts = JobRow & { candidate_count: number; stage_counts: Pa
 export async function listJobs(): Promise<Result<JobWithCounts[]>> {
   const db = getDb();
   const [jobs, cands] = await Promise.all([
-    db.from('jobs').select(JOB_COLUMNS).order('created_at', { ascending: false }),
+    db.from('jobs').select(JOB_COLUMNS).order('created_at', { ascending: false }).order('id', { ascending: true }),
     db.from('candidates').select('job_id, stage'),
   ]);
   if (jobs.error) return err('db_error', 'Could not load jobs.', jobs.error.message);

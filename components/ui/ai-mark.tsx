@@ -6,7 +6,7 @@ export function AIMark({ label = "Suggested by AI" }: { label?: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button type="button" className="focus-ring t-footnote inline-flex items-center gap-1 rounded-full text-ai">
+        <button type="button" className="focus-ring t-footnote inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full text-ai">
           <Sparkles aria-hidden className="size-3" strokeWidth={1.75} />
           {label}
         </button>
