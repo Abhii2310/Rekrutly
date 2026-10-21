@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Activity, Briefcase, ChartColumn, Clapperboard, Command, LayoutGrid, LogOut, Search, Users } from "lucide-react"
+import { Activity, Briefcase, ChartColumn, Clapperboard, Command, LayoutGrid, LogOut, ScrollText, Search, Settings, Users } from "lucide-react"
 import { cn } from "cn"
 import { DemoTag } from "@/components/ui/tags"
 
@@ -14,6 +14,8 @@ const NAV = [
   { href: "/candidates", label: "Candidates", icon: Users },
   { href: "/war-room", label: "War Room", icon: Activity },
   { href: "/analytics", label: "Analytics", icon: ChartColumn },
+  { href: "/activity", label: "Activity", icon: ScrollText },
+  { href: "/settings", label: "Settings", icon: Settings },
 ] as const
 
 function isActive(pathname: string, href: string): boolean {

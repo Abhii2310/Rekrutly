@@ -1,3 +1,4 @@
+import { NewJobDialog } from "@/components/jobs/new-job-dialog"
 import { QueryError } from "@/components/frame/query-error"
 import { EmptyState } from "@/components/ui/empty-state"
 import { GroupedList, ListRow } from "@/components/ui/grouped-list"
@@ -23,10 +24,10 @@ export default async function JobsPage() {
 
   return (
     <>
-      <PageHeader title="Jobs" description="Open roles and their candidates." actions={hasDemo ? <DemoTag /> : undefined} />
+      <PageHeader title="Jobs" description="Open roles and their candidates." actions={<>{hasDemo ? <DemoTag /> : null}<NewJobDialog /></>} />
       <PageBody>
         {jobs.data.length === 0 ? (
-          <EmptyState message="No roles yet. Run npm run db:seed to add the demo roles." />
+          <EmptyState message="No roles yet. Create your first role to get started." />
         ) : (
           <GroupedList>
             {jobs.data.map((j) => (

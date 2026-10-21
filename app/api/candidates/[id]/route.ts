@@ -70,4 +70,36 @@ async function handlePATCH(request: Request, { params }: { params: Promise<{ id:
   return apiOk(data);
 }
 
+const DeleteBody = z.object({ confirm: z.literal(true, { error: 'Confirm the deletion first.' }) });
+
+/**
+ * Deletes a candidate and everything about them (links, answers, scores, signals, tasks and their receipts), at their request.
+ * One receipt is kept, with no name or other personal detail, so there is a record that a deletion happened.
+ */
+async function handleDELETE(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+  const denied = await requireRecruiter();
+  if (denied) return denied;
+  const { id } = await params;
+  if (!z.uuid().safeParse(id).success) return apiError('not_found', 'Candidate not found.', 404);
+  const parsed = DeleteBody.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return apiError('confirm_required', parsed.error.issues[0]?.message ?? 'Confirm the deletion first.', 400);
+
+  const db = getDb();
+  const cand = await db.from('candidates').select('id, job_id').eq('id', id).maybeSingle();
+  if (cand.error) return apiError('db_error', 'Could not load the candidate.', 500);
+  if (!cand.data) return apiError('not_found', 'Candidate not found.', 404);
+
+  const del = await db.from('candidates').delete().eq('id', id);
+  if (del.error) {
+    console.error('DELETE /api/candidates failed:', del.error.message);
+    return apiError('db_error', "Couldn't delete the candidate. Nothing was removed.", 500);
+  }
+  await logEvent({
+    jobId: cand.data.job_id as string, type: 'candidate.deleted', actor: 'recruiter', level: 'warning',
+    message: 'Deleted a candidate and their data at their request', data: { candidateRef: id.slice(0, 8) },
+  });
+  return apiOk({ id });
+}
+
 export const PATCH = withErrors(handlePATCH);
+export const DELETE = withErrors(handleDELETE);

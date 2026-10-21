@@ -16,6 +16,7 @@ export const EVENT_TYPES = [
   'score.objective_computed', 'score.ai_suggested', 'score.failed', 'score.overridden',
   'report.ready', 'report.failed',
   'followup.drafted', 'task.completed', 'task.dismissed',
+  'job.created', 'candidate.imported', 'candidate.exported', 'candidate.deleted',
   'system.seeded', 'demo.reset', 'demo.simulated',
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];

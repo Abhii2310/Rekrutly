@@ -18,6 +18,10 @@ Set these in Vercel (names only here; never write values in a doc) before the fi
 3. `PLAYWRIGHT_BASE_URL=<APP_URL> npm run e2e` (real AI). Note how long planning, question writing and scoring take; the demo timings below assume about 10 s, 30 s and 30 s.
 4. `npm run capture:fallback -- --run <run id>` after one good run on the seeded Full-Stack job, and commit the two JSON files, so "Use saved demo plan" matches the latest wording.
 
+## Before the demo starts
+
+Open the public address (the root of your Vercel URL) in a private window to see the landing page. It is a good thing to leave on screen while people sit down. Press **Sign in**, then use the passcode to enter the app.
+
 ## Pre-flight (start 30 minutes before)
 
 1. Laptop charged and plugged in. Notifications off (Do Not Disturb). Browser zoom 110%.

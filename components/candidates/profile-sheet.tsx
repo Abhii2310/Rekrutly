@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { GroupedList, ListRow } from "@/components/ui/grouped-list"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Pill, StatusPill } from "@/components/ui/status-pill"
 import { DemoTag } from "@/components/ui/tags"
@@ -59,6 +60,8 @@ export function CandidateSheet({ candidate }: { candidate: ProfileData }) {
   const [email, setEmail] = React.useState("")
   const [pending, setPending] = React.useState<"email" | "stage" | null>(null)
   const [emailError, setEmailError] = React.useState<string | null>(null)
+  const [deleteOpen, setDeleteOpen] = React.useState(false)
+  const [deleting, setDeleting] = React.useState(false)
 
   function close() {
     const p = new URLSearchParams(searchParams.toString())
@@ -78,6 +81,25 @@ export function CandidateSheet({ candidate }: { candidate: ProfileData }) {
     setEmail("")
     toast("Email added")
     router.refresh()
+  }
+
+  async function deleteData() {
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/candidates/${candidate.id}`, { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ confirm: true }) })
+      if (res.ok) {
+        toast("Candidate deleted")
+        setDeleteOpen(false)
+        close()
+        router.refresh()
+        return
+      }
+      const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null
+      toast(body?.error?.message ?? "Couldn't delete. Nothing was removed.")
+    } catch {
+      toast("Couldn't reach the server. Nothing was removed.")
+    }
+    setDeleting(false)
   }
 
   async function changeStage(stage: Stage) {
@@ -181,6 +203,14 @@ export function CandidateSheet({ candidate }: { candidate: ProfileData }) {
             )}
           </Block>
 
+          <Block title="Data and privacy">
+            <p className="t-callout text-ink-2">If this person asks for a copy of their data, or asks you to delete it, you can do both here.</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <Button asChild variant="secondary" size="sm"><a href={`/api/candidates/${candidate.id}/export`} download>Export data</a></Button>
+              <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>Delete data</Button>
+            </div>
+          </Block>
+
           <Block title="Activity">
             {candidate.events.length === 0 ? (
               <p className="t-body text-ink-2">No activity yet.</p>
@@ -194,6 +224,20 @@ export function CandidateSheet({ candidate }: { candidate: ProfileData }) {
           </Block>
         </div>
       </SheetContent>
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {candidate.fullName}&apos;s data?</DialogTitle>
+            <DialogDescription>
+              This permanently deletes the profile, candidate links, answers, scores, reports, tasks and the activity about this person. It cannot be undone. A receipt without their name is kept to show that a deletion happened. Export their data first if they asked for a copy.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setDeleteOpen(false)}>Keep</Button>
+            <Button variant="destructive" loading={deleting} onClick={() => void deleteData()}>Delete data</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sheet>
   )
 }

@@ -13,6 +13,16 @@
 5. **Evidence.** Multiple-choice answers are scored by code. Written answers get an AI suggestion with the exact quote and the rubric points matched and missing. The recruiter reviews, overrides with a reason, and compares candidates side by side. Rekrutly never picks a winner.
 6. **Coordinate.** The War Room shows who is where, what is blocked and what needs the recruiter, and drafts follow-ups in English, Hindi and Kannada. The recruiter copies or opens them in WhatsApp; nothing is sent automatically.
 
+### For the admin
+
+- **Landing page** at the root address for visitors who are not signed in (the app opens for people who are), with animated product demos and no made-up numbers.
+- **Command Centre, Spotlight (Ctrl or Cmd + K) and voice** to plan in a sentence from anywhere.
+- **Roles and candidates:** create a role, import candidates from a CSV (bad rows are listed with the reason, duplicates are skipped), and move people through stages.
+- **Activity:** every receipt, filterable, with a CSV export for an audit.
+- **Data and privacy:** export everything held about a candidate, or delete a candidate and their data on request; a receipt without their name is kept.
+- **Settings:** system status, a one-click AI check that shows which provider answered and how fast, and the keyboard shortcuts.
+- **Demo Director** (demo mode only) to reset, simulate candidates and check the demo is ready.
+
 ## Architecture
 
 - **Next.js 16** (App Router, Turbopack), React 19, TypeScript strict. Server Components read; Route Handlers write.
