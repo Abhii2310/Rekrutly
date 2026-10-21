@@ -2,6 +2,7 @@ import 'server-only';
 import { createGateway, generateText, Output, type LanguageModel } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { createGroq } from '@ai-sdk/groq';
 import type { z } from 'zod';
 import { env } from '@/lib/env';
 import type { AiProvider } from '@/lib/env-schema';
@@ -23,6 +24,7 @@ const config: ModelConfig = {
 function build(provider: AiProvider, id: string): LanguageModel {
   if (provider === 'google') return createGoogleGenerativeAI({ apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY })(id);
   if (provider === 'anthropic') return createAnthropic({ apiKey: env.ANTHROPIC_API_KEY })(id);
+  if (provider === 'groq') return createGroq({ apiKey: env.GROQ_API_KEY })(id);
   return createGateway({ apiKey: env.AI_GATEWAY_API_KEY })(id);
 }
 

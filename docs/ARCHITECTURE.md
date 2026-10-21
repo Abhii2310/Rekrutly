@@ -134,9 +134,9 @@ Rules for every action:
 
 ## 4. AI layer
 
-Provider and models come from env: `AI_PROVIDER` (`gateway | google | anthropic`), optional `AI_FALLBACK_PROVIDER` (must differ), `AI_MODEL_SMART` for planning, questions and reports, `AI_MODEL_FAST` for grading, drafts and retries, optional `AI_FALLBACK_MODEL`. Model IDs are never hard-coded: `npm run ai:check` picks them from the provider's live list.
+Provider and models come from env: `AI_PROVIDER` (`gateway | google | anthropic | groq`), optional `AI_FALLBACK_PROVIDER` (must differ), `AI_MODEL_SMART` for planning, questions and reports, `AI_MODEL_FAST` for grading, drafts and retries, optional `AI_FALLBACK_MODEL`. Model IDs are never hard-coded: `npm run ai:check` picks them from the provider's live list.
 
-All model access goes through `lib/ai/client.ts`: `getModel(tier, provider?)` builds `gateway(id)`, `google(id)` or `anthropic(id)`. No other file imports a provider package. `runStructured` wraps calls with a 45s timeout via AbortSignal, Zod parse and a typed `AiError` (`timeout | invalid_output | provider_error | guardrail`). On timeout or `provider_error` it retries once on the same provider's fast model, then once on the fallback provider if set. On HTTP 429 it backs off 2s then 5s. The answering provider is recorded in event data as `ai_provider`. Parallel AI calls run with concurrency 3, or 1 when the active provider is `google` (free-tier limits).
+All model access goes through `lib/ai/client.ts`: `getModel(tier, provider?)` builds `gateway(id)`, `google(id)`, `anthropic(id)` or `groq(id)`. No other file imports a provider package. `runStructured` wraps calls with a 45s timeout via AbortSignal, Zod parse and a typed `AiError` (`timeout | invalid_output | provider_error | guardrail`). On timeout or `provider_error` it retries once on the same provider's fast model, then once on the fallback provider if set. On HTTP 429 it backs off 2s then 5s. The answering provider is recorded in event data as `ai_provider`. Parallel AI calls run with concurrency 3, or 1 when the active provider is `google` (free-tier limits).
 
 Data rule: on the Google free tier, only `is_demo` data may be sent to the model (the README must say so).
 
@@ -298,7 +298,7 @@ If `RESEND_API_KEY` is set, `send_invitations` sends via Resend and sets `delive
 
 ## 14. Environment variables (`lib/env.ts`)
 
-`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `AI_PROVIDER`, `AI_FALLBACK_PROVIDER?`, `AI_GATEWAY_API_KEY?`, `GOOGLE_GENERATIVE_AI_API_KEY?`, `ANTHROPIC_API_KEY?` (only the keys for providers in use are required), `AI_MODEL_SMART?`, `AI_MODEL_FAST?`, `AI_FALLBACK_MODEL?`, `RECRUITER_PASSCODE`, `SESSION_SECRET` (≥32 chars), `TOKEN_ENC_KEY` (base64 of 32 bytes), `APP_URL`, `DEMO_MODE`, `DEMO_CANDIDATE_EMAIL?`, `DEMO_CANDIDATE_WHATSAPP?`, `TASK_OVERDUE_MINUTES?`, `RESEND_API_KEY?`, `EMAIL_FROM?`.
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `AI_PROVIDER`, `AI_FALLBACK_PROVIDER?`, `AI_GATEWAY_API_KEY?`, `GOOGLE_GENERATIVE_AI_API_KEY?`, `ANTHROPIC_API_KEY?`, `GROQ_API_KEY?` (only the keys for providers in use are required), `AI_MODEL_SMART?`, `AI_MODEL_FAST?`, `AI_FALLBACK_MODEL?`, `RECRUITER_PASSCODE`, `SESSION_SECRET` (≥32 chars), `TOKEN_ENC_KEY` (base64 of 32 bytes), `APP_URL`, `DEMO_MODE`, `DEMO_CANDIDATE_EMAIL?`, `DEMO_CANDIDATE_WHATSAPP?`, `TASK_OVERDUE_MINUTES?`, `RESEND_API_KEY?`, `EMAIL_FROM?`.
 
 ## 15. Testing
 

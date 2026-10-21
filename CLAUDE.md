@@ -25,7 +25,7 @@ Once a step of this path exists, every later task must leave it working. Re-run 
 - Next.js 16 App Router, React 19, TypeScript strict. Request interception lives in `proxy.ts` with an exported `proxy` function (Next.js 16 renamed middleware). `cookies()`, `headers()` and route `params` are async.
 - Tailwind CSS v4 (tokens via `@theme` in `app/globals.css`) + shadcn/ui components restyled to DESIGN.md. Icons: lucide-react. Animation: motion.
 - Supabase Postgres via `@supabase/supabase-js`, used only in server code with the service role key. No Supabase client in the browser.
-- AI: Vercel AI SDK (`ai` v7 installed; `Output.object` and `.output` work the same as v6) (`ai`, with provider packages `@ai-sdk/google` and `@ai-sdk/anthropic`, plus `gateway()` from `ai`). Provider is switched by `AI_PROVIDER`; all model access goes through `lib/ai/client.ts` and no other file imports a provider package. Structured output is `generateText({ model, output: Output.object({ schema }) })` and the result is `.output`. `generateObject` is deprecated: never use it. When unsure, read `node_modules/ai/docs/`.
+- AI: Vercel AI SDK (`ai` v7 installed; `Output.object` and `.output` work the same as v6) (`ai`, with provider packages `@ai-sdk/google`, `@ai-sdk/anthropic` and `@ai-sdk/groq`, plus `gateway()` from `ai`). Provider is switched by `AI_PROVIDER`; all model access goes through `lib/ai/client.ts` and no other file imports a provider package. Structured output is `generateText({ model, output: Output.object({ schema }) })` and the result is `.output`. `generateObject` is deprecated: never use it. When unsure, read `node_modules/ai/docs/`.
 - Zod v4 for every boundary. Vitest for unit tests. Playwright for the e2e golden-path test.
 - npm. Node 20.9+.
 

@@ -1,12 +1,13 @@
 import { z } from 'zod';
 
-const PROVIDERS = ['gateway', 'google', 'anthropic'] as const;
+const PROVIDERS = ['gateway', 'google', 'anthropic', 'groq'] as const;
 export type AiProvider = (typeof PROVIDERS)[number];
 
 const KEY_INFO: Record<AiProvider, { name: string; where: string }> = {
   gateway: { name: 'AI_GATEWAY_API_KEY', where: 'Vercel Dashboard → AI Gateway → API Keys' },
   google: { name: 'GOOGLE_GENERATIVE_AI_API_KEY', where: 'aistudio.google.com → Get API key' },
   anthropic: { name: 'ANTHROPIC_API_KEY', where: 'console.anthropic.com → API keys' },
+  groq: { name: 'GROQ_API_KEY', where: 'console.groq.com → API Keys' },
 };
 
 const str = (where: string) => z.string({ error: `is missing. ${where}` }).min(1, `is missing. ${where}`);
@@ -22,6 +23,7 @@ const schema = z
     AI_GATEWAY_API_KEY: z.string().optional(),
     GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
     ANTHROPIC_API_KEY: z.string().optional(),
+    GROQ_API_KEY: z.string().optional(),
     AI_MODEL_SMART: z.string().optional(),
     AI_MODEL_FAST: z.string().optional(),
     AI_FALLBACK_MODEL: z.string().optional(),

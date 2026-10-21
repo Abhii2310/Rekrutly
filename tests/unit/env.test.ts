@@ -69,6 +69,13 @@ describe('parseEnv', () => {
     expect(ok({ ...noGoogle, AI_PROVIDER: 'anthropic', ANTHROPIC_API_KEY: 'k' }).AI_PROVIDER).toBe('anthropic');
   });
 
+  it('supports groq as a fallback and names its key when missing', () => {
+    const r = parseEnv({ ...base, AI_FALLBACK_PROVIDER: 'groq' });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.message).toMatch(/GROQ_API_KEY.*console\.groq\.com/);
+    expect(ok({ ...base, AI_FALLBACK_PROVIDER: 'groq', GROQ_API_KEY: 'gsk_x' }).AI_FALLBACK_PROVIDER).toBe('groq');
+  });
+
   it('accepts any non-empty Google key (AQ. format)', () => {
     expect(parseEnv({ ...base, GOOGLE_GENERATIVE_AI_API_KEY: 'AQ.anything' }).ok).toBe(true);
   });

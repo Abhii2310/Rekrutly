@@ -3,7 +3,7 @@ import type { AiProvider, Env } from '../lib/env-schema';
 export type LiveModels = { provider: AiProvider; ids: string[] };
 
 function keyFor(env: Env, p: AiProvider): string {
-  const key = { gateway: env.AI_GATEWAY_API_KEY, google: env.GOOGLE_GENERATIVE_AI_API_KEY, anthropic: env.ANTHROPIC_API_KEY }[p];
+  const key = { gateway: env.AI_GATEWAY_API_KEY, google: env.GOOGLE_GENERATIVE_AI_API_KEY, anthropic: env.ANTHROPIC_API_KEY, groq: env.GROQ_API_KEY }[p];
   return key ?? '';
 }
 
@@ -33,6 +33,12 @@ export async function listModels(env: Env, provider: AiProvider): Promise<LiveMo
     };
     return { provider, ids: (j.data ?? []).filter((m) => !m.type || m.type === 'language').map((m) => m.id) };
   }
+  if (provider === 'groq') {
+    const j = (await getJson('https://api.groq.com/openai/v1/models', { Authorization: `Bearer ${key}` })) as { data?: { id: string; active?: boolean }[] };
+    // Chat models only: no speech, audio or safety-classifier models.
+    const ids = (j.data ?? []).filter((m) => m.active !== false).map((m) => m.id).filter((id) => !/whisper|orpheus|guard|safeguard|allam/i.test(id));
+    return { provider, ids };
+  }
   const j = (await getJson('https://api.anthropic.com/v1/models?limit=100', { 'x-api-key': key, 'anthropic-version': '2023-06-01' })) as {
     data?: { id: string }[];
   };
@@ -55,6 +61,11 @@ export function pickModels({ provider, ids }: LiveModels): { smart?: string; fas
     const flash = ids.filter((i) => /^gemini-[\d.]+-flash$/.test(i)).sort(newestFirst);
     const lite = ids.filter((i) => /^gemini-[\d.]+-flash-lite$/.test(i)).sort(newestFirst);
     return { smart: flash[0], fast: lite[0] ?? flash[0] };
+  }
+  if (provider === 'groq') {
+    const big = ids.find((i) => /gpt-oss-120b/.test(i)) ?? ids.find((i) => /70b|27b/.test(i));
+    const small = ids.find((i) => /gpt-oss-20b/.test(i)) ?? ids.find((i) => /8b|20b/.test(i)) ?? big;
+    return { smart: big, fast: small };
   }
   const sonnet = ids.filter((i) => /claude-sonnet/.test(i)).sort(newestFirst);
   const haiku = ids.filter((i) => /claude-haiku/.test(i)).sort(newestFirst);
