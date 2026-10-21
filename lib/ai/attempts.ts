@@ -29,7 +29,9 @@ export function buildAttempts(cfg: ModelConfig, tier: Tier): Result<Attempt[]> {
     return err('ai_not_configured', `${name} isn't set. Run npm run ai:check, then add the model ID to .env.local.`);
   }
   const attempts: Attempt[] = [{ provider: cfg.provider, modelId: first, label: 'primary' }];
-  if (cfg.fast) attempts.push({ provider: cfg.provider, modelId: cfg.fast, label: 'retry-fast' });
+  // The second try uses the other tier's model, so one overloaded model does not fail both tries.
+  const second = tier === 'smart' ? cfg.fast : (cfg.smart && cfg.smart !== first ? cfg.smart : cfg.fast);
+  if (second) attempts.push({ provider: cfg.provider, modelId: second, label: 'retry-fast' });
   if (cfg.fallbackProvider && cfg.fallbackModel) {
     attempts.push({ provider: cfg.fallbackProvider, modelId: cfg.fallbackModel, label: 'fallback-provider' });
   }

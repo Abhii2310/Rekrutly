@@ -116,8 +116,7 @@ export async function regenerateQuestion(input: RegenerateInput): Promise<Result
     `Time limit for the whole assessment: ${input.durationMinutes} minutes.`,
     `Avoid (already in the assessment, do not repeat or reword):\n${input.avoid.map((p) => `- ${p.slice(0, 160)}`).join('\n')}`,
   ].join('\n');
-  // One question is a small job: the fast model is plenty and is less rate-limited than the smart one.
-  const res = await runStructured({ tier: 'fast', system: SYSTEM, prompt, schema: One, temperature: 0.7, thinking: 'low', timeoutMs: 25_000 });
+  const res = await runStructured({ tier: 'smart', system: SYSTEM, prompt, schema: One, temperature: 0.7, thinking: 'low', timeoutMs: 25_000 });
   if (!res.ok) return res;
   const checked = postValidate([res.data.output.question], {
     count: 1, skills: [input.skill], durationMinutes: 999, seed: input.seed, types: [input.type],

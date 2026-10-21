@@ -15,6 +15,12 @@ describe('buildAttempts', () => {
     const r = buildAttempts(cfg, 'smart');
     expect(r.ok && r.data.map((a) => `${a.provider}/${a.modelId}`)).toEqual(['google/smart-1', 'google/fast-1']);
   });
+  it('retries a fast call on the smart model, so one overloaded model does not fail both tries', () => {
+    const r = buildAttempts(cfg, 'fast');
+    expect(r.ok && r.data.map((a) => a.modelId)).toEqual(['fast-1', 'smart-1']);
+    const same = buildAttempts({ provider: 'google', smart: 'm', fast: 'm' }, 'fast');
+    expect(same.ok && same.data.map((a) => a.modelId)).toEqual(['m', 'm']);
+  });
   it('adds the fallback provider last', () => {
     const r = buildAttempts({ ...cfg, fallbackProvider: 'anthropic', fallbackModel: 'claude-x' }, 'smart');
     expect(r.ok && r.data.map((a) => a.label)).toEqual(['primary', 'retry-fast', 'fallback-provider']);
