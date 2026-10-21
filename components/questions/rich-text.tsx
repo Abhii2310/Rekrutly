@@ -4,10 +4,10 @@ import { cn } from "cn"
  * Renders model or recruiter text as plain text, with ``` fenced blocks shown in a mono font on mist.
  * Nothing here is ever interpreted as HTML.
  */
-export function RichText({ text, className }: { text: string; className?: string }) {
+export function RichText({ text, className, inheritType = false }: { text: string; className?: string; /** Use the surrounding font size and weight (the candidate page sets its own). */ inheritType?: boolean }) {
   const parts = text.split(/```(?:[a-zA-Z0-9+#-]*)?\n?([\s\S]*?)```/g)
   return (
-    <div className={cn("t-body flex flex-col gap-3 text-ink", className)}>
+    <div className={cn("flex flex-col gap-3 text-ink", !inheritType && "t-body", className)}>
       {parts.map((part, i) =>
         i % 2 === 1 ? (
           <pre key={i} className="overflow-x-auto rounded-control bg-mist px-4 py-3 font-mono text-[13px] leading-5 text-ink">

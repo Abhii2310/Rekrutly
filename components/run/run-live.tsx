@@ -138,7 +138,13 @@ export function RunLive({ runId, initial }: { runId: string; initial: RunLiveDat
                 <ListRow
                   key={i.id}
                   title={i.name}
-                  subtitle={i.has_email ? (DELIVERY[i.delivery_status] ?? "Email not sent") : "No email, share the link"}
+                  subtitle={
+                    i.status === "started" && i.current_question
+                      ? `Question ${i.current_question} of ${live.assessment?.question_count ?? ""}`
+                      : i.status === "submitted"
+                        ? "Submitted"
+                        : i.has_email ? (DELIVERY[i.delivery_status] ?? "Email not sent") : "No email, share the link"
+                  }
                   pill={<StatusPill kind="invitation" value={i.status} />}
                   actions={
                     <>
