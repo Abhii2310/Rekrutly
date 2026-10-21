@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { deleteQuestion, patchQuestion } from '@/lib/db/mutations/assessments';
 import { getQuestionContext } from '@/lib/db/queries/assessments';
 import { logEvent } from '@/lib/events';
@@ -17,7 +17,7 @@ async function load(id: string) {
   return { ctx: ctx.data };
 }
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handlePATCH(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id } = await params;
@@ -41,7 +41,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   return apiOk({ id });
 }
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handleDELETE(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id } = await params;
@@ -57,3 +57,6 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   });
   return apiOk({ id });
 }
+
+export const PATCH = withErrors(handlePATCH);
+export const DELETE = withErrors(handleDELETE);

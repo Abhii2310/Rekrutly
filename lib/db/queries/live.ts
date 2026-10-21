@@ -42,43 +42,44 @@ function taskHref(type: string, key: string | null, candidateId: string | null):
   return null;
 }
 
-/** One small, explicit-column read for the polling screens. No model calls. */
+/**
+ * One round trip to the database, not three: the run, steps, events and tasks are read together, and the assessment comes
+ * with its candidates, submissions, integrity signals and question count embedded. No model calls.
+ */
 export async function getRunLive(runId: string): Promise<Result<RunLive | null>> {
   const db = getDb();
-  const run = await db.from('workflow_runs').select('id, status, error, plan, approved_at').eq('id', runId).maybeSingle();
-  if (run.error) return err('db_error', "Couldn't load the workflow.", run.error.message);
-  if (!run.data) return ok(null);
-
-  const [steps, assessment, events, taskRows] = await Promise.all([
+  const [run, steps, assessment, events, taskRows] = await Promise.all([
+    db.from('workflow_runs').select('id, status, error, plan, approved_at').eq('id', runId).maybeSingle(),
     db.from('workflow_steps').select('id, position, action, title, status, result, error, started_at, finished_at').eq('run_id', runId).order('position'),
-    db.from('assessments').select('id, title, duration_minutes, status').eq('run_id', runId).maybeSingle(),
+    db.from('assessments')
+      .select(`id, title, duration_minutes, status, questions(count), invitations(${INVITATION_SELECT}, integrity_signals(type))`)
+      .eq('run_id', runId).maybeSingle(),
     db.from('workflow_events').select('id, message, actor, level, is_simulated, created_at').eq('run_id', runId).order('id', { ascending: false }).limit(30),
     db.from('tasks').select('id, type, title, detail, status, candidate_id, dedupe_key, draft, created_at, candidates(full_name, email, phone)').eq('run_id', runId).eq('status', 'open').order('created_at').order('id'),
   ]);
-  const failed = [steps, assessment, events, taskRows].find((r) => r.error);
+  const failed = [run, steps, assessment, events, taskRows].find((r) => r.error);
   if (failed?.error) return err('db_error', "Couldn't load the workflow.", failed.error.message);
+  if (!run.data) return ok(null);
 
   let invitations: LiveInvitation[] = [];
   let pipeline: ReturnType<typeof toPipelineInvitation>[] = [];
   let questionCount = 0;
   if (assessment.data) {
-    const [inv, qc, sigs] = await Promise.all([
-      db.from('invitations').select(INVITATION_SELECT).eq('assessment_id', assessment.data.id).order('created_at').order('id'),
-      db.from('questions').select('id', { count: 'exact', head: true }).eq('assessment_id', assessment.data.id),
-      db.from('integrity_signals').select('invitation_id, type, invitations!inner(assessment_id)').eq('invitations.assessment_id', assessment.data.id),
-    ]);
-    const signalsOf = new Map<string, { tab_hidden: number; paste: number }>();
-    for (const r of (sigs.data ?? []) as unknown as { invitation_id: string; type: string }[]) {
-      const cur = signalsOf.get(r.invitation_id) ?? { tab_hidden: 0, paste: 0 };
-      if (r.type === 'tab_hidden') cur.tab_hidden++;
-      else if (r.type === 'paste') cur.paste++;
-      signalsOf.set(r.invitation_id, cur);
-    }
-    if (inv.error) return err('db_error', "Couldn't load the candidate links.", inv.error.message);
-    questionCount = qc.count ?? 0;
+    type Embedded = { questions: { count: number }[]; invitations: (Record<string, unknown> & { integrity_signals: { type: string }[] })[] };
+    const emb = assessment.data as unknown as Embedded;
+    questionCount = emb.questions?.[0]?.count ?? 0;
     const now = Date.now();
+    const signalsOf = new Map<string, { tab_hidden: number; paste: number }>();
+    for (const i of emb.invitations ?? []) {
+      const cur = { tab_hidden: 0, paste: 0 };
+      for (const sg of i.integrity_signals ?? []) {
+        if (sg.type === 'tab_hidden') cur.tab_hidden++;
+        else if (sg.type === 'paste') cur.paste++;
+      }
+      signalsOf.set(i.id as string, cur);
+    }
     // Same order as the candidate list (seeded IDs are sequential), not the random order of invitation IDs.
-    pipeline = (inv.data as unknown[]).map(toPipelineInvitation).sort((x, y) => x.candidateId.localeCompare(y.candidateId));
+    pipeline = (emb.invitations ?? []).map(toPipelineInvitation).sort((x, y) => x.candidateId.localeCompare(y.candidateId));
     invitations = pipeline.map((i) => ({
       id: i.id, candidate_id: i.candidateId, name: i.name, has_email: Boolean(i.email), status: i.status, delivery_status: i.deliveryStatus,
       current_question: i.currentQuestion, deadline_at: i.deadlineAt, submitted_at: i.submittedAt, last_activity_at: i.lastActivityAt,

@@ -1,5 +1,5 @@
 import { after } from 'next/server';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { withInvitation } from '@/lib/portal/http';
 import { getPortalState } from '@/lib/portal/state';
 import { runPostSubmitPipeline } from '@/lib/scoring/pipeline';
@@ -7,7 +7,7 @@ import { afterSubmit, submitAssessment } from '@/lib/scoring/submit';
 
 export const maxDuration = 60;
 
-export async function POST(_request: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
+async function handlePOST(_request: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
   const { token } = await params;
   const found = await withInvitation(token);
   if ('response' in found) return found.response;
@@ -31,3 +31,5 @@ export async function POST(_request: Request, { params }: { params: Promise<{ to
   });
   return apiOk({ submittedAt: done.data.submittedAt, autoSubmitted: done.data.autoSubmitted });
 }
+
+export const POST = withErrors(handlePOST);

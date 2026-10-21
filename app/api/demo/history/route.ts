@@ -1,4 +1,5 @@
-import { apiError, apiOk } from '@/lib/api';
+import 'server-only';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { demoGuard } from '@/lib/demo/guard';
 import { seedHistory } from '@/lib/demo/history';
 import { getDb } from '@/lib/db/server';
@@ -7,7 +8,7 @@ import { createInvitationToken } from '@/lib/security/tokens';
 export const maxDuration = 60;
 
 /** A closed assessment on the Backend Engineer (Go) job with three simulated submissions, so Analytics has history. */
-export async function POST(): Promise<Response> {
+async function handlePOST(): Promise<Response> {
   const denied = await demoGuard();
   if (denied) return denied;
   try {
@@ -18,3 +19,5 @@ export async function POST(): Promise<Response> {
     return apiError('history_failed', "Couldn't add the demo history. Reset the demo data first, then try again.", 500);
   }
 }
+
+export const POST = withErrors(handlePOST);

@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { GroupedList, ListRow } from "@/components/ui/grouped-list"
 import { PageBody, PageHeader } from "@/components/ui/page-header"
 import { StatusPill } from "@/components/ui/status-pill"
+import { DemoTag } from "@/components/ui/tags"
 import { groupStages, parseGroup } from "@/lib/candidate-groups"
 import { getCandidate, listCandidates } from "@/lib/db/queries/candidates"
 import { listJobs } from "@/lib/db/queries/jobs"
@@ -65,7 +66,7 @@ export default async function CandidatesPage({ searchParams }: { searchParams: P
 
   return (
     <>
-      <PageHeader title="Candidates" description={plural(list.data.length, "candidate")} />
+      <PageHeader title="Candidates" description={plural(list.data.length, "candidate")} actions={list.data.some((c) => c.is_demo) ? <DemoTag /> : undefined} />
       <PageBody>
         <CandidateFilters group={group} jobId={jobId} search={search} jobs={jobs.data.map((j) => ({ id: j.id, title: j.title }))} />
         {detail && !detail.ok ? <QueryError message="Couldn't load that candidate." /> : null}

@@ -1,5 +1,6 @@
+import 'server-only';
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { getDb } from '@/lib/db/server';
 import { env } from '@/lib/env';
 import { logEvent } from '@/lib/events';
@@ -8,7 +9,7 @@ import { decryptToken } from '@/lib/security/tokens';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handleGET(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id } = await params;
@@ -30,3 +31,5 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   await logEvent({ runId: a?.run_id ?? null, jobId: a?.job_id ?? null, candidateId: inv.data.candidate_id as string, type: 'invitation.link_copied', actor: 'recruiter', message: 'Copied a candidate link' });
   return apiOk({ url: `${env.APP_URL}/a/${token}` });
 }
+
+export const GET = withErrors(handleGET);

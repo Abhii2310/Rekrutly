@@ -8,6 +8,8 @@ export type SeedOptions = {
   candidateEmail?: string | null;
   /** Aarav's WhatsApp number. */
   candidateWhatsapp?: string | null;
+  /** Write the "Seeded ..." receipt. The Demo Director writes its own "Reset" receipt instead, so it turns this off. */
+  logSeed?: boolean;
 };
 
 export type SeedResult = { jobs: number; candidates: number; summary: { job: string; candidates: number; stages: string }[] };
@@ -54,7 +56,7 @@ export async function seedDemo(db: SupabaseClient, options: SeedOptions = {}): P
     return { job: j.title, candidates: mine.length, stages: Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(', ') };
   });
 
-  await run('log event', db.from('workflow_events').insert({
+  if (options.logSeed !== false) await run('log event', db.from('workflow_events').insert({
     type: 'system.seeded', actor: 'system', level: 'success',
     message: `Seeded ${DEMO_JOBS.length} demo jobs and ${candidates.length} candidates`,
     data: { jobs: DEMO_JOBS.length, candidates: candidates.length },

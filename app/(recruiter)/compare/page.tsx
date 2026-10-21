@@ -57,7 +57,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
       <>
         <PageHeader title="Compare" />
         <PageBody>
-          <ErrorState message={error?.message ?? "Couldn't compare these candidates."} hint="Open a results page, tick two to four candidates and press Compare." action={{ label: "Go to Jobs", href: "/jobs" }} />
+          <ErrorState message={error?.message ?? "Couldn't compare these candidates."} hint={ids.ok || ids.error.code !== "no_selection" ? "Open a results page, tick two to four candidates and press Compare." : undefined} action={{ label: "Go to Jobs", href: "/jobs" }} />
         </PageBody>
       </>
     )

@@ -72,7 +72,7 @@ function CommandSeparator({ className, ...props }: React.ComponentProps<typeof C
 }
 
 function CommandShortcut({ className, ...props }: React.ComponentProps<"span">) {
-  return <span data-slot="command-shortcut" className={cn("t-footnote ml-auto text-ink-3", className)} {...props} />
+  return <span data-slot="command-shortcut" className={cn("t-footnote ml-auto text-ink-2", className)} {...props} />
 }
 
 export { Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut }

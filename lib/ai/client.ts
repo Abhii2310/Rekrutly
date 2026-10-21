@@ -81,7 +81,7 @@ export async function runStructured<S extends z.ZodType>(input: StructuredInput<
         ...(a.provider === 'google' ? { providerOptions: { google: { thinkingConfig: { thinkingLevel: input.thinking ?? 'low' } } } } : {}),
         abortSignal: AbortSignal.timeout(Math.min(input.timeoutMs ?? 45_000, remaining)),
       });
-      console.log(`[ai] ${a.provider}/${a.modelId} ${a.label} ok ${Date.now() - t0}ms tokens=${res.usage?.totalTokens ?? '?'}`);
+      if (process.env.NODE_ENV !== 'production') console.log(`[ai] ${a.provider}/${a.modelId} ${a.label} ok ${Date.now() - t0}ms tokens=${res.usage?.totalTokens ?? '?'}`);
       return { ok: true as const, value: res.output as z.infer<S> };
     } catch (e) {
       const error = classifyError(e);

@@ -1,6 +1,7 @@
+import 'server-only';
 import { after } from 'next/server';
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { updateAssessment } from '@/lib/db/mutations/assessments';
 import { getDb } from '@/lib/db/server';
 import { approveSweep } from '@/lib/executor/approve-sweep';
@@ -17,7 +18,7 @@ const Body = z.object({
   recipientIds: z.array(z.uuid('Some chosen candidates are not valid.'), { error: 'Choose at least one candidate.' }).min(1, 'Choose at least one candidate.').max(50),
 });
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handlePOST(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id } = await params;
@@ -104,3 +105,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   });
   return apiOk({ runId: id, status: 'approved' });
 }
+
+export const POST = withErrors(handlePOST);

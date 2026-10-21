@@ -1,4 +1,5 @@
-import { apiError, apiOk } from '@/lib/api';
+import 'server-only';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { demoGuard } from '@/lib/demo/guard';
 import { getDb } from '@/lib/db/server';
 import { emailStatus, env } from '@/lib/env';
@@ -6,7 +7,7 @@ import { emailStatus, env } from '@/lib/env';
 export const dynamic = 'force-dynamic';
 
 /** What the Demo Director shows: the latest live assessment with its candidates, plus a health check. */
-export async function GET(): Promise<Response> {
+async function handleGET(): Promise<Response> {
   const denied = await demoGuard();
   if (denied) return denied;
   const db = getDb();
@@ -34,3 +35,5 @@ export async function GET(): Promise<Response> {
     invitations,
   });
 }
+
+export const GET = withErrors(handleGET);

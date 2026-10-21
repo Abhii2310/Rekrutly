@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { withInvitation } from '@/lib/portal/http';
 import { recordSignals } from '@/lib/portal/service';
 import { canWriteAnswers } from '@/lib/portal/state';
@@ -7,7 +7,7 @@ import { canWriteAnswers } from '@/lib/portal/state';
 const Body = z.object({ events: z.array(z.object({ type: z.string().max(40), at: z.string().max(40).optional() })).max(20) });
 
 /** Integrity signals are hints for a human, never proof, and never block the candidate. */
-export async function POST(request: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
+async function handlePOST(request: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
   const { token } = await params;
   const found = await withInvitation(token);
   if ('response' in found) return found.response;
@@ -19,3 +19,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
   if (canWriteAnswers(inv, now)) await recordSignals(inv, parsed.data.events, now);
   return apiOk({ received: parsed.data.events.length });
 }
+
+export const POST = withErrors(handlePOST);

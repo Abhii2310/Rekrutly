@@ -1,7 +1,8 @@
+import 'server-only';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { env } from '@/lib/env';
 import { SESSION_COOKIE, SESSION_TTL_MS, createSessionValue } from '@/lib/security/session';
 
@@ -9,7 +10,7 @@ const Body = z.object({ passcode: z.string().min(1).max(200) });
 
 const sha = (s: string): Buffer => createHash('sha256').update(s).digest();
 
-export async function POST(request: Request): Promise<Response> {
+async function handlePOST(request: Request): Promise<Response> {
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError('invalid_input', 'Enter the passcode.', 400);
 
@@ -30,3 +31,5 @@ export async function POST(request: Request): Promise<Response> {
   });
   return apiOk({ signedIn: true });
 }
+
+export const POST = withErrors(handlePOST);

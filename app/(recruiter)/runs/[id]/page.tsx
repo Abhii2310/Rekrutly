@@ -1,3 +1,4 @@
+import 'server-only';
 import { notFound } from "next/navigation"
 import { QueryError } from "@/components/frame/query-error"
 import { QuestionBuilder } from "@/components/questions/builder"

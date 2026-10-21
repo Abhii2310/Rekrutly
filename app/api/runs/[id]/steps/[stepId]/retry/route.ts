@@ -1,13 +1,14 @@
+import 'server-only';
 import { after } from 'next/server';
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { getDb } from '@/lib/db/server';
 import { executeRun } from '@/lib/executor/run';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
 
 export const maxDuration = 60;
 
-export async function POST(_request: Request, { params }: { params: Promise<{ id: string; stepId: string }> }): Promise<Response> {
+async function handlePOST(_request: Request, { params }: { params: Promise<{ id: string; stepId: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id, stepId } = await params;
@@ -24,3 +25,5 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   });
   return apiOk({ runId: id, status: 'executing' });
 }
+
+export const POST = withErrors(handlePOST);

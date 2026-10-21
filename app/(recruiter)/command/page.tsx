@@ -1,3 +1,4 @@
+import 'server-only';
 import { CommandCentre } from "@/components/command/command-centre"
 import { PageHeader } from "@/components/ui/page-header"
 import { QueryError } from "@/components/frame/query-error"

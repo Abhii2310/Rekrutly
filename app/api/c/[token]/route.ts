@@ -1,5 +1,6 @@
+import 'server-only';
 import { after } from 'next/server';
-import { apiOk } from '@/lib/api';
+import { apiOk, withErrors } from '@/lib/api';
 import { withInvitation } from '@/lib/portal/http';
 import { markOpened, questionCount } from '@/lib/portal/service';
 import { getPortalState, toIso } from '@/lib/portal/state';
@@ -9,7 +10,7 @@ import { afterSubmit, submitAssessment } from '@/lib/scoring/submit';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_request: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
+async function handleGET(_request: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
   const { token } = await params;
   const found = await withInvitation(token);
   if ('response' in found) return found.response;
@@ -57,3 +58,5 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tok
     autoSubmitted,
   });
 }
+
+export const GET = withErrors(handleGET);

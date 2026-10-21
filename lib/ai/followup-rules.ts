@@ -1,7 +1,6 @@
 import type { FollowUpDraft } from './schemas';
 
 export type Language = FollowUpDraft['language'];
-export const LANGUAGES: readonly Language[] = ['en', 'hi', 'kn'];
 export const LANGUAGE_NAMES: Record<Language, string> = { en: 'English', hi: 'Hindi', kn: 'Kannada' };
 export const LANGUAGE_SCRIPTS: Record<Language, string> = { en: 'the Latin alphabet', hi: 'Devanagari script', kn: 'Kannada script' };
 export const LINK_LABEL: Record<Language, string> = { en: 'Your link', hi: 'आपका लिंक', kn: 'ನಿಮ್ಮ ಲಿಂಕ್' };

@@ -1,5 +1,6 @@
+import 'server-only';
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { AI_ERROR_STATUS } from '@/lib/ai/attempts';
 import { regenerateQuestion } from '@/lib/ai/questions';
 import { overwriteQuestion } from '@/lib/db/mutations/assessments';
@@ -10,7 +11,7 @@ import { requireRecruiter } from '@/lib/security/require-recruiter';
 
 export const maxDuration = 60;
 
-export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handlePOST(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id } = await params;
@@ -51,3 +52,5 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   });
   return apiOk({ id });
 }
+
+export const POST = withErrors(handlePOST);

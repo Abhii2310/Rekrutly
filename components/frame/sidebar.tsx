@@ -51,7 +51,7 @@ export function Sidebar({ demoMode }: { demoMode: boolean }) {
         <Search aria-hidden className="size-[18px] shrink-0" strokeWidth={1.75} />
         <span className="hidden lg:inline">Ask or search</span>
         <span className="sr-only lg:hidden">Ask or search</span>
-        <span className="t-footnote ml-auto hidden text-ink-3 lg:inline">⌘K</span>
+        <span className="t-footnote ml-auto hidden text-ink-2 lg:inline">⌘K</span>
       </button>
 
       <nav aria-label="Main" className="flex flex-col gap-0.5">

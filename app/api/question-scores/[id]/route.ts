@@ -1,5 +1,6 @@
+import 'server-only';
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { getDb } from '@/lib/db/server';
 import { logEvent } from '@/lib/events';
 import { recomputeSubmission } from '@/lib/scoring/pipeline';
@@ -11,7 +12,7 @@ const Body = z.object({
 });
 
 /** The recruiter's score replaces the suggestion in totals. The original suggestion is kept and shown. */
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handlePATCH(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id } = await params;
@@ -40,3 +41,5 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   });
   return apiOk({ id, overridden_score: rounded });
 }
+
+export const PATCH = withErrors(handlePATCH);

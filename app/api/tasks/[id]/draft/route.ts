@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { AI_ERROR_STATUS } from '@/lib/ai/attempts';
 import { createDraftForTask } from '@/lib/tasks/draft';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 const Body = z.object({ language: z.enum(['en', 'hi', 'kn'], { error: 'Choose English, Hindi or Kannada.' }) });
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handlePOST(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id } = await params;
@@ -29,3 +29,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
   return apiOk({ draft: res.data.draft });
 }
+
+export const POST = withErrors(handlePOST);

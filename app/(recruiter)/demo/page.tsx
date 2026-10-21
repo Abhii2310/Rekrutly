@@ -1,3 +1,4 @@
+import 'server-only';
 import { notFound } from "next/navigation"
 import { DemoDirector } from "@/components/demo/demo-director"
 import { PageBody, PageHeader } from "@/components/ui/page-header"

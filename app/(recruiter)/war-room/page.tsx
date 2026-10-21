@@ -1,3 +1,4 @@
+import 'server-only';
 import { redirect } from "next/navigation"
 import { QueryError } from "@/components/frame/query-error"
 import { EmptyState } from "@/components/ui/empty-state"

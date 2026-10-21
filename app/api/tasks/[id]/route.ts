@@ -1,5 +1,6 @@
+import 'server-only';
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { getDb } from '@/lib/db/server';
 import { logEvent } from '@/lib/events';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
@@ -9,7 +10,7 @@ export const dynamic = 'force-dynamic';
 
 const Body = z.object({ status: z.enum(['done', 'dismissed'], { error: 'Choose done or dismissed.' }) });
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handlePATCH(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id } = await params;
@@ -37,3 +38,5 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   });
   return apiOk({ id, status });
 }
+
+export const PATCH = withErrors(handlePATCH);

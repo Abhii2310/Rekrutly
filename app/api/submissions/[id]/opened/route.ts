@@ -1,11 +1,12 @@
+import 'server-only';
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { getDb } from '@/lib/db/server';
 import { logEvent } from '@/lib/events';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
 
 /** The first time a recruiter opens a submission, the candidate moves to "In review". Later opens do nothing. */
-export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handlePOST(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id } = await params;
@@ -26,3 +27,5 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   }
   return apiOk({ moved: Boolean(moved.data && moved.data.length > 0) });
 }
+
+export const POST = withErrors(handlePOST);

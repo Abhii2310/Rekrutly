@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { updateAssessment } from '@/lib/db/mutations/assessments';
 import { getAssessmentContext } from '@/lib/db/queries/assessments';
 import { logEvent } from '@/lib/events';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
 import { AssessmentPatch } from '@/lib/validation/questions';
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handlePATCH(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id } = await params;
@@ -27,3 +27,5 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   });
   return apiOk({ id });
 }
+
+export const PATCH = withErrors(handlePATCH);

@@ -1,13 +1,13 @@
 import { after } from 'next/server';
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { withInvitation } from '@/lib/portal/http';
 import { afterStart, startAssessment } from '@/lib/portal/service';
 import { getPortalState, toIso } from '@/lib/portal/state';
 
 const Body = z.object({ consent: z.literal(true, { error: 'Please tick the box to confirm you understand.' }) });
 
-export async function POST(request: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
+async function handlePOST(request: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
   const { token } = await params;
   const found = await withInvitation(token);
   if ('response' in found) return found.response;
@@ -29,3 +29,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
   after(() => afterStart(inv));
   return apiOk({ deadlineAt: toIso(started.data.deadlineAt), serverNow: now.toISOString() });
 }
+
+export const POST = withErrors(handlePOST);

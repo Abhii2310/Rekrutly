@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { withInvitation } from '@/lib/portal/http';
 import { getQuestionForAnswer, saveAnswer } from '@/lib/portal/service';
 import { canWriteAnswers, validateAnswer } from '@/lib/portal/state';
@@ -11,7 +11,7 @@ const Body = z.object({
   currentQuestion: z.number().int().min(1).max(100),
 });
 
-export async function PUT(request: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
+async function handlePUT(request: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
   const { token } = await params;
   const found = await withInvitation(token);
   if ('response' in found) return found.response;
@@ -36,3 +36,5 @@ export async function PUT(request: Request, { params }: { params: Promise<{ toke
   if (!saved.ok) return apiError('server_error', 'Something went wrong saving your answer.', 500);
   return apiOk({ savedAt: saved.data.savedAt });
 }
+
+export const PUT = withErrors(handlePUT);

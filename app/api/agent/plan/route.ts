@@ -1,5 +1,6 @@
+import 'server-only';
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { AI_ERROR_STATUS } from '@/lib/ai/attempts';
 import { savedPlan } from '@/lib/ai/fallbacks';
 import { planInstruction } from '@/lib/ai/planner';
@@ -21,7 +22,7 @@ const Body = z.object({
   useSavedPlan: z.boolean().optional(),
 });
 
-export async function POST(request: Request): Promise<Response> {
+async function handlePOST(request: Request): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
 
@@ -108,3 +109,5 @@ export async function POST(request: Request): Promise<Response> {
 
   return apiOk({ status: 'ready' as const, runId, plan, steps: steps.map((s) => ({ position: s.position, action: s.action, title: s.title, status: s.status })) });
 }
+
+export const POST = withErrors(handlePOST);

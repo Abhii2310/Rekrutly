@@ -77,7 +77,7 @@ export function QuestionScreen({
             aria-label="Your answer" placeholder="Write your answer here" value={answer.text} className="min-h-40 text-[16px]"
             onChange={(e) => onChange({ ...answer, text: e.target.value })} onBlur={onBlurText}
           />
-          <p className="t-footnote tabular mt-2 text-right text-ink-3">{answer.text.length} / 5000</p>
+          <p className="t-footnote tabular mt-2 text-right text-ink-2">{answer.text.length} / 5000</p>
         </div>
       )}
 

@@ -1,5 +1,6 @@
+import 'server-only';
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { getDb } from '@/lib/db/server';
 import { logEvent } from '@/lib/events';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
@@ -15,7 +16,7 @@ const Body = z
 const COLUMNS =
   'id, job_id, full_name, email, phone, current_title, current_company, years_experience, location, skills, resume_summary, source, stage, is_demo, created_at, updated_at';
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handlePATCH(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
 
@@ -68,3 +69,5 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   return apiOk(data);
 }
+
+export const PATCH = withErrors(handlePATCH);

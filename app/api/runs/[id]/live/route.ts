@@ -1,13 +1,13 @@
 import { after } from 'next/server';
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { getRunLive } from '@/lib/db/queries/live';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
 import { syncTasks } from '@/lib/tasks/sync';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handleGET(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id } = await params;
@@ -19,3 +19,5 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (live.data.assessment) after(async () => { await syncTasks(id); });
   return apiOk(live.data);
 }
+
+export const GET = withErrors(handleGET);

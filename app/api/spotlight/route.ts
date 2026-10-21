@@ -1,11 +1,12 @@
-import { apiError, apiOk } from '@/lib/api';
+import 'server-only';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { getDb } from '@/lib/db/server';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
 
 export const dynamic = 'force-dynamic';
 
 /** What Spotlight can jump to: open jobs, candidate names and the latest War Room. Names and IDs only. */
-export async function GET(): Promise<Response> {
+async function handleGET(): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const db = getDb();
@@ -23,3 +24,5 @@ export async function GET(): Promise<Response> {
     warRoomRunId: (run.data as { id: string }[])[0]?.id ?? null,
   });
 }
+
+export const GET = withErrors(handleGET);

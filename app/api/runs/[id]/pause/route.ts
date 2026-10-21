@@ -1,11 +1,12 @@
+import 'server-only';
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { getDb } from '@/lib/db/server';
 import { setRunStatus } from '@/lib/executor/run-status';
 import { logEvent } from '@/lib/events';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
 
-export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handlePOST(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id } = await params;
@@ -18,3 +19,5 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   await logEvent({ runId: id, jobId: run.data.job_id as string | null, type: 'run.paused', actor: 'recruiter', level: 'warning', message: "Paused. Rekrutly won't take any new actions until you resume." });
   return apiOk({ runId: id, status: 'paused' });
 }
+
+export const POST = withErrors(handlePOST);

@@ -1,6 +1,7 @@
+import 'server-only';
 import { after } from 'next/server';
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { getDb } from '@/lib/db/server';
 import { runPostSubmitPipeline } from '@/lib/scoring/pipeline';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
@@ -9,7 +10,7 @@ export const maxDuration = 60;
 const STALE_MS = 2 * 60_000;
 
 /** Re-runs whatever failed or never finished. Already graded questions and a ready report are left alone. */
-export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handlePOST(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id } = await params;
@@ -31,3 +32,5 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   after(async () => { await runPostSubmitPipeline(id); });
   return apiOk({ status: 'scoring' });
 }
+
+export const POST = withErrors(handlePOST);

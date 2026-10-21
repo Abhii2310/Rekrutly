@@ -1,5 +1,6 @@
+import 'server-only';
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { AI_ERROR_STATUS } from '@/lib/ai/attempts';
 import { savedQuestions } from '@/lib/ai/fallbacks';
 import { generateQuestionSet } from '@/lib/ai/questions';
@@ -20,7 +21,7 @@ const Params = z.object({
 });
 const STALE_MS = 90_000;
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handlePOST(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id } = await params;
@@ -113,3 +114,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   return apiOk({ assessmentId, count: questions.length, warnings });
 }
+
+export const POST = withErrors(handlePOST);

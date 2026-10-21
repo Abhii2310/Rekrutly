@@ -1,4 +1,4 @@
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { getQuestionsForCandidate } from '@/lib/db/queries/candidate-questions';
 import { withInvitation } from '@/lib/portal/http';
 import { listSavedAnswers } from '@/lib/portal/service';
@@ -7,7 +7,7 @@ import { getPortalState, toIso } from '@/lib/portal/state';
 export const dynamic = 'force-dynamic';
 
 /** Only after the test has started. Questions come from the candidate-safe query: no keys, no rubrics. */
-export async function GET(_request: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
+async function handleGET(_request: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
   const { token } = await params;
   const found = await withInvitation(token);
   if ('response' in found) return found.response;
@@ -26,3 +26,5 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tok
     currentQuestion: inv.current_question,
   });
 }
+
+export const GET = withErrors(handleGET);

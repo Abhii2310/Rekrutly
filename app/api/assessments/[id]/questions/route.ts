@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { apiError, apiOk } from '@/lib/api';
+import { apiError, apiOk, withErrors } from '@/lib/api';
 import { addQuestion } from '@/lib/db/mutations/assessments';
 import { getAssessmentContext } from '@/lib/db/queries/assessments';
 import { logEvent } from '@/lib/events';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
 import { QuestionInput } from '@/lib/validation/questions';
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
+async function handlePOST(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
   if (denied) return denied;
   const { id } = await params;
@@ -30,3 +30,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   });
   return apiOk({ id: added.data }, 201);
 }
+
+export const POST = withErrors(handlePOST);

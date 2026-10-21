@@ -1,3 +1,4 @@
+import 'server-only';
 import { Sidebar } from "@/components/frame/sidebar"
 import { Spotlight } from "@/components/frame/spotlight"
 import { env } from "@/lib/env"
