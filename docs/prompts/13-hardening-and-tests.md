@@ -19,7 +19,7 @@ Prove the product works, is safe, and looks finished on every screen, with an au
 3. **Resilience:** every page has loading, empty and error states; every AI action has Retry; network errors in polling show "Reconnecting" without wiping the screen; double-clicks on primary buttons cannot double-submit (disable while pending).
 4. **Accessibility:** labels on every input, focus order, visible focus, `aria-live="polite"` for autosave status and new Activity items, colour contrast ≥4.5:1 for body text, `prefers-reduced-motion` respected, portal fully keyboard-operable.
 5. **Performance:** no client components that could be server components; no request waterfalls on Overview, Results and War Room (use `Promise.all`); `/live` responds in under 300ms locally with seeded data (measure and report).
-6. **Design audit:** using the Playwright MCP, screenshot every screen (recruiter at 1280px; portal at 375px and 1280px; login; empty states via a fresh reset) and run the DESIGN.md checklist on each. Produce a table in your report: screen, issues found, fixed. Fix all of them.
+6. **Design audit:** using a browser check (see CLAUDE.md → Browser checks), screenshot every screen (recruiter at 1280px; portal at 375px and 1280px; login; empty states via a fresh reset) and run the DESIGN.md checklist on each. Produce a table in your report: screen, issues found, fixed. Fix all of them.
 7. Remove dead code, unused dependencies (`npx depcheck`), console noise, and TODOs that are not in PROGRESS.md.
 
 ## Verify (Claude Code)

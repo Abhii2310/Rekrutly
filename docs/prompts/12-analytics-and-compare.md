@@ -1,5 +1,7 @@
 # Prompt 12 — Analytics and comparison
 
+Optional. If behind schedule, skip this prompt; R3 cuts it first.
+
 Time box: 2.5 hours. Read DESIGN.md (Stat, skill bars, Never list). Feature freeze starts when this prompt ends.
 
 ## Goal

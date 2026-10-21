@@ -35,7 +35,7 @@ A calm, secure, timed assessment that works in a second browser: personal link, 
 ## Verify (Claude Code)
 
 - `npm run verify` passes with tests for portal state, deadline/grace, answer validation and objective scoring (all branches).
-- Playwright MCP in two contexts: recruiter copies Aarav's link; candidate context (375px viewport) opens it, consents, answers 3 questions, reloads (answers and timer continue, timer did not reset), answers the rest, submits. Second submit returns the "already submitted" state. A token with one character changed shows the invalid link state. Another candidate's link shows that candidate's name only.
+- a browser check (see CLAUDE.md → Browser checks) in two contexts: recruiter copies Aarav's link; candidate context (375px viewport) opens it, consents, answers 3 questions, reloads (answers and timer continue, timer did not reset), answers the rest, submits. Second submit returns the "already submitted" state. A token with one character changed shows the invalid link state. Another candidate's link shows that candidate's name only.
 - Recruiter run page shows Aarav as Submitted and the rail shows 1 of 5.
 - Screenshot intro, question, review and done at 375px and 1280px; DESIGN.md checklist.
 

@@ -26,6 +26,7 @@ Typed access to every table, one source of truth for statuses, the receipt write
      - **Product Designer**, Design, Bengaluru, skills Interaction design, Figma, User research, Prototyping. Six candidates across stages: 2 applied, 2 interview, 1 offer, 1 rejected.
      - **Backend Engineer (Go)**, Engineering, Remote (India), skills Go, PostgreSQL, Distributed systems, Kubernetes. Four candidates: 2 applied, 1 under_review, 1 interview.
    - Each candidate gets a two-sentence, specific `resume_summary` and realistic skills. Use names from different regions of India. No ages, photos, gender, religion or caste anywhere.
+   - Reset deletes every demo run, assessment, invitation and submission, including ones created by hand in DEMO_MODE. Fixed seeded UUIDs keep saved fallbacks valid.
    - Log one `system.seeded` event (no run) with counts.
    - Print a summary table and exit with code 1 on any error.
 

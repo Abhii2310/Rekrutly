@@ -8,7 +8,7 @@ Copy this file's text into Claude Code and fill in the three blanks.
 
 ## Instructions for Claude Code
 
-1. Reproduce the bug first (Playwright MCP for UI, a failing unit test for logic). Do not change code before you can reproduce it.
+1. Reproduce the bug first (a browser check for UI, see CLAUDE.md → Browser checks; a failing unit test for logic). Do not change code before you can reproduce it.
 2. Find the root cause. Explain it in two sentences before fixing.
 3. Make the smallest fix that addresses the root cause. Do not refactor unrelated code.
 4. Add a test that would have caught it.

@@ -29,7 +29,7 @@ The recruiter workspace looks populated and real from the first second, every nu
 ## Verify (Claude Code)
 
 - `npm run verify` passes. Add tests for `lib/format.ts`.
-- Playwright MCP: Overview shows 15 candidates; Jobs shows 3 roles; open Rohan Nair's profile, add an email, change stage to an allowed value, confirm the activity list shows the change; refresh keeps the sheet open via `?c=`.
+- a browser check (see CLAUDE.md → Browser checks): Overview shows 15 candidates; Jobs shows 3 roles; open Rohan Nair's profile, add an email, change stage to an allowed value, confirm the activity list shows the change; refresh keeps the sheet open via `?c=`.
 - Run the DESIGN.md checklist on Overview, Jobs, Job detail, Candidates and the Sheet. Fix failures.
 - Reset Rohan's email to null afterwards (`npm run db:seed`).
 

@@ -33,7 +33,7 @@ Build each primitive exactly as specified in DESIGN.md → Components, using the
 ## Verify (Claude Code)
 
 - `npm run verify` passes; session tests included.
-- Playwright MCP: visiting `/` while signed out redirects to `/login`; wrong passcode shows the error; right passcode lands on Overview; `/a/test` is not redirected (404 is fine); `/api/jobs` style recruiter API returns 401 when signed out.
+- a browser check (see CLAUDE.md → Browser checks): visiting `/` while signed out redirects to `/login`; wrong passcode shows the error; right passcode lands on Overview; `/a/test` is not redirected (404 is fine); `/api/jobs` style recruiter API returns 401 when signed out.
 - Screenshot `/styleguide` at 1280px and walk the DESIGN.md review checklist item by item. Fix every failure, screenshot again, and include a short list of what you fixed in your report.
 
 ## Finish

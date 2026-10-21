@@ -35,6 +35,8 @@ Once a step of this path exists, every later task must leave it working. Re-run 
 - `npm run verify` typecheck + lint + unit tests + production build (must pass before every commit)
 - `npm run test` unit tests, `npm run e2e` Playwright golden path
 - `npm run db:seed` reset and reseed demo data (only rows with `is_demo = true`)
+- `npm run db:check` confirm all 15 tables exist; `npm run ai:check` test both model IDs
+- `npm run screenshot -- <path> [--width 375] [--name x]` signed-in screenshot to `screenshots/`
 
 ## Non-negotiable rules
 
@@ -68,10 +70,14 @@ Once a step of this path exists, every later task must leave it working. Re-run 
 
 1. `npm run verify` passes with zero errors and zero warnings you introduced.
 2. New logic in `lib/` has unit tests for the important paths and edge cases.
-3. You ran the feature in the browser (use the Playwright MCP if available) and checked it against DESIGN.md's review checklist.
+3. You ran the feature in a browser (see Browser checks below) and checked it against DESIGN.md's review checklist.
 4. The golden path still works up to the furthest built step.
 5. `docs/PROGRESS.md` updated in three lists: Working, Simulated or demo-only, Not built yet.
 6. One commit with a clear message, e.g. `feat(portal): server-enforced deadline and autosave`.
+
+## Browser checks
+
+Use the first that is available: (1) a browser tool in this session (the built-in browser or Claude in Chrome) for clicking through flows and taking screenshots; (2) Playwright MCP if installed; (3) `npm run screenshot`. Look at every screenshot before calling UI work done.
 
 ## Never
 
