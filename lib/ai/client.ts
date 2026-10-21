@@ -26,6 +26,14 @@ function build(provider: AiProvider, id: string): LanguageModel {
   return createGateway({ apiKey: env.AI_GATEWAY_API_KEY })(id);
 }
 
+/**
+ * Models that just returned HTTP 429 sit out for a while, so the next call goes straight to the next
+ * model instead of waiting through the 2s and 5s backoff again. In-memory per server instance.
+ */
+const COOLDOWN_MS = 90_000;
+const coolingUntil = new Map<string, number>();
+const coolKey = (a: Attempt): string => `${a.provider}/${a.modelId}`;
+
 export function getModel(tier: Tier, provider: AiProvider = env.AI_PROVIDER): Result<{ model: LanguageModel; provider: AiProvider; modelId: string }> {
   const modelId = provider === env.AI_PROVIDER ? (tier === 'smart' ? env.AI_MODEL_SMART : env.AI_MODEL_FAST) : env.AI_FALLBACK_MODEL;
   if (!modelId) return err('ai_not_configured', `No ${tier} model is set for ${provider}. Run npm run ai:check.`);
@@ -55,6 +63,11 @@ export async function runStructured<S extends z.ZodType>(input: StructuredInput<
 
   const call = async (a: Attempt, remaining: number) => {
     const t0 = Date.now();
+    const until = coolingUntil.get(coolKey(a)) ?? 0;
+    if (until > t0) {
+      console.warn(`[ai] ${a.provider}/${a.modelId} ${a.label} skipped (rate limited, cooling down)`);
+      return { ok: false as const, error: { code: 'provider_error' as const, message: 'Rate limited.', status: 429, skipped: true } };
+    }
     try {
       const res = await generateText({
         model: build(a.provider, a.modelId),
@@ -70,6 +83,7 @@ export async function runStructured<S extends z.ZodType>(input: StructuredInput<
       return { ok: true as const, value: res.output as z.infer<S> };
     } catch (e) {
       const error = classifyError(e);
+      if (error.status === 429) coolingUntil.set(coolKey(a), Date.now() + COOLDOWN_MS);
       console.warn(`[ai] ${a.provider}/${a.modelId} ${a.label} ${error.code}${error.status ? ` ${error.status}` : ''} ${Date.now() - t0}ms`);
       return { ok: false as const, error };
     }

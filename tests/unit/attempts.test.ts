@@ -72,6 +72,15 @@ describe('runAttempts', () => {
     expect(!result.ok && result.error.code).toBe('provider_error');
   });
 
+  it('does not back off for a skipped (cooling down) model', async () => {
+    const { deps: d, sleeps } = deps();
+    const { result } = await runAttempts(attempts, async (a) => (a.label === 'primary'
+      ? { ok: false, error: { code: 'provider_error', message: 'x', status: 429, skipped: true } }
+      : { ok: true, value: 'x' }), d);
+    expect(sleeps).toEqual([]);
+    expect(result.ok && result.data.meta.model).toBe('fast-1');
+  });
+
   it('stops when the time budget is spent', async () => {
     const { deps: d } = deps(1000);
     let calls = 0;

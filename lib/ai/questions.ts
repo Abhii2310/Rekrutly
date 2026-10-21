@@ -60,7 +60,7 @@ function brief(input: GenerateInput, mix: { mcq: number; short: number }, skillO
 async function callBatch(input: GenerateInput, mix: { mcq: number; short: number }, skillOrder: readonly string[], avoid: string[]) {
   return runStructured({
     tier: 'smart', system: SYSTEM, prompt: brief(input, mix, skillOrder, avoid), schema: Batch,
-    temperature: 0.6, thinking: 'low', timeoutMs: 35_000,
+    temperature: 0.6, thinking: 'low', timeoutMs: 50_000,
   });
 }
 

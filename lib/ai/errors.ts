@@ -7,6 +7,8 @@ export type AiError = {
   message: string;
   /** HTTP status from the provider, when there was one. */
   status?: number;
+  /** True when the call was not made because the model is cooling down after rate limits. */
+  skipped?: boolean;
 };
 
 const FRIENDLY: Record<AiErrorCode, string> = {

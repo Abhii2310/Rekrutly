@@ -81,7 +81,8 @@ export async function runAttempts<T>(
       }
       last = r.error;
       const backoff = BACKOFF_MS[rateLimitRetries];
-      if (r.error.status === 429 && backoff !== undefined) {
+      // A skipped call never reached the provider, so there is nothing to wait for.
+      if (r.error.status === 429 && !r.error.skipped && backoff !== undefined) {
         rateLimitRetries++;
         await deps.sleep(backoff);
         continue;

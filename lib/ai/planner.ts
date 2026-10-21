@@ -35,6 +35,6 @@ export async function planInstruction(instruction: string, context: PlannerConte
     prompt: plannerPrompt(instruction, context),
     schema: PlannerOutput,
     temperature: 0.2,
-    thinking: 'minimal',
+    thinking: 'low',
   });
 }
