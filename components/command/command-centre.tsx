@@ -147,6 +147,7 @@ export function CommandCentre({ jobs, defaultJobId, demoMode = false, initialTex
           </div>
         </div>
 
+        {speech.listening ? <p role="status" className="t-callout mt-3 text-ink-2">Listening. Speak now, and pause for a few seconds when you are done.</p> : null}
         {speech.error ? <p role="status" className="t-callout mt-3 text-ink-2">{speech.error}</p> : null}
 
         {phase.name === "idle" || phase.name === "error" ? (

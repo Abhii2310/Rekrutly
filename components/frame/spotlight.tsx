@@ -90,6 +90,7 @@ export function Spotlight() {
         <CommandInput value={query} onValueChange={setQuery} placeholder="Ask Rekrutly, or jump to…" className="min-w-0 flex-1 border-b-0" />
         {speech.supported ? <MicButton listening={speech.listening} onClick={() => speech.toggle(query)} /> : null}
       </div>
+      {speech.listening ? <p role="status" className="t-callout px-5 pt-3 text-ink-2">Listening. Speak now, and pause for a few seconds when you are done.</p> : null}
       {speech.error ? <p role="status" className="t-callout px-5 pt-3 text-ink-2">{speech.error}</p> : null}
       <CommandList>
         {sentence ? <CommandPrimitive.Group forceMount>{askItem}</CommandPrimitive.Group> : null}
