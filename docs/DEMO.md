@@ -20,7 +20,7 @@ Set these in Vercel (names only here; never write values in a doc) before the fi
 
 ## Before the demo starts
 
-Open the public address (the root of your Vercel URL) in a private window to see the landing page. It is a good thing to leave on screen while people sit down. Press **Sign in**, then use the passcode to enter the app.
+Open the root of your Vercel URL to see the landing page. It is a good thing to leave on screen while people sit down; scroll once to play the story. Press **Try the demo**, then use the passcode. The app itself lives at `/overview`.
 
 ## Pre-flight (start 30 minutes before)
 

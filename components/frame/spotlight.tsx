@@ -97,7 +97,7 @@ export function Spotlight() {
         <CommandGroup heading="Go to">
           <CommandItem value="command centre new task" onSelect={() => go("/command")}>Command Centre</CommandItem>
           {data?.warRoomRunId ? <CommandItem value="war room live workflow" onSelect={() => go(`/runs/${data.warRoomRunId}/war-room`)}>War Room</CommandItem> : null}
-          <CommandItem value="overview home" onSelect={() => go("/")}>Overview</CommandItem>
+          <CommandItem value="overview home" onSelect={() => go("/overview")}>Overview</CommandItem>
           <CommandItem value="jobs" onSelect={() => go("/jobs")}>Jobs</CommandItem>
           <CommandItem value="candidates" onSelect={() => go("/candidates")}>Candidates</CommandItem>
         </CommandGroup>

@@ -16,7 +16,7 @@ test.describe('signed out', () => {
   test('the root address shows the public landing page, not the app', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole('heading', { level: 1, name: 'The hiring agent that shows its work.' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Hire with the lights on.' })).toBeVisible();
     await page.getByRole('link', { name: 'Sign in' }).first().click();
     await expect(page).toHaveURL(/\/login/);
   });

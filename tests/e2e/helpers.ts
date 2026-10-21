@@ -12,7 +12,7 @@ export async function signIn(page: Page): Promise<void> {
   await page.goto('/login');
   await page.getByLabel('Passcode').fill(passcode);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/overview$/);
 }
 
 export async function resetDemo(request: APIRequestContext): Promise<void> {

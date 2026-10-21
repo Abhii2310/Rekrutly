@@ -8,7 +8,7 @@ import { cn } from "cn"
 import { DemoTag } from "@/components/ui/tags"
 
 const NAV = [
-  { href: "/", label: "Overview", icon: LayoutGrid },
+  { href: "/overview", label: "Overview", icon: LayoutGrid },
   { href: "/command", label: "Command", icon: Command },
   { href: "/jobs", label: "Jobs", icon: Briefcase },
   { href: "/candidates", label: "Candidates", icon: Users },
@@ -19,8 +19,7 @@ const NAV = [
 ] as const
 
 function isActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/"
-  if (href === "/war-room") return pathname === "/war-room" || /^\/runs\/[^/]+\/war-room/.test(pathname)
+    if (href === "/war-room") return pathname === "/war-room" || /^\/runs\/[^/]+\/war-room/.test(pathname)
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
@@ -39,7 +38,7 @@ export function Sidebar({ demoMode }: { demoMode: boolean }) {
 
   return (
     <aside data-print-hide className="sticky top-0 flex h-screen w-[72px] shrink-0 flex-col bg-mist px-3 py-6 lg:w-[240px] lg:px-4">
-      <Link href="/" className="focus-ring mb-8 flex h-9 items-center rounded-[8px] px-2.5 text-[17px] font-semibold leading-[22px] tracking-[-0.01em] text-ink">
+      <Link href="/overview" className="focus-ring mb-8 flex h-9 items-center rounded-[8px] px-2.5 text-[17px] font-semibold leading-[22px] tracking-[-0.01em] text-ink">
         <span className="lg:hidden" aria-hidden>R</span>
         <span className="hidden lg:inline">Rekrutly</span>
         <span className="sr-only lg:hidden">Rekrutly</span>

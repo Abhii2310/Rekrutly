@@ -15,7 +15,7 @@
 
 ### For the admin
 
-- **Landing page** at the root address for visitors who are not signed in (the app opens for people who are), with animated product demos and no made-up numbers.
+- **Landing page** at the root address (the app lives at `/overview`): an aurora hero, a pinned scroll story of the whole product, and almost no text. Nothing on it is a made-up number.
 - **Command Centre, Spotlight (Ctrl or Cmd + K) and voice** to plan in a sentence from anywhere.
 - **Roles and candidates:** create a role, import candidates from a CSV (bad rows are listed with the reason, duplicates are skipped), and move people through stages.
 - **Activity:** every receipt, filterable, with a CSV export for an audit.
