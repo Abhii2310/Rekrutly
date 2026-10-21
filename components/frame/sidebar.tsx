@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Activity, Briefcase, ChartColumn, Command, LayoutGrid, LogOut, Users } from "lucide-react"
+import { Activity, Briefcase, ChartColumn, Clapperboard, Command, LayoutGrid, LogOut, Search, Users } from "lucide-react"
 import { cn } from "cn"
 import { DemoTag } from "@/components/ui/tags"
 
@@ -43,8 +43,19 @@ export function Sidebar({ demoMode }: { demoMode: boolean }) {
         <span className="sr-only lg:hidden">Rekrutly</span>
       </Link>
 
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new Event("spotlight:open"))}
+        className="focus-ring t-body mb-3 flex h-9 items-center gap-3 rounded-[8px] bg-canvas px-2.5 text-ink-2 transition-colors duration-[160ms] hover:text-ink"
+      >
+        <Search aria-hidden className="size-[18px] shrink-0" strokeWidth={1.75} />
+        <span className="hidden lg:inline">Ask or search</span>
+        <span className="sr-only lg:hidden">Ask or search</span>
+        <span className="t-footnote ml-auto hidden text-ink-3 lg:inline">⌘K</span>
+      </button>
+
       <nav aria-label="Main" className="flex flex-col gap-0.5">
-        {NAV.map(({ href, label, icon: Icon }) => {
+        {(demoMode ? [...NAV, { href: "/demo", label: "Demo Director", icon: Clapperboard }] : NAV).map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href)
           return (
             <Link

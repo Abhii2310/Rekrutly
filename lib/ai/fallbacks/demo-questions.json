@@ -1,0 +1,197 @@
+{
+  "questions": [
+    {
+      "type": "mcq",
+      "prompt": "In React, which hook is used to perform side effects such as data fetching after the component has rendered?",
+      "options": [
+        "useState",
+        "useEffect",
+        "useContext",
+        "useReducer"
+      ],
+      "correct_option": 1,
+      "explanation": "useEffect runs after render and can contain side‑effects like fetching data, subscriptions, or manually changing the DOM.",
+      "skill": "React",
+      "difficulty": "easy",
+      "max_score": 1
+    },
+    {
+      "type": "mcq",
+      "prompt": "When rendering a list of items in React, which attribute helps the diffing algorithm identify which items have changed?",
+      "options": [
+        "id",
+        "className",
+        "key",
+        "ref"
+      ],
+      "correct_option": 2,
+      "explanation": "The key prop must be a stable, unique identifier for each list element; it lets React match items between renders efficiently.",
+      "skill": "React",
+      "difficulty": "medium",
+      "max_score": 2
+    },
+    {
+      "type": "mcq",
+      "prompt": "What is the primary purpose of React.memo for a functional component?",
+      "options": [
+        "Force a component to re‑render on every state change",
+        "Convert a component to a class component",
+        "Enable server‑side rendering",
+        "Prevent re‑rendering when props are shallowly equal"
+      ],
+      "correct_option": 3,
+      "explanation": "React.memo memoizes the rendered output and skips re‑rendering if the component's props have not changed (shallow comparison).",
+      "skill": "React",
+      "difficulty": "hard",
+      "max_score": 2
+    },
+    {
+      "type": "mcq",
+      "prompt": "Which HTTP status code is the most appropriate response for a successful resource creation via POST?",
+      "options": [
+        "201 Created",
+        "200 OK",
+        "202 Accepted",
+        "204 No Content"
+      ],
+      "correct_option": 0,
+      "explanation": "201 Created indicates that the request has been fulfilled and resulted in a new resource being created.",
+      "skill": "APIs",
+      "difficulty": "easy",
+      "max_score": 1
+    },
+    {
+      "type": "mcq",
+      "prompt": "Which of the following HTTP methods is considered idempotent?",
+      "options": [
+        "POST",
+        "PATCH",
+        "GET",
+        "CONNECT"
+      ],
+      "correct_option": 2,
+      "explanation": "GET can be called multiple times without changing server state; the result is the same, making it idempotent. DELETE is also idempotent, but not listed here.",
+      "skill": "APIs",
+      "difficulty": "medium",
+      "max_score": 2
+    },
+    {
+      "type": "mcq",
+      "prompt": "What is the main reason browsers send a CORS preflight (OPTIONS) request?",
+      "options": [
+        "To fetch the actual data before the real request",
+        "To verify the server permits the actual method and headers",
+        "To cache the response for future requests",
+        "To encrypt the request payload"
+      ],
+      "correct_option": 1,
+      "explanation": "A preflight request asks the server if the actual request’s method and custom headers are allowed under the server’s CORS policy.",
+      "skill": "APIs",
+      "difficulty": "hard",
+      "max_score": 2
+    },
+    {
+      "type": "mcq",
+      "prompt": "Which SQL clause would you use to retrieve the number of orders per customer, showing only customers with more than five orders?",
+      "options": [
+        "WHERE COUNT(*) > 5",
+        "GROUP BY > 5",
+        "FILTER COUNT(*) > 5",
+        "HAVING COUNT(*) > 5"
+      ],
+      "correct_option": 3,
+      "explanation": "HAVING filters groups after aggregation, so HAVING COUNT(*) > 5 returns only customers whose order count exceeds five.",
+      "skill": "SQL",
+      "difficulty": "medium",
+      "max_score": 2
+    },
+    {
+      "type": "short",
+      "prompt": "Write a PostgreSQL query that returns the customer_id and the number of orders placed in the last 30 days for customers who placed more than three orders in that period. Order the results by order count descending.",
+      "rubric": {
+        "criteria": [
+          {
+            "point": "Correct use of CURRENT_DATE or equivalent to define the 30‑day window",
+            "weight": 2
+          },
+          {
+            "point": "Aggregates orders per customer with COUNT(*)",
+            "weight": 2
+          },
+          {
+            "point": "Filters with HAVING COUNT(*) > 3",
+            "weight": 2
+          },
+          {
+            "point": "Orders results by count descending",
+            "weight": 1
+          }
+        ],
+        "model_answer": "SELECT customer_id,\n       COUNT(*) AS order_count\nFROM orders\nWHERE order_date >= CURRENT_DATE - INTERVAL '30 days'\nGROUP BY customer_id\nHAVING COUNT(*) > 3\nORDER BY order_count DESC;"
+      },
+      "skill": "SQL",
+      "difficulty": "hard",
+      "max_score": 6
+    },
+    {
+      "type": "short",
+      "prompt": "A React component is re‑rendering infinitely, causing the UI to freeze. Describe the steps you would take to diagnose and fix the issue.",
+      "rubric": {
+        "criteria": [
+          {
+            "point": "Identify whether a state or prop change inside the component triggers the render loop",
+            "weight": 2
+          },
+          {
+            "point": "Check useEffect dependencies for missing or extra entries",
+            "weight": 2
+          },
+          {
+            "point": "Verify that setState (or a state updater) is not called unconditionally during render",
+            "weight": 2
+          },
+          {
+            "point": "Use React DevTools or console logs to trace the render cycle",
+            "weight": 1
+          }
+        ],
+        "model_answer": "First, open React DevTools and look at the component’s render count. Then, examine any useEffect hooks: ensure the dependency array includes all values that should trigger the effect and that it isn’t empty when it should be. Look for setState calls that run on every render (e.g., directly in the component body) and move them into an effect or event handler. Finally, add console.log statements or breakpoints to confirm the state updates stop once the underlying condition is fixed."
+      },
+      "skill": "debugging",
+      "difficulty": "easy",
+      "max_score": 4
+    },
+    {
+      "type": "short",
+      "prompt": "A Node.js API endpoint intermittently returns a 500 Internal Server Error for a specific request payload. Outline your debugging approach to identify and resolve the root cause.",
+      "rubric": {
+        "criteria": [
+          {
+            "point": "Reproduce the error locally with the same payload and capture the stack trace",
+            "weight": 2
+          },
+          {
+            "point": "Check server logs for error messages and stack traces around the failure point",
+            "weight": 2
+          },
+          {
+            "point": "Determine if the error is due to unhandled promise rejections or synchronous exceptions",
+            "weight": 2
+          },
+          {
+            "point": "Validate input data against expected schema and add defensive checks",
+            "weight": 2
+          },
+          {
+            "point": "Write or extend unit/integration tests to cover the failing case",
+            "weight": 2
+          }
+        ],
+        "model_answer": "Start by reproducing the request using a tool like curl or Postman and capture the full error stack from the server logs. Examine the stack trace to pinpoint the file and line where the exception occurs. Verify whether the code is throwing an unhandled exception or a rejected promise—add try/catch or .catch handlers as needed. Check that the incoming payload conforms to the expected schema; if not, add validation and return a 400 error instead. Once the root cause is fixed, add a test case that sends the same payload and asserts a successful response, ensuring the regression does not reappear."
+      },
+      "skill": "debugging",
+      "difficulty": "medium",
+      "max_score": 5
+    }
+  ]
+}

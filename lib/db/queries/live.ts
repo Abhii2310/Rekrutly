@@ -12,6 +12,8 @@ export type LiveInvitation = {
   current_question: number | null; deadline_at: string | null; submitted_at: string | null; last_activity_at: string | null;
   /** Counted on the server from the deadline, so a wrong clock in the browser cannot change it. Null when not in progress. */
   seconds_left: number | null;
+  /** Integrity hints, counted from recorded signals. Hints for a person, never proof. */
+  signals: { tab_hidden: number; paste: number };
 };
 export type LiveTask = {
   id: string; type: string; title: string; detail: string | null; status: string; candidate_id: string | null;
@@ -60,10 +62,18 @@ export async function getRunLive(runId: string): Promise<Result<RunLive | null>>
   let pipeline: ReturnType<typeof toPipelineInvitation>[] = [];
   let questionCount = 0;
   if (assessment.data) {
-    const [inv, qc] = await Promise.all([
+    const [inv, qc, sigs] = await Promise.all([
       db.from('invitations').select(INVITATION_SELECT).eq('assessment_id', assessment.data.id).order('created_at').order('id'),
       db.from('questions').select('id', { count: 'exact', head: true }).eq('assessment_id', assessment.data.id),
+      db.from('integrity_signals').select('invitation_id, type, invitations!inner(assessment_id)').eq('invitations.assessment_id', assessment.data.id),
     ]);
+    const signalsOf = new Map<string, { tab_hidden: number; paste: number }>();
+    for (const r of (sigs.data ?? []) as unknown as { invitation_id: string; type: string }[]) {
+      const cur = signalsOf.get(r.invitation_id) ?? { tab_hidden: 0, paste: 0 };
+      if (r.type === 'tab_hidden') cur.tab_hidden++;
+      else if (r.type === 'paste') cur.paste++;
+      signalsOf.set(r.invitation_id, cur);
+    }
     if (inv.error) return err('db_error', "Couldn't load the candidate links.", inv.error.message);
     questionCount = qc.count ?? 0;
     const now = Date.now();
@@ -72,6 +82,7 @@ export async function getRunLive(runId: string): Promise<Result<RunLive | null>>
     invitations = pipeline.map((i) => ({
       id: i.id, candidate_id: i.candidateId, name: i.name, has_email: Boolean(i.email), status: i.status, delivery_status: i.deliveryStatus,
       current_question: i.currentQuestion, deadline_at: i.deadlineAt, submitted_at: i.submittedAt, last_activity_at: i.lastActivityAt,
+      signals: signalsOf.get(i.id) ?? { tab_hidden: 0, paste: 0 },
       seconds_left: i.status === 'started' && i.deadlineAt ? Math.max(0, Math.round((new Date(i.deadlineAt).getTime() - now) / 1000)) : null,
     }));
   }

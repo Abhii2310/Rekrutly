@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { apiError, apiOk } from '@/lib/api';
 import { AI_ERROR_STATUS } from '@/lib/ai/attempts';
+import { savedPlan } from '@/lib/ai/fallbacks';
 import { planInstruction } from '@/lib/ai/planner';
 import { blockingClarifications, resolvePlan } from '@/lib/ai/resolve-plan';
 import { getPlannerContext } from '@/lib/db/queries/planner-context';
@@ -8,7 +9,7 @@ import { getDb } from '@/lib/db/server';
 import { env } from '@/lib/env';
 import { buildSteps } from '@/lib/executor/plan-builder';
 import { logEvent } from '@/lib/events';
-import { checkInstruction, redactFlagged } from '@/lib/guardrails/protected';
+import { checkInstruction, guardrailMessage, redactFlagged } from '@/lib/guardrails/protected';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
 
 export const maxDuration = 60;
@@ -16,6 +17,8 @@ export const maxDuration = 60;
 const Body = z.object({
   instruction: z.string().trim().min(3, 'Type an instruction first.').max(2000),
   jobId: z.uuid().optional(),
+  /** DEMO_MODE only: skip the AI and use the saved demo plan. */
+  useSavedPlan: z.boolean().optional(),
 });
 
 export async function POST(request: Request): Promise<Response> {
@@ -24,7 +27,8 @@ export async function POST(request: Request): Promise<Response> {
 
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError('invalid_input', parsed.error.issues[0]?.message ?? 'Type an instruction first.', 400);
-  const { instruction, jobId } = parsed.data;
+  const { instruction, jobId, useSavedPlan } = parsed.data;
+  if (useSavedPlan && !env.DEMO_MODE) return apiError('not_demo', 'Saved plans are only available in demo mode.', 403);
 
   // 1. Guardrail runs on every instruction, before the model sees it.
   const { flagged } = checkInstruction(instruction);
@@ -33,7 +37,14 @@ export async function POST(request: Request): Promise<Response> {
   // 2. Planner: the model proposes parameters from the limited context.
   const ctx = await getPlannerContext(jobId ?? null);
   if (!ctx.ok) return apiError(ctx.error.code, ctx.error.message, 500);
-  const planned = await planInstruction(safeInstruction, ctx.data);
+  let planned: Awaited<ReturnType<typeof planInstruction>>;
+  if (useSavedPlan) {
+    const saved = savedPlan();
+    if (!saved) return apiError('no_saved_plan', 'There is no saved demo plan yet. Run npm run capture:fallback after a good run.', 404);
+    planned = { ok: true, data: { output: saved, meta: { provider: env.AI_PROVIDER, model: 'saved', attempts: 0, fellBack: false, durationMs: 0 } } };
+  } else {
+    planned = await planInstruction(safeInstruction, ctx.data);
+  }
   if (!planned.ok) {
     const code = planned.error.code;
     const status = code === 'ai_not_configured' ? 500 : (AI_ERROR_STATUS[code as keyof typeof AI_ERROR_STATUS] ?? 502);
@@ -47,6 +58,7 @@ export async function POST(request: Request): Promise<Response> {
 
   // 3. Code validates and resolves everything the model said.
   const { plan, clarifications } = resolvePlan(planned.data.output, ctx.data, safeInstruction, flagged);
+  if (useSavedPlan) plan.fallback = true;
   const meta = planned.data.meta;
   const aiData = { ai_provider: meta.provider, ai_model: meta.model, ai_fell_back: meta.fellBack };
 
@@ -75,6 +87,12 @@ export async function POST(request: Request): Promise<Response> {
     return apiError('db_error', "Couldn't save the plan.", 500);
   }
 
+  if (useSavedPlan) {
+    await logEvent({
+      runId, jobId: plan.job?.id ?? null, type: 'plan.fallback_used', actor: 'recruiter', level: 'warning',
+      message: 'Used the saved demo plan instead of the AI', data: { reason: 'recruiter chose the saved plan' },
+    });
+  }
   await logEvent({
     runId, jobId: plan.job?.id ?? null, type: 'plan.created', actor: 'agent', level: 'success',
     message: `Planned: ${plan.summary || 'a new workflow'}`,
@@ -83,7 +101,7 @@ export async function POST(request: Request): Promise<Response> {
   if (plan.guardrail_flags.length > 0) {
     await logEvent({
       runId, jobId: plan.job?.id ?? null, type: 'guardrail.triggered', actor: 'system', level: 'warning',
-      message: `Guardrail: removed ${plan.guardrail_flags.map((f) => `"${f.phrase}"`).join(', ')}`,
+      message: guardrailMessage(plan.guardrail_flags),
       data: { phrases: plan.guardrail_flags.map((f) => f.phrase) },
     });
   }

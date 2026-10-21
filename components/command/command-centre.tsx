@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, ShieldCheck } from "lucide-react"
 import { motion, useReducedMotion } from "motion/react"
 import { AIMark } from "@/components/ui/ai-mark"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenu
 import { ErrorState } from "@/components/ui/error-state"
 import { Input } from "@/components/ui/input"
 import { Kbd } from "@/components/ui/kbd"
+import { MicButton } from "@/components/ui/mic-button"
+import { Pill } from "@/components/ui/status-pill"
+import { useSpeechInput } from "@/hooks/use-speech"
 import { ProgressRail, type RailStep } from "@/components/ui/progress-rail"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
@@ -20,6 +23,7 @@ import type { StepStatus } from "@/lib/status"
 export const EXAMPLES = [
   "Prepare a 30-minute full-stack developer assessment for the five candidates in this job. Cover React, APIs, SQL and debugging. Show me the questions before inviting anyone.",
   "Prepare the next hiring steps, identify blockers and draft outstanding follow-ups. Ask me before sending anything.",
+  "Prepare a 30-minute full-stack developer assessment for the five candidates in this job, but only invite candidates under 30.",
 ]
 
 type PlanStep = { position: number; action: string; title: string; status: StepStatus }
@@ -42,9 +46,9 @@ const STEP_DETAIL: Record<string, string> = {
   draft_followups: "Nothing is sent",
 }
 
-export function CommandCentre({ jobs, defaultJobId }: { jobs: { id: string; title: string }[]; defaultJobId: string | null }) {
+export function CommandCentre({ jobs, defaultJobId, demoMode = false, initialText = "", autoPlan = false }: { jobs: { id: string; title: string }[]; defaultJobId: string | null; demoMode?: boolean; initialText?: string; autoPlan?: boolean }) {
   const reduce = useReducedMotion()
-  const [text, setText] = React.useState("")
+  const [text, setText] = React.useState(initialText)
   const [jobId, setJobId] = React.useState<string | null>(defaultJobId)
   const [phase, setPhase] = React.useState<Phase>({ name: "idle" })
   const [answer, setAnswer] = React.useState("")
@@ -54,7 +58,7 @@ export function CommandCentre({ jobs, defaultJobId }: { jobs: { id: string; titl
   const compact = phase.name !== "idle"
 
   const plan = React.useCallback(
-    async (instruction: string) => {
+    async (instruction: string, useSavedPlan = false) => {
       if (inFlight.current || instruction.trim().length < 3) return
       inFlight.current = true
       setPhase({ name: "planning" })
@@ -63,7 +67,7 @@ export function CommandCentre({ jobs, defaultJobId }: { jobs: { id: string; titl
         const res = await fetch("/api/agent/plan", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ instruction: instruction.trim(), ...(jobId ? { jobId } : {}) }),
+          body: JSON.stringify({ instruction: instruction.trim(), ...(jobId ? { jobId } : {}), ...(useSavedPlan ? { useSavedPlan: true } : {}) }),
         })
         const body = (await res.json().catch(() => null)) as { data?: Result; error?: { message?: string } } | null
         if (res.ok && body?.data) setPhase({ name: "done", result: body.data })
@@ -76,6 +80,17 @@ export function CommandCentre({ jobs, defaultJobId }: { jobs: { id: string; titl
     },
     [jobId]
   )
+
+  // Opened from Spotlight with a sentence: plan it once, as if Enter was pressed.
+  const autoStarted = React.useRef(false)
+  React.useEffect(() => {
+    if (autoPlan && initialText.trim().length >= 3 && !autoStarted.current) {
+      autoStarted.current = true
+      void plan(initialText)
+    }
+  }, [autoPlan, initialText, plan])
+
+  const speech = useSpeechInput(setText)
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -123,6 +138,7 @@ export function CommandCentre({ jobs, defaultJobId }: { jobs: { id: string; titl
               </DropdownMenuContent>
             </DropdownMenu>
             <span className="t-callout flex items-center gap-2 text-ink-2">
+              {speech.supported ? <MicButton listening={speech.listening} onClick={() => speech.toggle(text)} /> : null}
               <Kbd>Enter</Kbd> to plan
               <Button variant="secondary" size="sm" disabled={phase.name === "planning" || text.trim().length < 3} onClick={() => void plan(text)}>
                 Make a plan
@@ -130,6 +146,8 @@ export function CommandCentre({ jobs, defaultJobId }: { jobs: { id: string; titl
             </span>
           </div>
         </div>
+
+        {speech.error ? <p role="status" className="t-callout mt-3 text-ink-2">{speech.error}</p> : null}
 
         {phase.name === "idle" || phase.name === "error" ? (
           <div className="mt-6">
@@ -154,7 +172,10 @@ export function CommandCentre({ jobs, defaultJobId }: { jobs: { id: string; titl
       <div className="mt-10" aria-live="polite">
         {phase.name === "planning" ? <Planning /> : null}
         {phase.name === "error" ? (
-          <ErrorState message={phase.message} hint="Retry, or change the instruction." onRetry={() => void plan(text)} />
+          <ErrorState
+            message={phase.message} hint="Retry, or change the instruction." onRetry={() => void plan(text)}
+            secondary={demoMode ? { label: "Use saved demo plan", onClick: () => void plan(text, true) } : undefined}
+          />
         ) : null}
         {phase.name === "done" ? (
           <Outcome
@@ -233,21 +254,29 @@ function Outcome({
     id: String(s.position), title: s.title, status: s.status, detail: s.status === "awaiting_approval" ? undefined : STEP_DETAIL[s.action],
   }))
   const noEmail = plan.candidates.filter((c) => !c.has_email).length
-  const phrases = plan.guardrail_flags.map((f) => `“${f.phrase}”`)
   const reasons = [...new Set(plan.guardrail_flags.map((f) => f.reason))]
 
   return (
     <div>
       <div className="flex items-center justify-between">
         <h2 className="t-title text-ink">Plan</h2>
-        <AIMark />
+        {plan.fallback ? <Pill>Saved</Pill> : <AIMark />}
       </div>
       <p className="t-body mt-2 text-ink">{plan.summary}</p>
 
       {plan.guardrail_flags.length > 0 ? (
-        <div role="note" className="mt-5 rounded-group bg-warning-tint p-4">
-          <p className="t-body text-ink">I left out {phrases.join(", ")}.</p>
-          <p className="t-callout mt-1 text-ink-2">{reasons.join(" ")}</p>
+        <div role="note" className="rail-in mt-5 flex gap-3 rounded-group bg-warning-tint p-5">
+          <ShieldCheck aria-hidden className="mt-0.5 size-5 shrink-0 text-warning" strokeWidth={1.75} />
+          <div className="min-w-0">
+            <p className="t-headline text-ink">
+              {plan.guardrail_flags.length === 1 ? "I left out this filter: " : "I left out these filters: "}
+              {plan.guardrail_flags.map((f, i) => (
+                <span key={f.phrase}>{i > 0 ? ", " : ""}<span className="whitespace-nowrap">&ldquo;{f.phrase}&rdquo;</span></span>
+              ))}
+            </p>
+            <p className="t-callout mt-1 text-ink-2">{reasons.join(" ")}</p>
+            <p className="t-callout mt-2 text-ink-2">The rest of the plan is below, and nothing runs until you approve it.</p>
+          </div>
         </div>
       ) : null}
 

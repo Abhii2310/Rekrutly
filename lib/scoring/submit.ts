@@ -40,6 +40,7 @@ export async function submitAssessment(inv: ResolvedInvitation, now: Date): Prom
     final_score: hasWritten ? null : result.total,
     final_max: hasWritten ? null : result.max,
     scoring_status: hasWritten ? 'pending' : 'scored',
+    is_simulated: inv.simulated ?? false,
   }).select('id').single();
   if (sub.error) {
     if (sub.error.code === '23505') return err('already_submitted', 'This assessment was already submitted.');
@@ -67,7 +68,7 @@ export async function submitAssessment(inv: ResolvedInvitation, now: Date): Prom
  */
 export async function afterSubmit(inv: ResolvedInvitation, done: { autoSubmitted: boolean; objective: { total: number; max: number } }): Promise<void> {
   const db = getDb();
-  const base = { runId: inv.assessment.run_id, jobId: inv.assessment.job_id, candidateId: inv.candidate_id };
+  const base = { runId: inv.assessment.run_id, jobId: inv.assessment.job_id, candidateId: inv.candidate_id, isSimulated: inv.simulated ?? false };
   // One round trip: the stage change (only from the stages that lead here, per lib/status.ts) and both receipts.
   await Promise.all([
     db.from('candidates').update({ stage: 'assessment_submitted' }).eq('id', inv.candidate_id).in('stage', ['assessment_in_progress', 'assessment_invited']),

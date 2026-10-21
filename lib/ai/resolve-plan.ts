@@ -21,6 +21,8 @@ export type ResolvedPlan = {
   assumptions: string[];
   guardrail_flags: GuardrailFlag[];
   clarifications: Clarification[];
+  /** True when the plan came from the saved demo plan instead of the AI. Shown as a "Saved" pill. */
+  fallback?: boolean;
 };
 
 export const DEFAULTS = { question_count: 10, duration_minutes: 30 } as const;

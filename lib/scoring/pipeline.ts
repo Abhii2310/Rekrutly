@@ -20,6 +20,7 @@ type Ctx = {
   skills: string[];
   firstName: string;
   candidateId: string;
+  isSimulated: boolean;
   scoringStatus: string;
   reportStatus: string;
 };
@@ -30,7 +31,7 @@ type ScoreRow = AggScore & { id: string; unanswered: boolean; evidence_quote: st
 async function loadContext(submissionId: string): Promise<Ctx | null> {
   const { data } = await getDb()
     .from('submissions')
-    .select('id, invitation_id, scoring_status, report_status, invitations(assessment_id, candidate_id, assessments(run_id, job_id, skills, jobs(title, skills)), candidates(full_name))')
+    .select('id, invitation_id, scoring_status, report_status, is_simulated, invitations(assessment_id, candidate_id, assessments(run_id, job_id, skills, jobs(title, skills)), candidates(full_name))')
     .eq('id', submissionId).maybeSingle();
   if (!data) return null;
   type Joined = { assessment_id: string; candidate_id: string; assessments: { run_id: string | null; job_id: string; skills: string[]; jobs: { title: string; skills: string[] } | null }; candidates: { full_name: string } | null };
@@ -39,7 +40,7 @@ async function loadContext(submissionId: string): Promise<Ctx | null> {
   return {
     submissionId, invitationId: data.invitation_id as string, assessmentId: inv.assessment_id, runId: inv.assessments.run_id, jobId: inv.assessments.job_id,
     jobTitle: inv.assessments.jobs?.title ?? 'this role', skills, firstName: (inv.candidates?.full_name ?? 'the candidate').split(/\s+/)[0] ?? 'the candidate',
-    candidateId: inv.candidate_id, scoringStatus: data.scoring_status as string, reportStatus: data.report_status as string,
+    candidateId: inv.candidate_id, isSimulated: Boolean(data.is_simulated), scoringStatus: data.scoring_status as string, reportStatus: data.report_status as string,
   };
 }
 
@@ -138,7 +139,7 @@ async function gradeAndAggregate(c: Ctx): Promise<void> {
   await recomputeSubmission(c.submissionId);
   await db.from('submissions').update({ scoring_status: 'scored', scoring_error: null }).eq('id', c.submissionId);
   await logEvent({
-    runId: c.runId, jobId: c.jobId, candidateId: c.candidateId, type: 'score.ai_suggested', actor: 'agent', level: 'success',
+    runId: c.runId, jobId: c.jobId, candidateId: c.candidateId, isSimulated: c.isSimulated, type: 'score.ai_suggested', actor: 'agent', level: 'success',
     message: `Reviewed ${todo.length} written ${todo.length === 1 ? 'answer' : 'answers'} for ${c.firstName}. Scores are suggestions for you to check.`,
     data: { graded: todo.length },
   });
@@ -162,7 +163,7 @@ async function writeReport(c: Ctx): Promise<void> {
   if (!res.ok) throw new Error(res.error.message);
   await db.from('submissions').update({ report: res.data.report, report_status: 'ready', report_error: null }).eq('id', c.submissionId);
   await logEvent({
-    runId: c.runId, jobId: c.jobId, candidateId: c.candidateId, type: 'report.ready', actor: 'agent', level: 'success',
+    runId: c.runId, jobId: c.jobId, candidateId: c.candidateId, isSimulated: c.isSimulated, type: 'report.ready', actor: 'agent', level: 'success',
     message: `The report for ${c.firstName} is ready`, data: { ai_provider: res.data.meta.provider, ai_model: res.data.meta.model },
   });
 }
@@ -189,7 +190,7 @@ async function runCore(submissionId: string): Promise<void> {
       } catch (e) {
         const message = e instanceof Error ? e.message : 'The report failed.';
         await db.from('submissions').update({ report_status: 'failed', report_error: message }).eq('id', submissionId);
-        await logEvent({ runId: c.runId, jobId: c.jobId, candidateId: c.candidateId, type: 'report.failed', actor: 'agent', level: 'error', message: `Couldn't write the report for ${c.firstName}: ${message}` });
+        await logEvent({ runId: c.runId, jobId: c.jobId, candidateId: c.candidateId, isSimulated: c.isSimulated, type: 'report.failed', actor: 'agent', level: 'error', message: `Couldn't write the report for ${c.firstName}: ${message}` });
       }
     }
   }
@@ -201,7 +202,7 @@ async function markScoringFailed(error: unknown, submissionId: string): Promise<
   const c = await loadContext(submissionId);
   await getDb().from('submissions').update({ scoring_status: 'failed', scoring_error: message }).eq('id', submissionId);
   if (c) {
-    await logEvent({ runId: c.runId, jobId: c.jobId, candidateId: c.candidateId, type: 'score.failed', actor: 'agent', level: 'error', message: `Couldn't review the written answers for ${c.firstName}: ${message}` });
+    await logEvent({ runId: c.runId, jobId: c.jobId, candidateId: c.candidateId, isSimulated: c.isSimulated, type: 'score.failed', actor: 'agent', level: 'error', message: `Couldn't review the written answers for ${c.firstName}: ${message}` });
     await updateScoreStep(c.assessmentId, c.runId, c.jobId);
   }
 }

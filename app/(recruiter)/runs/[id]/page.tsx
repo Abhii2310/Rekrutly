@@ -11,8 +11,9 @@ import { AIMark } from "@/components/ui/ai-mark"
 import { PageBody, PageHeader } from "@/components/ui/page-header"
 import { ProgressRail } from "@/components/ui/progress-rail"
 import { Section } from "@/components/ui/section"
-import { StatusPill } from "@/components/ui/status-pill"
+import { Pill, StatusPill } from "@/components/ui/status-pill"
 import { DemoTag } from "@/components/ui/tags"
+import { env } from "@/lib/env"
 import { getDb } from "@/lib/db/server"
 import { getAssessmentForReview } from "@/lib/db/queries/assessments"
 import { getRunLive } from "@/lib/db/queries/live"
@@ -67,7 +68,7 @@ export default async function RunPage({ params, searchParams }: { params: Promis
       <PageBody>
         <div className="flex max-w-[720px] items-start justify-between gap-4">
           <p className="t-body text-ink">{plan.summary}</p>
-          <AIMark />
+          {plan.fallback ? <Pill>Saved</Pill> : <AIMark />}
         </div>
 
         {isAssessmentFlow && beforeApproval ? (
@@ -84,6 +85,8 @@ export default async function RunPage({ params, searchParams }: { params: Promis
                 autoStart={generate === "1"}
                 plannedCount={plan.assessment?.question_count ?? 10}
                 warnings={(steps.find((s) => s.action === "generate_questions")?.result?.warnings as string[] | undefined) ?? []}
+                demoMode={env.DEMO_MODE}
+                saved={steps.find((s) => s.action === "generate_questions")?.result?.fallback === true}
               />
             </div>
             {canApprove ? (

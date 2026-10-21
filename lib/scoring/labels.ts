@@ -30,6 +30,14 @@ export function describeSignals(s: { tab_hidden: number; paste: number; window_b
   return parts.length ? parts.join(', ') : 'no tab switches or pastes recorded';
 }
 
+/** Pure: the short, quiet note on a War Room row, such as "2 tab switches, 1 paste". Null when there is nothing to say. */
+export function signalNote(s: { tab_hidden: number; paste: number }): string | null {
+  const parts: string[] = [];
+  if (s.tab_hidden > 0) parts.push(`${s.tab_hidden} tab ${s.tab_hidden === 1 ? 'switch' : 'switches'}`);
+  if (s.paste > 0) parts.push(`${s.paste} ${s.paste === 1 ? 'paste' : 'pastes'}`);
+  return parts.length ? parts.join(', ') : null;
+}
+
 const LETTERS = 'ABCDEF';
 /** Pure: "Chose B. Correct answer: C." for a multiple-choice row. */
 export function describeChoice(selected: number | null, correct: number | null): string {

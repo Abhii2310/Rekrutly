@@ -46,3 +46,13 @@ describe('splitAtQuote', () => {
     expect(splitAtQuote('abc', 'xyz')).toEqual({ before: 'abc', match: '', after: '' });
   });
 });
+
+describe('signalNote', () => {
+  it('writes a quiet short note, or nothing', async () => {
+    const { signalNote } = await import('@/lib/scoring/labels');
+    expect(signalNote({ tab_hidden: 0, paste: 0 })).toBeNull();
+    expect(signalNote({ tab_hidden: 2, paste: 0 })).toBe('2 tab switches');
+    expect(signalNote({ tab_hidden: 1, paste: 1 })).toBe('1 tab switch, 1 paste');
+    expect(signalNote({ tab_hidden: 0, paste: 3 })).toBe('3 pastes');
+  });
+});

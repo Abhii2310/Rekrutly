@@ -1,4 +1,4 @@
-export type GuardrailFlag = { phrase: string; reason: string };
+export type GuardrailFlag = { phrase: string; reason: string; /** Set by the code check, for example "age". Model flags have none. */ category?: string };
 
 type Rule = { category: string; reason: string; pattern: RegExp };
 
@@ -33,13 +33,13 @@ const RULES: Rule[] = [
 export function checkInstruction(text: string): { flagged: GuardrailFlag[] } {
   const seen = new Set<string>();
   const flagged: GuardrailFlag[] = [];
-  for (const { reason, pattern } of RULES) {
+  for (const { category, reason, pattern } of RULES) {
     for (const m of text.matchAll(pattern)) {
       const phrase = m[0].trim();
       const key = phrase.toLowerCase();
       if (!phrase || seen.has(key)) continue;
       seen.add(key);
-      flagged.push({ phrase, reason });
+      flagged.push({ phrase, reason, category });
     }
   }
   return { flagged };
@@ -53,4 +53,17 @@ export function redactFlagged(text: string, flags: GuardrailFlag[]): string {
     out = out.replace(new RegExp(escaped, 'gi'), '[removed]');
   }
   return out;
+}
+
+/** The receipt text for Activity, for example "Guardrail: removed an age filter". */
+export function guardrailMessage(flags: GuardrailFlag[]): string {
+  const cats = [...new Set(flags.map((f) => f.category).filter((c): c is string => Boolean(c)))];
+  if (cats.length === 0 || cats.length < new Set(flags.map((f) => f.phrase.toLowerCase())).size && flags.some((f) => !f.category)) {
+    return `Guardrail: removed ${flags.map((f) => `"${f.phrase}"`).join(', ')}`;
+  }
+  if (cats.length === 1) {
+    const c = cats[0] as string;
+    return `Guardrail: removed ${/^[aeiou]/i.test(c) ? 'an' : 'a'} ${c} filter`;
+  }
+  return `Guardrail: removed ${cats.slice(0, -1).join(', ')} and ${cats[cats.length - 1]} filters`;
 }

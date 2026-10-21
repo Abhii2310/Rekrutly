@@ -4,6 +4,7 @@ import * as React from "react"
 import { cn } from "cn"
 import { formatTime } from "@/lib/format"
 import type { LiveInvitation } from "@/lib/db/queries/live"
+import { signalNote } from "@/lib/scoring/labels"
 import { clockLabel, progressLabel } from "@/lib/tasks/labels"
 
 const signature = (i: LiveInvitation): string => `${i.status}|${i.current_question ?? ""}|${i.submitted_at ?? ""}`
@@ -46,7 +47,10 @@ export function CandidateRows({ invitations, questionCount, serverNow }: { invit
             <li key={i.id} className="relative grid min-h-14 list-none grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_4.75rem] sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_5.5rem] items-center gap-3 px-4 py-2 after:absolute after:bottom-0 after:left-4 after:right-0 after:h-px after:bg-hairline/70 last:after:hidden">
               <span className="flex min-w-0 items-center gap-2.5">
                 <span key={pulse} aria-hidden className={cn("size-2 shrink-0 rounded-full", DOT[i.status] ?? "bg-fog", pulse > 0 && "dot-pulse")} />
-                <span className="t-headline break-words text-ink">{i.name}</span>
+                <span className="min-w-0">
+                  <span className="t-headline block break-words text-ink">{i.name}</span>
+                  {signalNote(i.signals) ? <span className="t-footnote block text-ink-2" title="Hints for a person to look at, never proof.">{signalNote(i.signals)}</span> : null}
+                </span>
               </span>
               <span className="t-callout tabular leading-snug text-ink-2">{progressLabel(i, questionCount)}</span>
               <span className="t-callout tabular text-right text-ink-2">

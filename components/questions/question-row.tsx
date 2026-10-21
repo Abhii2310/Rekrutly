@@ -21,12 +21,14 @@ export type RowHandlers = {
 }
 
 export function QuestionRow({
-  question, index, editable, canDelete, handlers,
+  question, index, editable, canDelete, handlers, saved = false,
 }: {
   question: ReviewQuestion
   index: number
   editable: boolean
   canDelete: boolean
+  /** From the saved demo set, not the AI. */
+  saved?: boolean
   handlers: RowHandlers
 }) {
   const [open, setOpen] = React.useState(false)
@@ -67,7 +69,7 @@ export function QuestionRow({
           </span>
         </button>
         <Pill>{DIFFICULTY_LABEL[question.difficulty]}</Pill>
-        {edited ? <span className="t-footnote text-ink-2">Edited</span> : question.ai_generated ? <AIMark /> : null}
+        {edited ? <span className="t-footnote text-ink-2">Edited</span> : question.ai_generated ? (saved ? <Pill>Saved</Pill> : <AIMark />) : null}
         <button
           type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? "Hide details" : "Show details"} aria-expanded={open}
           className="focus-ring inline-flex size-8 shrink-0 items-center justify-center rounded-full text-ink-3 hover:text-ink"

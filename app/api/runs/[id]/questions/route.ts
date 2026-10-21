@@ -1,16 +1,18 @@
 import { z } from 'zod';
 import { apiError, apiOk } from '@/lib/api';
 import { AI_ERROR_STATUS } from '@/lib/ai/attempts';
+import { savedQuestions } from '@/lib/ai/fallbacks';
 import { generateQuestionSet } from '@/lib/ai/questions';
 import { createDraftAssessment, replaceAllQuestions } from '@/lib/db/mutations/assessments';
 import { getDb } from '@/lib/db/server';
 import { env } from '@/lib/env';
 import { completeStep, failStep, startStep } from '@/lib/executor/step-runner';
+import { logEvent } from '@/lib/events';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
 
 export const maxDuration = 60;
 
-const Body = z.object({ replace: z.boolean().optional() }).optional();
+const Body = z.object({ replace: z.boolean().optional(), useSaved: z.boolean().optional() }).optional();
 const Params = z.object({
   jobId: z.uuid(), skills: z.array(z.string()).min(1), count: z.number().int().min(3).max(20),
   durationMinutes: z.number().int().min(5).max(180), types: z.array(z.enum(['mcq', 'short'])).min(1),
@@ -25,6 +27,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!z.uuid().safeParse(id).success) return apiError('not_found', 'Workflow not found.', 404);
   const body = Body.safeParse(await request.json().catch(() => undefined));
   const replace = body.success && body.data?.replace === true;
+  const useSaved = body.success && body.data?.useSaved === true;
+  if (useSaved && !env.DEMO_MODE) return apiError('not_demo', 'Saved questions are only available in demo mode.', 403);
 
   const db = getDb();
   const [run, step, existing] = await Promise.all([
@@ -59,7 +63,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return apiError('not_found', 'The job for this workflow could not be found.', 404);
   }
 
-  const gen = await generateQuestionSet({
+  const saved0 = useSaved ? savedQuestions() : null;
+  if (useSaved && !saved0) {
+    await failStep(ctx, 'There is no saved question set yet.');
+    return apiError('no_saved_questions', 'There is no saved question set yet. Run npm run capture:fallback after a good run.', 404);
+  }
+  const meta0 = { provider: env.AI_PROVIDER, model: 'saved', attempts: 0, fellBack: false, durationMs: 0 };
+  const gen = saved0 ? { ok: true as const, data: { questions: saved0.questions, warnings: [] as string[], meta: meta0 } } : await generateQuestionSet({
     job: { title: job.data.title as string, description: job.data.description as string, skills: job.data.skills as string[] },
     skills: p.skills, count: p.count, durationMinutes: p.durationMinutes, types: p.types, difficulty: p.difficulty, seed: `${id}:${started.data.attempts}`,
   });
@@ -89,10 +99,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const skillCount = new Set(questions.map((q) => q.skill)).size;
   const assessmentId = assessment ? assessment.id : (saved.data as { assessmentId: string }).assessmentId;
   await completeStep(
-    ctx, `Wrote ${questions.length} questions across ${skillCount} ${skillCount === 1 ? 'skill' : 'skills'}`,
-    { assessmentId, count: questions.length, warnings },
-    'completed', { ai_provider: meta.provider, ai_model: meta.model, ai_fell_back: meta.fellBack, replaced: Boolean(assessment) },
+    ctx, `${useSaved ? 'Loaded' : 'Wrote'} ${questions.length} ${useSaved ? 'saved ' : ''}questions across ${skillCount} ${skillCount === 1 ? 'skill' : 'skills'}`,
+    { assessmentId, count: questions.length, warnings, ...(useSaved ? { fallback: true } : {}) },
+    'completed', { ai_provider: meta.provider, ai_model: meta.model, ai_fell_back: meta.fellBack, replaced: Boolean(assessment), ...(useSaved ? { fallback: true } : {}) },
   );
+  if (useSaved) {
+    await logEvent({
+      runId: id, stepId: ctx.stepId, jobId: ctx.jobId, type: 'questions.fallback_used', actor: 'recruiter', level: 'warning',
+      message: `Used ${questions.length} saved questions instead of the AI`,
+    });
+  }
   await db.from('workflow_runs').update({ status: 'awaiting_approval' }).eq('id', id).eq('status', 'draft');
 
   return apiOk({ assessmentId, count: questions.length, warnings });

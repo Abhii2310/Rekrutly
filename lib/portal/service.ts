@@ -21,6 +21,8 @@ export type ResolvedInvitation = {
   assessment: { id: string; title: string; instructions: string; duration_minutes: number; status: string; job_id: string; run_id: string | null };
   jobTitle: string;
   firstName: string;
+  /** Set only by the Demo Director. Real candidate routes never set it. */
+  simulated?: boolean;
 };
 
 // 43 base64url characters: 32 random bytes. Anything else cannot be a real link, so skip the database.
@@ -49,7 +51,7 @@ export async function resolveInvitation(token: string): Promise<Result<ResolvedI
 }
 
 const eventBase = (inv: ResolvedInvitation) => ({
-  runId: inv.assessment.run_id, jobId: inv.assessment.job_id, candidateId: inv.candidate_id, actor: 'candidate' as const,
+  runId: inv.assessment.run_id, jobId: inv.assessment.job_id, candidateId: inv.candidate_id, actor: 'candidate' as const, isSimulated: inv.simulated ?? false,
 });
 
 /** First open: records it once. Nothing changes once the candidate has started. */

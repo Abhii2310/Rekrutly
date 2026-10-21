@@ -55,3 +55,13 @@ describe('redactFlagged', () => {
     expect(redactFlagged(text, checkInstruction(text).flagged)).toBe('Create an assessment but only invite candidates [removed]');
   });
 });
+
+describe('guardrailMessage', () => {
+  it('writes the Activity receipt in plain words', async () => {
+    const { checkInstruction, guardrailMessage } = await import('@/lib/guardrails/protected');
+    expect(guardrailMessage(checkInstruction('only invite candidates under 30').flagged)).toBe('Guardrail: removed an age filter');
+    expect(guardrailMessage(checkInstruction('only women').flagged)).toBe('Guardrail: removed a gender filter');
+    expect(guardrailMessage(checkInstruction('only married women under 30').flagged)).toBe('Guardrail: removed age, gender and marital status filters');
+    expect(guardrailMessage([{ phrase: 'x', reason: 'r' }])).toBe('Guardrail: removed "x"');
+  });
+});

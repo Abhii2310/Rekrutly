@@ -7,6 +7,7 @@ import { ErrorState } from "@/components/ui/error-state"
 import { Input } from "@/components/ui/input"
 import { ProgressRail, type RailStep } from "@/components/ui/progress-rail"
 import { Section } from "@/components/ui/section"
+import { Pill } from "@/components/ui/status-pill"
 import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "@/components/ui/toaster"
 import { plural } from "@/lib/format-text"
@@ -24,6 +25,10 @@ type Props = {
   autoStart: boolean
   plannedCount: number
   warnings: string[]
+  /** DEMO_MODE only: lets a failed generation fall back to the saved question set. */
+  demoMode?: boolean
+  /** The questions came from the saved set, not the AI. */
+  saved?: boolean
 }
 
 async function call(url: string, method: string, body?: unknown): Promise<string | null> {
@@ -37,7 +42,7 @@ async function call(url: string, method: string, body?: unknown): Promise<string
   }
 }
 
-export function QuestionBuilder({ runId, steps, review, editable, autoStart, plannedCount, warnings }: Props) {
+export function QuestionBuilder({ runId, steps, review, editable, autoStart, plannedCount, warnings, demoMode = false, saved = false }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const started = React.useRef(false)
@@ -50,13 +55,13 @@ export function QuestionBuilder({ runId, steps, review, editable, autoStart, pla
   const serverGenerating = !review && steps.some((s) => s.action === "generate_questions" && s.status === "executing")
   const busy = generating || serverGenerating
 
-  const generate = React.useCallback(async () => {
+  const generate = React.useCallback(async (useSaved = false) => {
     setGenerating(true)
     setGenError(null)
-    const message = await call(`/api/runs/${runId}/questions`, "POST", {})
+    const message = await call(`/api/runs/${runId}/questions`, "POST", useSaved ? { useSaved: true } : {})
     setGenerating(false)
     if (message) setGenError(message)
-    else toast("Questions are ready")
+    else toast(useSaved ? "Saved questions loaded" : "Questions are ready")
     router.replace(pathname) // drops ?generate=1
     router.refresh()
   }, [runId, router, pathname])
@@ -125,7 +130,10 @@ export function QuestionBuilder({ runId, steps, review, editable, autoStart, pla
             <div className="flex flex-col gap-2">{Array.from({ length: plannedCount }, (_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
           </div>
         ) : genError && !review ? (
-          <ErrorState message={genError} hint="Retry, or change the plan from the Command Centre." onRetry={() => void generate()} />
+          <ErrorState
+            message={genError} hint="Retry, or change the plan from the Command Centre." onRetry={() => void generate()}
+            secondary={demoMode ? { label: "Use saved questions", onClick: () => void generate(true) } : undefined}
+          />
         ) : !review ? (
           <div className="rounded-group bg-mist px-6 py-14 text-center">
             <p className="t-body text-ink-2">The questions haven&apos;t been written yet.</p>
@@ -144,6 +152,7 @@ export function QuestionBuilder({ runId, steps, review, editable, autoStart, pla
                 ) : (
                   <div className="flex items-center gap-3">
                     <h3 className="t-headline truncate text-ink">{review.assessment.title}</h3>
+                    {saved ? <Pill>Saved</Pill> : null}
                     {editable ? <Button variant="plain" size="sm" onClick={() => setRenaming(true)}>Rename</Button> : null}
                   </div>
                 )}
@@ -162,7 +171,7 @@ export function QuestionBuilder({ runId, steps, review, editable, autoStart, pla
             <div className="rounded-group bg-mist p-1">
               <ul className="overflow-hidden rounded-[10px] bg-canvas">
                 {questions.map((q, i) => (
-                  <QuestionRow key={q.id} question={q} index={i} editable={editable} canDelete={questions.length > 3} handlers={handlers} />
+                  <QuestionRow key={q.id} question={q} index={i} editable={editable} canDelete={questions.length > 3} handlers={handlers} saved={saved} />
                 ))}
               </ul>
             </div>

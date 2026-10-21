@@ -11,7 +11,7 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
-    "db:seed": "tsx --env-file=.env.local scripts/seed.ts",
+    "db:seed": "tsx --conditions=react-server --env-file=.env.local scripts/seed.ts",
     "smoke:executor": "tsx --conditions=react-server --env-file=.env.local scripts/smoke-executor.ts",
     "capture:fallback": "tsx --env-file=.env.local scripts/capture-fallback.ts",
     "db:check": "tsx --env-file=.env.local scripts/check-db.ts",
