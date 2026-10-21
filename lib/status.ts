@@ -180,6 +180,8 @@ const MAP = {
 export type StatusKind = keyof typeof MAP;
 type ValueOf<K extends StatusKind> = (typeof MAP)[K] extends Def<infer V> ? V : never;
 
+export type StatusValue<K extends StatusKind> = ValueOf<K>;
+
 export function statusValues<K extends StatusKind>(kind: K): readonly ValueOf<K>[] {
   return MAP[kind].values as readonly ValueOf<K>[];
 }

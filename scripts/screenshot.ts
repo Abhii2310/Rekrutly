@@ -20,7 +20,7 @@ async function main(): Promise<void> {
 
   const browser = await chromium.launch();
   const context = await browser.newContext({ viewport: { width, height: 900 } });
-  if (!path.startsWith('/a/')) {
+  if (!path.startsWith('/a/') && !path.startsWith('/login')) {
     const res = await context.request.post(`${base}/api/auth/login`, { data: { passcode: env.RECRUITER_PASSCODE } });
     if (!res.ok()) console.warn(`Sign-in returned ${res.status()} (expected until the access gate exists in Prompt 03).`);
   }

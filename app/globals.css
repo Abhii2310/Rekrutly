@@ -12,6 +12,7 @@
   --color-hairline: #D2D2D7;
   --color-action: #0071E3;
   --color-action-hover: #0077ED;
+  --color-action-tint: #E8F1FD;  /* status pills only */
   --color-ai: #5E5CE6;
   --color-ai-tint: #EEEEFC;
   --color-success: #248A3D;
@@ -99,6 +100,43 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+}
+
+/* Type scale (DESIGN.md). Weights 400, 500, 600 only. */
+@utility t-hero { font-family: var(--font-display); font-size: 44px; line-height: 48px; font-weight: 600; letter-spacing: -0.025em; }
+@utility t-large { font-family: var(--font-display); font-size: 32px; line-height: 38px; font-weight: 600; letter-spacing: -0.02em; }
+@utility t-title { font-family: var(--font-display); font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.015em; }
+@utility t-headline { font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.01em; }
+@utility t-body { font-size: 15px; line-height: 22px; font-weight: 400; letter-spacing: -0.005em; }
+@utility t-callout { font-size: 13px; line-height: 18px; font-weight: 400; }
+@utility t-footnote { font-size: 12px; line-height: 16px; font-weight: 500; }
+@utility t-stat { font-family: var(--font-display); font-size: 40px; line-height: 44px; font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+
+/* Focus: 3px action ring at 35% with a 2px offset. */
+@utility focus-ring {
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-canvas), 0 0 0 5px rgb(0 113 227 / 0.35);
+  }
+}
+
+@keyframes rail-spin { to { transform: rotate(360deg); } }
+@keyframes rail-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.rail-spin { animation: rail-spin 2.4s linear infinite; transform-origin: center; }
+.rail-in { animation: rail-in 240ms var(--ease-spring) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .rail-spin { animation: none; }
+}
+
+@media print {
+  [data-print-hide] { display: none !important; }
 }
 
 .tabular {
