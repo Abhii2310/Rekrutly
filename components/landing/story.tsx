@@ -40,7 +40,7 @@ export function Story() {
   const receipts = stage === 3 ? Math.floor(within * 1.6 * RECEIPTS.length) + 1 : stage > 3 ? RECEIPTS.length : 0
 
   return (
-    <section id="story" ref={ref} className="relative h-[460vh] bg-canvas">
+    <section id="story" ref={ref} className="relative h-[460vh]">
       <div className="sticky top-0 flex h-screen items-center overflow-hidden px-5 md:px-8">
         <div className="mx-auto grid w-full max-w-[1200px] items-center gap-8 md:grid-cols-[1fr_520px] md:gap-16">
           <div className="relative h-[150px] md:h-[300px]">
@@ -53,15 +53,15 @@ export function Story() {
                   i === stage ? "translate-y-0 opacity-100" : i < stage ? "-translate-y-8 opacity-0" : "translate-y-8 opacity-0",
                 )}
               >
-                <h2 className="text-[56px] font-semibold leading-none tracking-[-0.045em] text-ink sm:text-[80px] md:text-[128px]">{s.word}</h2>
-                <p className="mt-4 text-[17px] text-ink-2 md:mt-6 md:text-[22px]">{s.line}</p>
+                <h2 className="text-[56px] font-semibold leading-none tracking-[-0.045em] text-white sm:text-[80px] md:text-[128px]">{s.word}</h2>
+                <p className="mt-4 text-[17px] text-white/55 md:mt-6 md:text-[22px]">{s.line}</p>
               </div>
             ))}
             <div aria-hidden className="absolute -bottom-2 left-0 flex gap-1.5 md:bottom-0">
               {STAGES.map((s, i) => (
-                <span key={s.word} className="h-1 w-8 overflow-hidden rounded-full bg-fog md:w-12">
+                <span key={s.word} className="h-1 w-8 overflow-hidden rounded-full bg-white/15 md:w-12">
                   <span
-                    className="block h-full origin-left rounded-full bg-ink transition-transform duration-300"
+                    className="block h-full origin-left rounded-full bg-white transition-transform duration-300"
                     style={{ transform: `scaleX(${i < stage ? 1 : i === stage ? Math.max(0.08, within) : 0})` }}
                   />
                 </span>
@@ -69,20 +69,20 @@ export function Story() {
             </div>
           </div>
 
-          <div className="relative mx-auto h-[330px] w-full max-w-[520px] overflow-hidden rounded-[22px] border border-hairline/70 bg-canvas shadow-[0_30px_80px_rgb(0_0_0/0.12)] md:h-[400px]">
-            <div className="absolute inset-x-0 top-0 flex items-center gap-2 border-b border-hairline/60 bg-mist px-4 py-3">
-              <span className="size-2.5 rounded-full bg-fog" />
-              <span className="size-2.5 rounded-full bg-fog" />
-              <span className="size-2.5 rounded-full bg-fog" />
+          <div className="relative mx-auto h-[330px] w-full max-w-[520px] overflow-hidden rounded-[22px] border border-white/10 bg-[#0B0B10] shadow-[0_30px_120px_rgba(94,92,230,0.25)] md:h-[400px]">
+            <div className="absolute inset-x-0 top-0 flex items-center gap-2 border-b border-white/10 bg-white/[0.03] px-4 py-3">
+              <span className="size-2.5 rounded-full bg-white/15" />
+              <span className="size-2.5 rounded-full bg-white/15" />
+              <span className="size-2.5 rounded-full bg-white/15" />
             </div>
             <div className="absolute inset-0 top-[41px]">
               {/* 0: say it */}
               <div className={layer(stage === 0)}>
-                <p className="t-callout text-ink-2">Tell Rekrutly what to do.</p>
-                <div className="mt-3 min-h-[120px] rounded-[14px] bg-mist px-4 py-3.5">
-                  <p className="text-[17px] leading-7 text-ink">
+                <p className="t-callout text-white/55">Tell Rekrutly what to do.</p>
+                <div className="mt-3 min-h-[120px] rounded-[14px] border border-white/10 bg-white/[0.04] px-4 py-3.5">
+                  <p className="text-[17px] leading-7 text-white">
                     {typed}
-                    <span aria-hidden className="ml-0.5 inline-block h-[1.1em] w-px translate-y-1 animate-pulse bg-ink" />
+                    <span aria-hidden className="ml-0.5 inline-block h-[1.1em] w-px translate-y-1 animate-pulse bg-white" />
                   </p>
                 </div>
               </div>
@@ -90,15 +90,15 @@ export function Story() {
               {/* 1: plan */}
               <div className={layer(stage === 1)}>
                 <div className="flex items-center justify-between">
-                  <p className="t-headline text-ink">Plan</p>
-                  <span className="t-footnote text-ai">Suggested by AI</span>
+                  <p className="t-headline text-white">Plan</p>
+                  <span className="t-footnote text-[#A5A3FF]">Suggested by AI</span>
                 </div>
                 <ol className="mt-5 flex flex-col gap-4">
                   {PLAN.map((s, i) => (
                     <li key={s} className={cn("flex items-center gap-3 transition-all duration-300", i < litSteps ? "translate-x-0 opacity-100" : "-translate-x-2 opacity-25")}>
-                      <span aria-hidden className={cn("flex size-5 shrink-0 items-center justify-center rounded-full border", i < litSteps ? "border-warning" : "border-hairline")} />
-                      <span className="text-[17px] text-ink">{s}</span>
-                      {i > 0 && i < 4 && i < litSteps ? <span className="t-footnote ml-auto text-warning">Waiting for you</span> : null}
+                      <span aria-hidden className={cn("flex size-5 shrink-0 items-center justify-center rounded-full border", i < litSteps ? "border-[#FFB340]" : "border-white/20")} />
+                      <span className="text-[17px] text-white">{s}</span>
+                      {i > 0 && i < 4 && i < litSteps ? <span className="t-footnote ml-auto text-[#FFB340]">Waiting for you</span> : null}
                     </li>
                   ))}
                 </ol>
@@ -106,8 +106,8 @@ export function Story() {
 
               {/* 2: approve */}
               <div className={cn(layer(stage === 2), "items-center justify-center text-center")}>
-                <p className="t-callout text-ink-2">Nothing has happened yet.</p>
-                <span className={cn("mt-6 inline-flex h-14 items-center gap-2 rounded-full px-9 text-[19px] text-white transition-all duration-300", pressed ? "scale-95 bg-success" : "scale-100 bg-action")}>
+                <p className="t-callout text-white/55">Nothing has happened yet.</p>
+                <span className={cn("mt-6 inline-flex h-14 items-center gap-2 rounded-full px-9 text-[19px] transition-all duration-300", pressed ? "scale-95 bg-[#30D158] text-black" : "scale-100 bg-white text-black")}>
                   {pressed ? (
                     <>
                       <Check aria-hidden className="size-5" strokeWidth={3} />
@@ -117,19 +117,19 @@ export function Story() {
                     "Approve and create links"
                   )}
                 </span>
-                <p className={cn("t-callout mt-5 text-ink-2 transition-opacity duration-300", pressed ? "opacity-100" : "opacity-0")}>Now it runs, step by step.</p>
+                <p className={cn("t-callout mt-5 text-white/55 transition-opacity duration-300", pressed ? "opacity-100" : "opacity-0")}>Now it runs, step by step.</p>
               </div>
 
               {/* 3: act */}
               <div className={layer(stage === 3)}>
-                <p className="t-headline text-ink">Receipts</p>
+                <p className="t-headline text-white">Receipts</p>
                 <ul className="mt-5 flex flex-col gap-3.5">
                   {RECEIPTS.map((r, i) => (
                     <li key={r} className={cn("flex items-center gap-3 transition-all duration-300", i < receipts ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0")}>
-                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-success text-white">
+                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#30D158] text-black">
                         <Check aria-hidden className="size-3" strokeWidth={3} />
                       </span>
-                      <span className="text-[16px] text-ink">{r}</span>
+                      <span className="text-[16px] text-white">{r}</span>
                     </li>
                   ))}
                 </ul>
@@ -137,13 +137,13 @@ export function Story() {
 
               {/* 4: prove */}
               <div className={layer(stage === 4)}>
-                <p className="t-callout text-ink-2">Question 8, SQL</p>
-                <p className="mt-3 rounded-[14px] bg-mist px-4 py-3.5 text-[16px] leading-7 text-ink">
+                <p className="t-callout text-white/55">Question 8, SQL</p>
+                <p className="mt-3 rounded-[14px] border border-white/10 bg-white/[0.04] px-4 py-3.5 text-[16px] leading-7 text-white">
                   An index lets the database{" "}
                   <span className="relative">
                     <span
                       aria-hidden
-                      className="absolute inset-0 -mx-0.5 origin-left rounded-[4px] bg-[#5E5CE6]/25 transition-transform duration-700"
+                      className="absolute inset-0 -mx-0.5 origin-left rounded-[4px] bg-[#5E5CE6]/50 transition-transform duration-700"
                       style={{ transform: `scaleX(${stage === 4 && within > 0.15 ? 1 : 0})` }}
                     />
                     <span className="relative">find rows without scanning the whole table</span>
@@ -151,10 +151,10 @@ export function Story() {
                   , so lookups are much faster.
                 </p>
                 <div className="mt-auto flex items-center justify-between">
-                  <p className="text-ink">
-                    <span className="text-[34px] font-semibold tracking-[-0.03em]">6</span> <span className="t-body text-ink-2">of 6</span>
+                  <p className="text-white">
+                    <span className="text-[34px] font-semibold tracking-[-0.03em]">6</span> <span className="t-body text-white/55">of 6</span>
                   </p>
-                  <span className="t-footnote inline-flex items-center gap-1 text-ai">
+                  <span className="t-footnote inline-flex items-center gap-1 text-[#A5A3FF]">
                     <Sparkles aria-hidden className="size-3" strokeWidth={1.75} />
                     Suggested by AI
                   </span>

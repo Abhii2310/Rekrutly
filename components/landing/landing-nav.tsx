@@ -1,23 +1,19 @@
 "use client"
 
-import * as React from "react"
 import Link from "next/link"
-import { cn } from "cn"
 
-/** Minimal top bar: the name and one button. It gains a frosted background once the page scrolls. */
+/** A floating glass pill: the name on the left, one button on the right. */
 export function LandingNav({ signedIn }: { signedIn: boolean }) {
-  const [scrolled, setScrolled] = React.useState(false)
-  React.useEffect(() => {
-    const on = () => setScrolled(window.scrollY > 8)
-    on()
-    window.addEventListener("scroll", on, { passive: true })
-    return () => window.removeEventListener("scroll", on)
-  }, [])
   return (
-    <header className={cn("fixed inset-x-0 top-0 z-40 border-b transition-colors duration-[200ms]", scrolled ? "border-hairline/50 bg-white/90 backdrop-blur-[20px] backdrop-saturate-[180%]" : "border-transparent bg-transparent")}>
-      <div className="mx-auto flex h-14 w-full max-w-[1200px] items-center justify-between px-5 md:px-8">
-        <Link href="/" className="focus-ring rounded-md text-[19px] font-semibold tracking-[-0.02em] text-ink">Rekrutly</Link>
-        <Link href={signedIn ? "/overview" : "/login"} className="focus-ring t-callout inline-flex h-9 items-center rounded-full bg-ink px-5 text-white transition-opacity duration-[160ms] hover:opacity-85">
+    <header className="fixed inset-x-0 top-4 z-40 flex justify-center px-4">
+      <div className="flex h-12 w-full max-w-[640px] items-center justify-between rounded-full border border-white/10 bg-black/40 pl-6 pr-1.5 backdrop-blur-xl backdrop-saturate-150">
+        <Link href="/" className="focus-ring rounded-md text-[17px] font-semibold tracking-[-0.02em] text-white">Rekrutly</Link>
+        <nav aria-label="Page" className="hidden items-center gap-6 sm:flex">
+          <a href="#story" className="focus-ring t-callout rounded-md text-white/60 transition-colors hover:text-white">Story</a>
+          <a href="#more" className="focus-ring t-callout rounded-md text-white/60 transition-colors hover:text-white">Inside</a>
+          <a href="#trust" className="focus-ring t-callout rounded-md text-white/60 transition-colors hover:text-white">Trust</a>
+        </nav>
+        <Link href={signedIn ? "/overview" : "/login"} className="focus-ring t-callout inline-flex h-9 items-center rounded-full bg-white px-5 font-medium text-black transition-opacity duration-[160ms] hover:opacity-85">
           {signedIn ? "Open the app" : "Sign in"}
         </Link>
       </div>

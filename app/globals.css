@@ -147,6 +147,24 @@
   color: transparent;
   animation: sheen 7s linear infinite;
 }
+/* Landing page, dark theme: a rotating light along a border, floating cards, and a slow pulse. */
+@property --a { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+@keyframes spin-a { to { --a: 360deg; } }
+.shine-border { position: relative; }
+.shine-border::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px;
+  background: conic-gradient(from var(--a), transparent 0 62%, #64D2FF 78%, #5E5CE6 90%, transparent);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude; animation: spin-a 5s linear infinite; pointer-events: none;
+}
+@keyframes float-y { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+.float-a { animation: float-y 7s ease-in-out infinite; }
+.float-b { animation: float-y 9s ease-in-out -3s infinite; }
+.float-c { animation: float-y 8s ease-in-out -5s infinite; }
+@keyframes pulse-ring { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(2.2); opacity: 0; } }
+.pulse-ring { animation: pulse-ring 2.2s ease-out infinite; }
+.text-outline { -webkit-text-stroke: 1.5px rgba(255,255,255,0.28); color: transparent; }
+
 @keyframes marquee-left { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes marquee-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
 .marquee-left { animation: marquee-left 38s linear infinite; }
@@ -162,7 +180,7 @@
   .rail-spin { animation: none; }
   .dot-pulse { animation: none; }
   .mic-ring { animation: none; opacity: 0.4; }
-  .aurora-a, .aurora-b, .aurora-c, .gradient-text, .marquee-left, .marquee-right { animation: none; }
+  .aurora-a, .aurora-b, .aurora-c, .gradient-text, .marquee-left, .marquee-right, .shine-border::before, .float-a, .float-b, .float-c, .pulse-ring { animation: none; }
 }
 
 @media print {
