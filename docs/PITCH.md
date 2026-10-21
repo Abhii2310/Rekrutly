@@ -67,4 +67,4 @@ Close: "Others are building agents that act on their own. We're building the one
 - **Bias?** No protected characteristics go to the model or into filters; a guardrail removes them from instructions and logs it. Scoring is per rubric, not per person.
 - **Data protection?** Minimal data to the model (no names in grading), answer keys isolated, links hashed and encrypted, RLS with no public access, consent notice, append-only audit trail; designed toward DPDP obligations that apply from May 2027.
 - **Business model (hypothesis)?** Per active role per month, free for one role, aimed at teams without a full ATS. To be validated.
-- **What's real today?** Everything in the demo runs on the deployed app with a real database and real AI. Simulated candidates are labelled as simulated. See the README's "real vs simulated" list.
+- **What's real today?** Everything in the demo runs on the deployed app with a real database and real AI (name the provider that powered the demo; on the Google free tier only demo data is sent to the model). Simulated candidates are labelled as simulated. See the README's "real vs simulated" list.

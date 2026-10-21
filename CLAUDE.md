@@ -25,7 +25,7 @@ Once a step of this path exists, every later task must leave it working. Re-run 
 - Next.js 16 App Router, React 19, TypeScript strict. Request interception lives in `proxy.ts` with an exported `proxy` function (Next.js 16 renamed middleware). `cookies()`, `headers()` and route `params` are async.
 - Tailwind CSS v4 (tokens via `@theme` in `app/globals.css`) + shadcn/ui components restyled to DESIGN.md. Icons: lucide-react. Animation: motion.
 - Supabase Postgres via `@supabase/supabase-js`, used only in server code with the service role key. No Supabase client in the browser.
-- AI: Vercel AI SDK v6 (`ai`, `@ai-sdk/anthropic`). Structured output is `generateText({ model, output: Output.object({ schema }) })` and the result is `.output`. `generateObject` is deprecated: never use it. When unsure, read `node_modules/ai/docs/`.
+- AI: Vercel AI SDK v6 (`ai`, with provider packages `@ai-sdk/google` and `@ai-sdk/anthropic`, plus `gateway()` from `ai`). Provider is switched by `AI_PROVIDER`; all model access goes through `lib/ai/client.ts` and no other file imports a provider package. Structured output is `generateText({ model, output: Output.object({ schema }) })` and the result is `.output`. `generateObject` is deprecated: never use it. When unsure, read `node_modules/ai/docs/`.
 - Zod v4 for every boundary. Vitest for unit tests. Playwright for the e2e golden-path test.
 - npm. Node 20.9+.
 
@@ -35,7 +35,7 @@ Once a step of this path exists, every later task must leave it working. Re-run 
 - `npm run verify` typecheck + lint + unit tests + production build (must pass before every commit)
 - `npm run test` unit tests, `npm run e2e` Playwright golden path
 - `npm run db:seed` reset and reseed demo data (only rows with `is_demo = true`)
-- `npm run db:check` confirm all 15 tables exist; `npm run ai:check` test both model IDs
+- `npm run db:check` confirm all 15 tables exist; `npm run ai:check` test the configured models, `npm run ai:models` list live model IDs
 - `npm run screenshot -- <path> [--width 375] [--name x]` signed-in screenshot to `screenshots/`
 
 ## Non-negotiable rules
