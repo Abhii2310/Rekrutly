@@ -4,11 +4,14 @@ Claude Code updates this file at the end of every prompt. Keep each list honest 
 
 ## Last completed prompt
 
-None yet. Next: Run 0001_init.sql in Supabase, then Prompt 01.
+Prompt 01 (foundation). Next: `docs/prompts/02-data-layer-and-seed.md`
 
 ## Working (verified end to end)
 
-- Schema written and tested on local Postgres 16 by the kit author (constraints, cascades, append-only receipts). Not yet applied to this project's Supabase.
+- Schema from `0001_init.sql` applied to this project's Supabase; `npm run db:check` reports all 15 tables OK.
+- Next.js 16.4.2 app with design tokens, validated env (`lib/env-schema.ts`, 12 unit tests), server-only DB client, `/api/health` (db ok locally).
+- `npm run verify` passes. `npm run ai:check` passes on Google: smart `gemini-3.5-flash` (~3.5s), fast `gemini-3.5-flash-lite` (~1.7s).
+- Home page screenshot checked: one centred line on white.
 
 ## Simulated or demo-only
 
@@ -16,4 +19,10 @@ None yet. Next: Run 0001_init.sql in Supabase, then Prompt 01.
 
 ## Not built yet / known issues
 
-- Everything in prompts 01–14
+- Everything in prompts 02–14.
+- Not yet done: GitHub push, Vercel deploy, Vercel env vars, Fluid compute check (user steps).
+- Model latency varies a lot: `gemini-3.8-flash` took ~36s and `3.7-flash` ~19s on a trivial call, so smart is set to `3.5-flash`. Re-check with `npm run ai:check` before the demo.
+- Scaffold defaults `cacheComponents` and `partialPrefetching` were removed from `next.config.ts` (they conflict with `dynamic = 'force-dynamic'` and the kit's assumptions).
+- `npm run screenshot` sign-in step warns with 404 until the login route exists (Prompt 03).
+- `next.config.ts` pins `turbopack.root` because a stray `package-lock.json` exists in the home folder.
+- shadcn init also added `components/ui/button.tsx`, `input.tsx`, `textarea.tsx`, `input-group.tsx` (dependencies of the requested components); Prompt 03 restyles them.

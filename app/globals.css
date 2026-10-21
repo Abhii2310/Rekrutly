@@ -1,0 +1,106 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@theme {
+  --color-canvas: #FFFFFF;
+  --color-mist: #F5F5F7;
+  --color-fog: #E8E8ED;
+  --color-ink: #1D1D1F;
+  --color-ink-2: #6E6E73;
+  --color-ink-3: #86868B;
+  --color-hairline: #D2D2D7;
+  --color-action: #0071E3;
+  --color-action-hover: #0077ED;
+  --color-ai: #5E5CE6;
+  --color-ai-tint: #EEEEFC;
+  --color-success: #248A3D;
+  --color-success-tint: #E9F6EC;
+  --color-warning: #B25000;
+  --color-warning-tint: #FFF3E3;
+  --color-danger: #D70015;
+  --color-danger-tint: #FFECEE;
+  --color-neutral: #6E6E73;
+  --color-neutral-tint: #F2F2F4;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), "Segoe UI", system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-inter), "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+
+  --radius-control: 10px;
+  --radius-group: 14px;
+  --radius-sheet: 18px;
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* shadcn variables mapped to Rekrutly tokens so shadcn components inherit the look */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-heading: var(--font-sans);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: var(--color-canvas);
+  --foreground: var(--color-ink);
+  --card: var(--color-canvas);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-canvas);
+  --popover-foreground: var(--color-ink);
+  --primary: var(--color-action);
+  --primary-foreground: #FFFFFF;
+  --secondary: var(--color-fog);
+  --secondary-foreground: var(--color-ink);
+  --muted: var(--color-mist);
+  --muted-foreground: var(--color-ink-2);
+  --accent: var(--color-mist);
+  --accent-foreground: var(--color-ink);
+  --destructive: var(--color-danger);
+  --border: var(--color-hairline);
+  --input: var(--color-hairline);
+  --ring: var(--color-action);
+  --radius: 10px;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans;
+    font-size: 15px;
+    line-height: 22px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

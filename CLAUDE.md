@@ -25,7 +25,7 @@ Once a step of this path exists, every later task must leave it working. Re-run 
 - Next.js 16 App Router, React 19, TypeScript strict. Request interception lives in `proxy.ts` with an exported `proxy` function (Next.js 16 renamed middleware). `cookies()`, `headers()` and route `params` are async.
 - Tailwind CSS v4 (tokens via `@theme` in `app/globals.css`) + shadcn/ui components restyled to DESIGN.md. Icons: lucide-react. Animation: motion.
 - Supabase Postgres via `@supabase/supabase-js`, used only in server code with the service role key. No Supabase client in the browser.
-- AI: Vercel AI SDK v6 (`ai`, with provider packages `@ai-sdk/google` and `@ai-sdk/anthropic`, plus `gateway()` from `ai`). Provider is switched by `AI_PROVIDER`; all model access goes through `lib/ai/client.ts` and no other file imports a provider package. Structured output is `generateText({ model, output: Output.object({ schema }) })` and the result is `.output`. `generateObject` is deprecated: never use it. When unsure, read `node_modules/ai/docs/`.
+- AI: Vercel AI SDK (`ai` v7 installed; `Output.object` and `.output` work the same as v6) (`ai`, with provider packages `@ai-sdk/google` and `@ai-sdk/anthropic`, plus `gateway()` from `ai`). Provider is switched by `AI_PROVIDER`; all model access goes through `lib/ai/client.ts` and no other file imports a provider package. Structured output is `generateText({ model, output: Output.object({ schema }) })` and the result is `.output`. `generateObject` is deprecated: never use it. When unsure, read `node_modules/ai/docs/`.
 - Zod v4 for every boundary. Vitest for unit tests. Playwright for the e2e golden-path test.
 - npm. Node 20.9+.
 
@@ -93,3 +93,7 @@ Use the first that is available: (1) a browser tool in this session (the built-i
 - If a credential, env var or SQL migration is missing, stop and tell the user exactly what to do. Do not invent values or mock around it.
 - If something outside the task looks broken, note it in PROGRESS.md under "Not built yet / known issues" instead of silently changing it.
 - At the end, report: what you built, how you verified it, anything simulated, and the next prompt to run.
+
+## Next.js agent notes
+
+@AGENTS.md

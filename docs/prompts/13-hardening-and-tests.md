@@ -16,7 +16,7 @@ Prove the product works, is safe, and looks finished on every screen, with an au
    - Every route handler validates input with Zod and returns the standard error shape; unknown errors return 500 with a generic message and log details server-side.
    - Recruiter-only routes call `require-recruiter`; demo routes also check DEMO_MODE on the server.
    - Model output is never rendered as HTML.
-   - `grep` proof that no file outside `lib/ai/client.ts` imports `@ai-sdk/*` providers or calls `gateway()`.
+   - `grep` proof that no file outside `lib/ai/client.ts` imports `@ai-sdk/*` providers or calls `gateway()` (the one allowed exception is `scripts/check-ai.ts`, which runs standalone before `lib/ai/client.ts` exists).
 3. **Resilience:** every page has loading, empty and error states; every AI action has Retry; network errors in polling show "Reconnecting" without wiping the screen; double-clicks on primary buttons cannot double-submit (disable while pending).
 4. **Accessibility:** labels on every input, focus order, visible focus, `aria-live="polite"` for autosave status and new Activity items, colour contrast ≥4.5:1 for body text, `prefers-reduced-motion` respected, portal fully keyboard-operable.
 5. **Performance:** no client components that could be server components; no request waterfalls on Overview, Results and War Room (use `Promise.all`); `/live` responds in under 300ms locally with seeded data (measure and report).
