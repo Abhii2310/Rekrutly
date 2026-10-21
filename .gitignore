@@ -1,0 +1,9 @@
+node_modules
+.next
+.env*.local
+scaffold-tmp
+test-results
+playwright-report
+screenshots
+.vercel
+.DS_Store
