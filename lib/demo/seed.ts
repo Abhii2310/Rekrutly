@@ -6,7 +6,7 @@ import { cid, jid } from './ids';
 export type SeedOptions = {
   /** Aarav's email, so the demo invitation reaches a real inbox. */
   candidateEmail?: string | null;
-  /** Aarav's WhatsApp number. */
+  /** The presenter's WhatsApp number, put on Aarav and Kabir so "Open in WhatsApp" works in the demo. */
   candidateWhatsapp?: string | null;
   /** Write the "Seeded ..." receipt. The Demo Director writes its own "Reset" receipt instead, so it turns this off. */
   logSeed?: boolean;
@@ -37,7 +37,8 @@ export async function seedDemo(db: SupabaseClient, options: SeedOptions = {}): P
     job_id: jid(s.job),
     full_name: s.name,
     email: s.n === 1 ? (options.candidateEmail ?? s.email ?? null) : (s.email ?? null),
-    phone: s.n === 1 ? (options.candidateWhatsapp ?? null) : null,
+    // The presenter's own number goes on Aarav (who takes the test live) and Kabir (who gets the demo nudge).
+    phone: s.n === 1 || s.n === 3 ? (options.candidateWhatsapp ?? null) : null,
     current_title: s.title,
     current_company: s.company,
     years_experience: s.yrs,

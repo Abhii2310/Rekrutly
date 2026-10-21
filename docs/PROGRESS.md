@@ -4,7 +4,7 @@ Claude Code updates this file at the end of every prompt. Keep each list honest 
 
 ## Last completed prompt
 
-Prompt 13 (hardening, e2e, audits). FEATURE FREEZE. Next: `docs/prompts/14-ship-and-demo.md`
+Prompt 14 (ship and demo readiness), done locally. All 14 prompts are built. Remaining for you: create GitHub and Vercel, set the environment variables, deploy, run the production check in `docs/DEMO.md`, record the backup video, rehearse.
 
 ## Working (verified end to end)
 
@@ -46,6 +46,7 @@ Prompt 13 (hardening, e2e, audits). FEATURE FREEZE. Next: `docs/prompts/14-ship-
 - **Performance:** a trivial query to the hosted database takes 250 to 470 ms from this machine, so that is the floor for any page that reads data. `/live` used three sequential round trips and took about 1.0 s; it now makes one (the assessment arrives with its candidates, submissions, signals and question count embedded) and takes 0.28 to 0.42 s over ten calls. The results list did the same (about 0.28 to 0.37 s). So "under 300 ms" is met only when the database is closer than this; the code is now one round trip. Overview and War Room already read in parallel.
 - **Design audit** (screens at 1280px; portal at 375px and 1280px; empty states after a fresh reset; screenshots in `screenshots/audit/`, not committed): Login (ok); Overview empty and with data (two receipts for one reset, fixed to one); Jobs, Job detail (ok); Candidates and profile sheet (no "Demo data" tag in the header, added); Command Centre idle, plan and guardrail notice (ok); Run review and live (ok); War Room empty and live (ok); Results (ok); Submission (ok); Compare empty (same sentence shown twice, fixed); Compare and Analytics (ok); Demo Director (ok); Portal intro, question, written answer, review, invalid link at 375px and intro at 1280px (ok). Loading states had no skeleton for 8 screens (fixed). Contrast of three small texts (fixed).
 - Dead code: removed `@vitejs/plugin-react` (unused), two unused exports in `lib/env.ts` and one in `lib/ai/followup-rules.ts`; no TODO or FIXME left. `@tailwindcss/turbopack` is reported unused by depcheck but was left in place because styling depends on how Tailwind is wired into Next; `lib/utils.ts` is the helper the shadcn tool expects and is kept.
+- Ship and demo readiness (Prompt 14): `README.md` for judges (product summary, how it works, architecture, data model, security and privacy, real versus simulated, which AI powered the demo, six-step local setup, tests, roadmap); `docs/DEMO.md` (settings the demo needs, production check, 30-minute pre-flight, the five-minute script with exact clicks, a recovery for every minute, a recovery cheat sheet); a monochrome R favicon (`app/icon.svg`) replacing the template one; Open Graph and Twitter metadata; the whole app is `noindex` (the candidate portal already was); template images removed. The reset now puts `DEMO_CANDIDATE_WHATSAPP` on Aarav and Kabir so "Open in WhatsApp" works for the demo nudge. Build, 229 unit tests and the e2e suite pass locally; the final demo data reset was run and the release is tagged `v1.0-demo` locally.
 
 ## Simulated or demo-only
 
@@ -115,3 +116,6 @@ Prompt 13 (hardening, e2e, audits). FEATURE FREEZE. Next: `docs/prompts/14-ship-
 - A failed or very slow AI call during scoring can leave a candidate on "Scoring failed" (seen: "The AI returned an answer in the wrong shape" once for one candidate); the Retry button on the submission page fixes it, and the Demo Director retries on its own.
 - On a dev server the first request to a route compiles it and can be slow; the invalid-link test warms the route first. A production build does not have this.
 - Playwright needs `RECRUITER_PASSCODE` (read from `.env.local`) and DEMO_MODE=true.
+- **Not done, by your instruction (no push or deploy until the end):** the production check (health endpoint, e2e against the Vercel URL with the fallback and with real AI, timings of planning, question writing and scoring on production). The commands are in `docs/DEMO.md`. The Vercel environment variables were not confirmed because nothing is deployed yet.
+- The git tag `v1.0-demo` exists only on this machine until you push it with `git push --tags`.
+- The README was checked for balanced code blocks and heading structure, not rendered on GitHub (there is no remote yet).
