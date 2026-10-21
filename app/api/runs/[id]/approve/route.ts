@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { apiError, apiOk } from '@/lib/api';
 import { updateAssessment } from '@/lib/db/mutations/assessments';
 import { getDb } from '@/lib/db/server';
+import { approveSweep } from '@/lib/executor/approve-sweep';
 import { buildSnapshot, stepTitles } from '@/lib/executor/approval';
 import { executeRun } from '@/lib/executor/run';
 import { setRunStatus } from '@/lib/executor/run-status';
@@ -21,14 +22,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (denied) return denied;
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) return apiError('not_found', 'Workflow not found.', 404);
-  const parsed = Body.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return apiError('invalid_input', parsed.error.issues[0]?.message ?? 'Check the settings and try again.', 400);
-  const { durationMinutes, recipientIds } = parsed.data;
-
   const db = getDb();
   const run = await db.from('workflow_runs').select('id, intent, status, job_id, plan').eq('id', id).maybeSingle();
   if (run.error) return apiError('db_error', "Couldn't load the workflow.", 500);
   if (!run.data) return apiError('not_found', 'Workflow not found.', 404);
+  if (run.data.intent === 'follow_up_sweep') {
+    return approveSweep({ id, status: run.data.status as string, job_id: (run.data.job_id as string | null) ?? null, plan: run.data.plan as Record<string, unknown> });
+  }
+
+  const parsed = Body.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return apiError('invalid_input', parsed.error.issues[0]?.message ?? 'Check the settings and try again.', 400);
+  const { durationMinutes, recipientIds } = parsed.data;
+
   const runRow = run.data;
   if (run.data.intent !== 'create_assessment_workflow') return apiError('unsupported_intent', "This kind of workflow can't be approved yet.", 400);
   if (!['awaiting_approval', 'draft'].includes(run.data.status as string)) {

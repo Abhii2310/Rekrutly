@@ -10,6 +10,7 @@ import { assertTransition, type AssessmentStatus, type Stage } from '@/lib/statu
 import type { ActionName, Json } from '@/lib/db/types';
 import { planDelivery } from './email-plan';
 import { sendEmail } from './email';
+import { analyzePipeline, draftFollowups } from './followup-actions';
 
 export type ExecContext = { runId: string; stepId: string; jobId: string | null };
 
@@ -215,4 +216,6 @@ export const ACTIONS: Partial<Record<ActionName, RegisteredAction>> = {
   create_invitations: register(createInvitations),
   send_invitations: register(sendInvitations),
   track_submissions: register(trackSubmissions),
+  analyze_pipeline: register(analyzePipeline),
+  draft_followups: register(draftFollowups),
 };

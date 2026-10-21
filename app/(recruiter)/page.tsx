@@ -63,7 +63,7 @@ export default async function OverviewPage() {
                   title={t.title}
                   subtitle={t.detail ?? undefined}
                   pill={<StatusPill kind="task" value={t.status} />}
-                  href={t.candidate_id ? `/candidates?c=${t.candidate_id}` : t.run_id ? `/runs/${t.run_id}` : undefined}
+                  href={t.run_id ? `/runs/${t.run_id}/war-room` : t.candidate_id ? `/candidates?c=${t.candidate_id}` : undefined}
                 />
               ))}
             </GroupedList>

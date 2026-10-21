@@ -11,6 +11,7 @@ import { StatusPill } from "@/components/ui/status-pill"
 import { SimulatedTag } from "@/components/ui/tags"
 import { toast } from "@/components/ui/toaster"
 import { usePoll } from "@/hooks/use-poll"
+import { copyText } from "@/lib/copy-text"
 import { formatRelative, formatTime } from "@/lib/format"
 import type { RunLive as RunLiveData } from "@/lib/db/queries/live"
 
@@ -35,25 +36,6 @@ async function fetchLink(id: string): Promise<string | null> {
     return ((await res.json()) as { data: { url: string } }).data.url
   } catch {
     return null
-  }
-}
-
-/** Clipboard API first; a hidden textarea as a fallback for browsers or frames that block it. */
-async function copyText(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text)
-    return true
-  } catch {
-    const el = document.createElement("textarea")
-    el.value = text
-    el.setAttribute("readonly", "")
-    el.style.cssText = "position:fixed;top:0;left:0;opacity:0"
-    document.body.appendChild(el)
-    el.select()
-    let ok = false
-    try { ok = document.execCommand("copy") } catch { ok = false }
-    el.remove()
-    return ok
   }
 }
 

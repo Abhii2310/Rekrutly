@@ -286,7 +286,7 @@ Single recruiter, passcode-based (production would use SSO). `POST /api/auth/log
 - Candidate in the run without email → `missing_email`.
 - Submission scored and not yet reviewed → `review_submission`.
 - Recruiter moves a candidate to `interview` → `schedule_interview`.
-Drafts are generated on demand (`FollowUpDraft`), never sent automatically. WhatsApp uses `https://wa.me/<digits>?text=<encoded>`; the recruiter presses send in WhatsApp.
+Drafts are generated on demand (`FollowUpDraft`), never sent automatically. The model-facing draft schema has no length limits (strict providers reject long output); `lib/ai/followup-rules.ts` enforces them, checks the script (Devanagari for Hindi, Kannada script for Kannada) and the candidate link is appended by code. `follow_up_sweep` targets the latest approved assessment run; its steps store `targetRunId` at approval. WhatsApp uses `https://wa.me/<digits>?text=<encoded>`; the recruiter presses send in WhatsApp.
 
 ## 12. Email (optional)
 

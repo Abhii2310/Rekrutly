@@ -3,6 +3,10 @@ import { QueryError } from "@/components/frame/query-error"
 import { QuestionBuilder } from "@/components/questions/builder"
 import { ApprovalPanel } from "@/components/run/approval-panel"
 import { RunLive } from "@/components/run/run-live"
+import { SweepRun } from "@/components/run/sweep-run"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { previewSweep } from "@/lib/executor/approve-sweep"
 import { AIMark } from "@/components/ui/ai-mark"
 import { PageBody, PageHeader } from "@/components/ui/page-header"
 import { ProgressRail } from "@/components/ui/progress-rail"
@@ -47,6 +51,10 @@ export default async function RunPage({ params, searchParams }: { params: Promis
     recipients = ((rows.data ?? []) as { id: string; full_name: string; email: string | null }[]).map((r) => ({ id: r.id, name: r.full_name, email: r.email }))
   }
 
+  const isSweep = plan.intent === "follow_up_sweep"
+  const sweepPreview = isSweep && beforeApproval ? await previewSweep(run.job_id) : { targetRunId: null, targetTitle: null, recipients: [] }
+  const sweepTarget = sweepPreview.targetRunId ?? ((plan as { target_run_id?: string }).target_run_id ?? null)
+  const showWarRoom = isAssessmentFlow && !beforeApproval && run.status !== "cancelled"
   const noEmail = plan.candidates.filter((c) => !c.has_email).length
 
   return (
@@ -54,7 +62,7 @@ export default async function RunPage({ params, searchParams }: { params: Promis
       <PageHeader
         title={plan.job ? plan.job.title : "Workflow"}
         description={`Created ${formatRelative(run.created_at)}`}
-        actions={<><StatusPill kind="run" value={run.status} />{run.is_demo ? <DemoTag /> : null}</>}
+        actions={<>{showWarRoom ? <Button asChild variant="secondary" size="sm"><Link href={`/runs/${run.id}/war-room`}>Open War Room</Link></Button> : null}<StatusPill kind="run" value={run.status} />{run.is_demo ? <DemoTag /> : null}</>}
       />
       <PageBody>
         <div className="flex max-w-[720px] items-start justify-between gap-4">
@@ -99,6 +107,8 @@ export default async function RunPage({ params, searchParams }: { params: Promis
             ) : null}
             <RunLive runId={run.id} initial={live.data} />
           </div>
+        ) : isSweep ? (
+          <SweepRun runId={run.id} initial={live.data} beforeApproval={beforeApproval} cancelled={run.status === "cancelled"} preview={sweepPreview} targetRunId={sweepTarget} />
         ) : (
           <Section title="Steps" className="mt-10">
             <div className="max-w-[720px]">

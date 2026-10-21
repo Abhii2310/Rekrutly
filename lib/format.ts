@@ -5,7 +5,14 @@ const dateTime = new Intl.DateTimeFormat('en-IN', {
 });
 const dateOnly = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: TZ });
 
+const dayMonth = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', timeZone: TZ });
+
 const toDate = (d: string | number | Date): Date => (d instanceof Date ? d : new Date(d));
+
+/** "3 Nov" in India time. */
+export function formatDate(d: string | number | Date): string {
+  return dayMonth.format(toDate(d));
+}
 
 /** "3 Nov, 3:42 pm" in en-IN. */
 export function formatDateTime(d: string | number | Date): string {

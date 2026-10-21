@@ -124,6 +124,9 @@
 @keyframes rail-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .rail-spin { animation: rail-spin 2.4s linear infinite; transform-origin: center; }
 .rail-in { animation: rail-in 240ms var(--ease-spring) both; }
+/* A row's activity dot pulses once when that row changes. Real events only. */
+@keyframes dot-pulse { 0% { transform: scale(1); opacity: 1; } 40% { transform: scale(1.9); opacity: 0.55; } 100% { transform: scale(1); opacity: 1; } }
+.dot-pulse { animation: dot-pulse 700ms var(--ease-spring) 1; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -133,6 +136,7 @@
     scroll-behavior: auto !important;
   }
   .rail-spin { animation: none; }
+  .dot-pulse { animation: none; }
 }
 
 @media print {

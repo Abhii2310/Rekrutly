@@ -24,19 +24,21 @@ type RowProps = {
   href?: string
   onClick?: () => void
   className?: string
+  /** Let long titles wrap instead of being cut off. For sentences, not names. */
+  wrap?: boolean
 }
 
 const rowBase =
   "focus-ring flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left"
 
-export function ListRow({ leading, title, subtitle, value, pill, actions, href, onClick, className }: RowProps) {
+export function ListRow({ leading, title, subtitle, value, pill, actions, href, onClick, className, wrap }: RowProps) {
   const interactive = Boolean(href || onClick)
   const body = (
     <>
       {leading ? <span className="shrink-0">{leading}</span> : null}
       <span className="min-w-0 flex-1">
-        <span className="t-headline block truncate text-ink">{title}</span>
-        {subtitle ? <span className="t-callout block truncate text-ink-2">{subtitle}</span> : null}
+        <span className={cn("t-headline block text-ink", !wrap && "truncate")}>{title}</span>
+        {subtitle ? <span className={cn("t-callout block text-ink-2", !wrap && "truncate")}>{subtitle}</span> : null}
       </span>
       {value ? <span className="t-callout tabular shrink-0 text-ink-2">{value}</span> : null}
       {pill ? <span className="shrink-0">{pill}</span> : null}
