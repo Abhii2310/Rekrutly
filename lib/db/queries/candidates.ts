@@ -25,7 +25,7 @@ function flatten({ jobs, ...rest }: JoinedRow): CandidateListItem {
 }
 
 export async function listCandidates(filters: CandidateFilters = {}): Promise<Result<CandidateListItem[]>> {
-  let q = getDb().from('candidates').select(`${CANDIDATE_COLUMNS}, jobs(title)`).order('created_at', { ascending: true });
+  let q = getDb().from('candidates').select(`${CANDIDATE_COLUMNS}, jobs(title)`).order('created_at', { ascending: true }).order('id', { ascending: true });
   if (filters.jobId) q = q.eq('job_id', filters.jobId);
   if (filters.stage) q = Array.isArray(filters.stage) ? q.in('stage', filters.stage) : q.eq('stage', filters.stage);
   const term = filters.search ? safeSearch(filters.search) : '';

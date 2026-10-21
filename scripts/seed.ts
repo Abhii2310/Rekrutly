@@ -94,6 +94,8 @@ async function main(): Promise<void> {
   // Reset deletes every demo run, assessment, invitation and submission, including ones created by hand in DEMO_MODE.
   // Fixed seeded UUIDs keep saved fallbacks valid. Rows with is_demo = false are never touched.
   await run('delete demo runs', db.from('workflow_runs').delete().eq('is_demo', true));
+  // Old seed receipts have no run or job, so they would pile up on the Overview. Remove only those.
+  await run('delete old seed receipts', db.from('workflow_events').delete().eq('type', 'system.seeded'));
   await run('delete demo jobs', db.from('jobs').delete().eq('is_demo', true));
 
   await run('insert jobs', db.from('jobs').insert(JOBS));

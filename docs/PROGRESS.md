@@ -4,7 +4,7 @@ Claude Code updates this file at the end of every prompt. Keep each list honest 
 
 ## Last completed prompt
 
-Prompt 03 (access gate and UI kit). Next: `docs/prompts/04-overview-jobs-candidates.md`
+Prompt 04 (overview, jobs, candidates). Next: `docs/prompts/05-command-centre.md`
 
 ## Working (verified end to end)
 
@@ -17,6 +17,7 @@ Prompt 03 (access gate and UI kit). Next: `docs/prompts/04-overview-jobs-candida
 
 - Access gate: passcode login (`/login`), HMAC session cookie (httpOnly, 7 days), `proxy.ts` protecting all recruiter routes and APIs, `requireRecruiter()` helper. Checked in the browser: signed-out redirect keeps `?next=`, wrong passcode shows the inline error, right passcode lands on the target page, sign out works, `/a/test` is not redirected (404), recruiter API returns 401 when signed out. 6 session unit tests.
 - UI kit in `components/ui/` (Button, Input, Textarea, SegmentedControl, StatusPill, AIMark, DemoTag, SimulatedTag, GroupedList, ListRow, Stat, PageHeader, EmptyState, ErrorState, Skeleton, Avatar, Kbd, ProgressRail, Toaster, plus restyled Dialog, Sheet, Tooltip, DropdownMenu, Command, Switch) and `/styleguide` (DEMO_MODE only) showing them in every state. Frame: 240px sidebar that collapses to a 72px icon rail under 1024px; placeholder pages for every nav item.
+- Overview (stats, needs attention, active workflows, recent activity), Jobs, Job detail, Candidates with URL-backed filters and search, and a candidate profile sheet (`?c=`) with add-email and allowed-stage changes. `PATCH /api/candidates/[id]` validates with Zod and `assertTransition`, logs `candidate.stage_changed` / `candidate.updated`. Checked in the browser: Rohan Nair email added, stage moved to Interview, both shown in Activity, reload kept the sheet open. API error cases checked with curl (401, 400, 404, 409 twice). 46 unit tests.
 
 ## Simulated or demo-only
 
@@ -24,7 +25,10 @@ Prompt 03 (access gate and UI kit). Next: `docs/prompts/04-overview-jobs-candida
 
 ## Not built yet / known issues
 
-- Everything in prompts 04–14. Nav pages (Overview, Command, Jobs, Candidates, War Room, Analytics) are honest placeholders until their prompts.
+- Everything in prompts 05–14. Command, War Room and Analytics are honest placeholders until their prompts.
+- Overview, job and run links point to `/runs/[id]`, which is built in Prompt 05; no runs exist yet, so no link is dead.
+- Candidate profile "Assessments" shows an empty note until Prompt 09.
+- Seed now clears old `system.seeded` receipts so the Overview activity list stays clean.
 - Added a token `--color-action-tint` (blue tint) for status pills; DESIGN.md lists no tint for the `action` tone.
 - Tertiary text token `ink-3` (#86868B) is below 4.5:1 on white; it is only used for placeholders and chevrons. Rail timestamps use `ink-2`.
 - The shadcn `radix-nova` preset installed the `cn` helper package (by shadcn); kept as is.
