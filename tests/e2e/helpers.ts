@@ -16,6 +16,11 @@ export async function signIn(page: Page): Promise<void> {
 }
 
 export async function resetDemo(request: APIRequestContext): Promise<void> {
+  // The reset deletes demo data, and every emailed candidate link with it. The app's database is shared with the live
+  // site, so these tests refuse to run unless you say it is safe (a separate test database, or nothing live to lose).
+  if (process.env.E2E_ALLOW_RESET !== 'true') {
+    throw new Error('Refusing to reset demo data. This wipes the workflows and candidate links in the database the app uses. Set E2E_ALLOW_RESET=true only against a database with nothing live in it.');
+  }
   const res = await request.post('/api/demo/reset');
   expect(res.ok(), 'reset demo data (needs DEMO_MODE=true)').toBeTruthy();
 }

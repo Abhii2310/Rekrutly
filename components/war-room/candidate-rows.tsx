@@ -4,7 +4,7 @@ import * as React from "react"
 import { cn } from "cn"
 import { formatTime } from "@/lib/format"
 import type { LiveAlert, LiveInvitation } from "@/lib/db/queries/live"
-import { FixEmail } from "./fix-email"
+import { FixEmail, ResendButton } from "./fix-email"
 import { reviewHref } from "./live-alerts"
 import { signalLabel } from "@/lib/proctor/signals"
 import { signalNote } from "@/lib/scoring/labels"
@@ -65,6 +65,7 @@ export function CandidateRows({ invitations, questionCount, serverNow, alerts = 
                 )}
                 <span className="min-w-0">
                   <span className="t-headline block break-words text-ink">{i.name}</span>
+                  {i.delivery_status === "sent" && i.status !== "started" && i.status !== "submitted" ? <ResendButton invitation={i} /> : null}
                   {latest && recent ? (
                     <span className="t-footnote block text-danger">
                       {signalLabel(latest.type)}.{" "}

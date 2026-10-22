@@ -50,3 +50,20 @@ export function FixEmail({ invitation }: { invitation: LiveInvitation }) {
     </form>
   )
 }
+
+/** A small "Resend email" for someone who has not started yet, in case the first email was missed or deleted. */
+export function ResendButton({ invitation }: { invitation: LiveInvitation }) {
+  const [pending, setPending] = React.useState(false)
+  async function resend() {
+    if (pending) return
+    setPending(true)
+    const failed = await call(`/api/invitations/${invitation.id}/resend`, "POST")
+    setPending(false)
+    toast(failed ?? `Sent the link again to ${invitation.name}`)
+  }
+  return (
+    <button type="button" onClick={() => void resend()} disabled={pending} className="focus-ring t-footnote rounded text-action hover:text-action-hover disabled:opacity-50">
+      {pending ? "Sending…" : "Resend email"}
+    </button>
+  )
+}

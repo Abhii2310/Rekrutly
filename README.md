@@ -99,7 +99,7 @@ Requires Node 20.9 or newer.
 |---|---|
 | `npm test` | Unit tests (Vitest): tokens, sessions, guardrails, scoring, aggregates, status transitions, task rules, analytics, compare, draft checks |
 | `npm run verify` | Typecheck, lint, unit tests and a production build |
-| `npm run e2e` | The Playwright golden path and negative cases. Add `E2E_USE_FALLBACK=true` to use the saved plan and questions instead of the live AI. Needs `DEMO_MODE=true` and `RECRUITER_PASSCODE` in `.env.local` |
+| `npm run e2e` | The Playwright golden path and negative cases. **These reset demo data, which deletes live workflows and emailed candidate links in the same database, so they refuse to run unless `E2E_ALLOW_RESET=true` is set. Use a separate test database.** Add `E2E_USE_FALLBACK=true` to use the saved plan and questions instead of the live AI. Needs `DEMO_MODE=true` and `RECRUITER_PASSCODE` in `.env.local` |
 
 To run the end-to-end suite against a deployed copy: `PLAYWRIGHT_BASE_URL=https://your-app.vercel.app E2E_USE_FALLBACK=true npm run e2e`.
 
