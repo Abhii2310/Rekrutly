@@ -17,7 +17,7 @@
 
 - **Landing page** at the root address (the app lives at `/overview`): an aurora hero, a pinned scroll story of the whole product, and almost no text. Nothing on it is a made-up number.
 - **Command Centre, Spotlight (Ctrl or Cmd + K) and voice** to plan in a sentence from anywhere.
-- **Roles and candidates:** create a role, import candidates from a CSV (bad rows are listed with the reason, duplicates are skipped), and move people through stages.
+- **Roles and candidates:** create a role, add a candidate by hand (name, email, role) or import from a CSV (bad rows are listed with the reason, duplicates are skipped), and move people through stages.
 - **Activity:** every receipt, filterable, with a CSV export for an audit.
 - **Data and privacy:** export everything held about a candidate, or delete a candidate and their data on request; a receipt without their name is kept.
 - **Settings:** system status, a one-click AI check that shows which provider answered and how fast, and the keyboard shortcuts.
