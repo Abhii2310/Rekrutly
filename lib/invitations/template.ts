@@ -1,33 +1,49 @@
-/** The fixed invitation text. Used for the preview in the review step and for real emails. */
+/** The fixed invitation text. Used for the preview in the review step and for real emails. Short on purpose. */
 export function invitationText(input: { firstName: string; role: string; durationMinutes: number; link?: string; proctored?: boolean }): { subject: string; body: string } {
   const { firstName, role, durationMinutes, link, proctored } = input;
   const lines = [
     `Hi ${firstName},`,
     '',
-    `Thanks for applying for the ${role} role. As the next step, we'd like you to take a short online assessment. It takes about ${durationMinutes} minutes, and you can only take it once.`,
+    `Thanks for applying for the ${role} role. The next step is a short online assessment. It takes about ${durationMinutes} minutes and can only be taken once.`,
     '',
     link ? `Start here: ${link}` : 'Start here: your personal link appears in this message.',
     '',
-    "Your link is personal. Please don't share it. You don't need to create an account or sign in: the link is your way in.",
-    '',
-    'Before you start',
-    `- Set aside ${durationMinutes} uninterrupted minutes. The timer starts when you press Start and cannot be paused.`,
-    '- Use a laptop or desktop with Chrome, Edge or Safari, and a stable internet connection. A phone works too.',
-    '- Close other tabs and apps. Answers save as you go, so a refresh will not lose your work.',
+    'What to expect',
+    `- The timer starts when you press Start and can't be paused. Your answers save as you go.`,
+    "- No account or sign-in. Your link is personal, so please don't share it.",
     ...(proctored
       ? [
-          '- This assessment is recorded on your camera and microphone. You will see a consent screen and a camera check first.',
-          '- Sit in a quiet, well-lit room, alone, with your face in view of the camera for the whole assessment. Please keep your eyes on the screen and do not talk or have others speak nearby.',
-          '- Allow camera and microphone access when your browser asks. Keep the page open and your camera on until you submit.',
-          '- Please do not switch tabs, copy or paste, or leave full screen. These moments are shown to the reviewer as signals to look at, never as proof, and nothing fails automatically.',
+          "- The assessment is recorded on your camera and microphone. You'll see a consent screen and a quick camera check first. Please sit alone in a quiet, well-lit room with your face in view.",
+          "- Stay on the page: don't switch tabs or copy and paste. Anything unusual is flagged for a person to review. Nothing is decided automatically.",
         ]
-      : ['- Please do not switch tabs or paste text. These are shown to the reviewer as signals, not as proof.']),
-    '- A person reviews your results. Nothing is decided automatically.',
+      : ["- Stay on the page and don't paste answers in. A person reads every submission."]),
     '',
-    'Good luck.',
+    'Good luck,',
     'The hiring team',
   ];
-  return { subject: `Your ${role} assessment`, body: lines.join('\n') };
+  return { subject: `Your next step for the ${role} role`, body: lines.join('\n') };
+}
+
+/** Sent once, right after a candidate submits. Says what happens next, and nothing about scores. */
+export function submissionText(input: { firstName: string; role: string; autoSubmitted: boolean; proctored: boolean }): { subject: string; body: string } {
+  const { firstName, role, autoSubmitted, proctored } = input;
+  const lines = [
+    `Hi ${firstName},`,
+    '',
+    `Thank you for completing the ${role} assessment. We've received your answers.`,
+    ...(autoSubmitted ? ['', 'Your time ran out, so your answers were submitted automatically.'] : []),
+    '',
+    'What happens next',
+    '- Our hiring team will review your submission. A person reads every one, and nothing is decided automatically.',
+    "- We'll email you with the next steps. You don't need to do anything else, and you can close the exam page.",
+    ...(proctored ? ['- The recording of your assessment is seen only by the hiring team.'] : []),
+    '',
+    'If you have any questions, just reply to this email.',
+    '',
+    'Thanks again,',
+    'The hiring team',
+  ];
+  return { subject: `We've received your ${role} assessment`, body: lines.join('\n') };
 }
 
 export const firstNameOf = (fullName: string): string => fullName.trim().split(/\s+/)[0] ?? fullName;
