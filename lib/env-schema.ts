@@ -40,6 +40,9 @@ const schema = z
     DEMO_CANDIDATE_WHATSAPP: z.string().optional(),
     RESEND_API_KEY: z.string().optional(),
     EMAIL_FROM: z.string().default('Rekrutly <onboarding@resend.dev>'),
+    // Send from a Gmail account (any recipient). Needs a Google app password, not the normal password.
+    GMAIL_USER: z.string().optional(),
+    GMAIL_APP_PASSWORD: z.string().optional(),
   })
   .superRefine((v, ctx) => {
     if (v.AI_FALLBACK_PROVIDER && v.AI_FALLBACK_PROVIDER === v.AI_PROVIDER) {
@@ -73,7 +76,15 @@ export function parseEnv(raw: Record<string, string | undefined>): ParseEnvResul
 
 export type EmailStatus = 'configured' | 'not_configured' | 'test_sender_without_recipient';
 
-export function emailStatus(env: Pick<Env, 'RESEND_API_KEY' | 'EMAIL_FROM' | 'DEMO_CANDIDATE_EMAIL'>): EmailStatus {
+export const gmailConfigured = (env: Pick<Env, 'GMAIL_USER' | 'GMAIL_APP_PASSWORD'>): boolean => Boolean(env.GMAIL_USER && env.GMAIL_APP_PASSWORD);
+
+/** The From header actually used: the Gmail account when it is set, otherwise EMAIL_FROM. */
+export function fromAddress(env: Pick<Env, 'GMAIL_USER' | 'GMAIL_APP_PASSWORD' | 'EMAIL_FROM'>): string {
+  return gmailConfigured(env) ? `Rekrutly <${env.GMAIL_USER}>` : env.EMAIL_FROM;
+}
+
+export function emailStatus(env: Pick<Env, 'RESEND_API_KEY' | 'EMAIL_FROM' | 'DEMO_CANDIDATE_EMAIL'> & Partial<Pick<Env, 'GMAIL_USER' | 'GMAIL_APP_PASSWORD'>>): EmailStatus {
+  if (gmailConfigured(env)) return 'configured';
   if (!env.RESEND_API_KEY) return 'not_configured';
   if (env.EMAIL_FROM.includes('resend.dev') && !env.DEMO_CANDIDATE_EMAIL) return 'test_sender_without_recipient';
   return 'configured';

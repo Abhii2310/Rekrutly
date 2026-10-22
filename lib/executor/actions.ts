@@ -1,7 +1,7 @@
 import 'server-only';
 import { z } from 'zod';
 import { getDb } from '@/lib/db/server';
-import { env, emailStatus } from '@/lib/env';
+import { env, emailStatus, fromAddress } from '@/lib/env';
 import { logEvent } from '@/lib/events';
 import { invitationText, firstNameOf } from '@/lib/invitations/template';
 import { err, ok, type Result } from '@/lib/result';
@@ -133,7 +133,7 @@ const sendInvitations: ActionDef<{ candidateIds: string[] }> = {
     const todo = (rows.data as unknown as Row[]).filter((r) => r.delivery_status !== 'sent');
 
     const plan = planDelivery(
-      { status: emailStatus(env), from: env.EMAIL_FROM, demoEmail: env.DEMO_CANDIDATE_EMAIL },
+      { status: emailStatus(env), from: fromAddress(env), demoEmail: env.DEMO_CANDIDATE_EMAIL },
       todo.map((r) => ({ id: r.id, email: r.candidates?.email ?? null })),
     );
 
