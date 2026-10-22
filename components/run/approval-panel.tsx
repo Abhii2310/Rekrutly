@@ -75,17 +75,18 @@ export function ApprovalPanel({
   const [cancelling, setCancelling] = React.useState(false)
   const [showFull, setShowFull] = React.useState(false)
   const [proctored, setProctored] = React.useState(false)
+  const [aiInterview, setAiInterview] = React.useState(false)
 
   const picked = recipients.filter((r) => chosen.has(r.id))
   const withEmail = picked.filter((r) => r.email).length
   const titles = stepTitles(picked.length, withEmail)
-  const preview = invitationText({ firstName: picked[0] ? firstNameOf(picked[0].name) : "there", role: roleTitle, durationMinutes: minutes, proctored })
+  const preview = invitationText({ firstName: picked[0] ? firstNameOf(picked[0].name) : "there", role: roleTitle, durationMinutes: minutes, proctored, aiInterview })
 
   async function approve() {
     if (pending || picked.length === 0) return
     setPending(true)
     setError(null)
-    const message = await send(`/api/runs/${runId}/approve`, "POST", { durationMinutes: minutes, proctored, recipientIds: picked.map((r) => r.id) })
+    const message = await send(`/api/runs/${runId}/approve`, "POST", { durationMinutes: minutes, proctored, aiInterview, recipientIds: picked.map((r) => r.id) })
     if (message) {
       setPending(false)
       return setError(message)
@@ -153,6 +154,21 @@ export function ApprovalPanel({
               {proctored
                 ? "Candidates see a clear consent screen and a camera check first. You get live alerts and a recording to review. Alerts are signals for you to look at, never proof, and nothing fails automatically."
                 : "Off. Candidates are not recorded."}
+            </span>
+          </span>
+        </label>
+      </section>
+
+      <section>
+        <h3 className="t-headline text-ink">AI interview</h3>
+        <label className="mt-2 flex cursor-pointer items-start gap-3">
+          <input type="checkbox" checked={aiInterview} onChange={(e) => setAiInterview(e.target.checked)} className="focus-ring mt-1 size-4 shrink-0 accent-[var(--color-action)]" />
+          <span className="min-w-0">
+            <span className="t-body block text-ink">Add a talking AI interview after the test</span>
+            <span className="t-callout block text-ink-2">
+              {aiInterview
+                ? "Right after the test, in the same link, an AI interviewer speaks four questions built from each person's own resume and test, and listens to their answers. You get a transcript and evidence notes with exact quotes, never a score."
+                : "Off. The candidate finishes after the test."}
             </span>
           </span>
         </label>

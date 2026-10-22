@@ -5,6 +5,7 @@ import { withInvitation } from '@/lib/portal/http';
 import { markOpened, questionCount } from '@/lib/portal/service';
 import { getPortalState, toIso } from '@/lib/portal/state';
 import { getDb } from '@/lib/db/server';
+import { getState } from '@/lib/ai-interview/service';
 import { runPostSubmitPipeline } from '@/lib/scoring/pipeline';
 import { afterSubmit, submitAssessment } from '@/lib/scoring/submit';
 
@@ -42,6 +43,7 @@ async function handleGET(_request: Request, { params }: { params: Promise<{ toke
 
   if (state === 'ready') await markOpened(inv);
 
+  const aiInterview = state === 'submitted' && inv.assessment.ai_interview ? await getState(inv) : null;
   const showTest = state === 'ready' || state === 'in_progress';
   return apiOk({
     state,
@@ -53,6 +55,8 @@ async function handleGET(_request: Request, { params }: { params: Promise<{ toke
     durationMinutes: showTest ? inv.assessment.duration_minutes : null,
     questionCount: showTest ? await questionCount(inv.assessment_id) : null,
     proctored: showTest ? inv.assessment.proctored : false,
+    aiInterview: aiInterview ? { status: aiInterview.status } : null,
+    aiInterviewAnnounced: showTest ? inv.assessment.ai_interview : false,
     instructions: state === 'ready' ? inv.assessment.instructions : null,
     deadlineAt: state === 'in_progress' ? toIso(inv.deadline_at) : null,
     submittedAt: state === 'submitted' ? toIso(inv.submitted_at) : null,

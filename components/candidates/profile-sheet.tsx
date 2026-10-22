@@ -12,6 +12,7 @@ import { DemoTag } from "@/components/ui/tags"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { toast } from "@/components/ui/toaster"
+import { AiInterviewPanel } from "@/components/hr/ai-interview-panel"
 import { InterviewPanel } from "@/components/hr/interview-panel"
 import { OfferPanel } from "@/components/hr/offer-panel"
 import { RejectDialog } from "@/components/hr/reject-dialog"
@@ -249,7 +250,13 @@ export function CandidateSheet({ candidate }: { candidate: ProfileData }) {
           ) : null}
 
           {tab === "interview" && candidate.hr ? (
-            <Block title="Interview">
+            <Block title="AI interview">
+              <AiInterviewPanel ai={candidate.hr.aiInterview} />
+            </Block>
+          ) : null}
+
+          {tab === "interview" && candidate.hr ? (
+            <Block title="Live interview">
               <InterviewPanel candidateId={candidate.id} candidateName={candidate.fullName} email={candidate.email} interviews={candidate.hr.interviews} />
             </Block>
           ) : null}

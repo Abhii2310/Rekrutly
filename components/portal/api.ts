@@ -7,6 +7,9 @@ export type PortalInfo = {
   durationMinutes: number | null
   questionCount: number | null
   proctored: boolean
+  /** Set after submitting, when the assessment has an AI interview: not started, in progress or finished. */
+  aiInterview: { status: "none" | "in_progress" | "completed" } | null
+  aiInterviewAnnounced: boolean
   instructions: string | null
   deadlineAt: string | null
   submittedAt: string | null
