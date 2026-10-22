@@ -6,6 +6,7 @@ import { SelectableCandidates } from "@/components/candidates/selectable-list"
 import { PageBody, PageHeader } from "@/components/ui/page-header"
 import { DemoTag } from "@/components/ui/tags"
 import { groupStages, parseGroup } from "@/lib/candidate-groups"
+import { getHrData, listHrBadges } from "@/lib/hr/queries"
 import { getCandidate, listCandidates } from "@/lib/db/queries/candidates"
 import { listJobs } from "@/lib/db/queries/jobs"
 import { formatRelative } from "@/lib/format"
@@ -40,6 +41,8 @@ export default async function CandidatesPage({ searchParams }: { searchParams: P
   }
 
   const now = new Date()
+  const badges = await listHrBadges(list.data.map((c) => c.id))
+  const hr = detail?.ok && detail.data ? await getHrData(detail.data.id) : null
   let profile: ProfileData | null = null
   if (detail?.ok && detail.data) {
     const c = detail.data
@@ -59,6 +62,7 @@ export default async function CandidatesPage({ searchParams }: { searchParams: P
       nextStages: [...allowedTransitions("candidate", c.stage)],
       events: c.events.map((e) => ({ id: e.id, message: e.message, when: formatRelative(e.created_at, now) })),
       assessments: c.assessments,
+      hr: hr?.ok ? hr.data : null,
     }
   }
 
@@ -76,6 +80,7 @@ export default async function CandidatesPage({ searchParams }: { searchParams: P
           <SelectableCandidates
             rows={list.data.map((c) => ({
               id: c.id, jobId: c.job_id, jobTitle: c.job_title, name: c.full_name, stage: c.stage,
+              match: badges.get(c.id)?.score ?? null, shortlisted: badges.get(c.id)?.shortlisted ?? false, interview: badges.get(c.id)?.interview ?? false, offer: badges.get(c.id)?.offer ?? false,
               subtitle: c.current_title && c.current_company ? `${c.current_title} at ${c.current_company}` : c.current_title,
               href: `/candidates?${new URLSearchParams({ ...(sp.g ? { g: sp.g } : {}), ...(jobId ? { job: jobId } : {}), ...(search ? { q: search } : {}), c: c.id }).toString()}`,
             }))}

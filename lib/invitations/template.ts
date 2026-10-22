@@ -56,10 +56,13 @@ const esc = (t: string): string => t.replace(/&/g, '&amp;').replace(/</g, '&lt;'
  */
 export function invitationHtml(body: string, link: string | undefined): string {
   const blocks = body.split('\n\n').map((block) => {
-    if (link && block.startsWith('Start here:')) {
-      return `<p style="margin:24px 0"><a href="${esc(link)}" style="display:inline-block;background:#0071E3;color:#ffffff;text-decoration:none;font-weight:600;padding:14px 28px;border-radius:999px">Start your assessment</a></p>`
+    const action = block.startsWith('Start here:') ? 'Start your assessment' : block.startsWith('Join here:') ? 'Join the interview' : null;
+    if (link && action) {
+      return `<p style="margin:24px 0"><a href="${esc(link)}" style="display:inline-block;background:#0071E3;color:#ffffff;text-decoration:none;font-weight:600;padding:14px 28px;border-radius:999px">${action}</a></p>`
         + `<p style="margin:0 0 16px;color:#6e6e73;font-size:13px">If the button does not work, copy this link into your browser:<br><a href="${esc(link)}" style="color:#0071E3;word-break:break-all">${esc(link)}</a></p>`;
     }
+    const cal = /^Add it to your calendar: (https:\/\/\S+)$/.exec(block);
+    if (cal) return `<p style="margin:0 0 16px"><a href="${esc(cal[1] as string)}" style="color:#0071E3">Add it to your calendar</a></p>`;
     const lines = block.split('\n');
     const firstBullet = lines.findIndex((l) => l.startsWith('- '));
     if (firstBullet >= 0 && lines.slice(firstBullet).every((l) => l.startsWith('- '))) {

@@ -34,6 +34,23 @@ async function main(): Promise<void> {
   }
   console.log('ok      signal types eyes_away, voice_detected');
 
+  // Migration 0004: resume match, shortlist, interviews, offers.
+  const hr: [string, PromiseLike<{ error: { message: string } | null }>][] = [
+    ['candidates.resume_text, resume_match, shortlisted', db.from('candidates').select('resume_text, resume_match, shortlisted').limit(1)],
+    ['interviews table', db.from('interviews').select('id').limit(1)],
+    ['offers table', db.from('offers').select('id').limit(1)],
+  ];
+  let hrOk = true;
+  for (const [name, q] of hr) {
+    const { error } = await q;
+    console.log(`${error ? 'MISSING' : 'ok     '} ${name}${error ? `  (${error.message})` : ''}`);
+    if (error) hrOk = false;
+  }
+  if (!hrOk) {
+    console.error('\nRun supabase/migrations/0004_hr_flow.sql in the Supabase SQL Editor, then run this again.');
+    process.exit(1);
+  }
+
   const list = await db.storage.listBuckets();
   if (list.error) throw new Error(list.error.message);
   if (list.data.some((b) => b.name === BUCKET)) {

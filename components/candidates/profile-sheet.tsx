@@ -12,6 +12,10 @@ import { DemoTag } from "@/components/ui/tags"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { toast } from "@/components/ui/toaster"
+import { InterviewPanel } from "@/components/hr/interview-panel"
+import { OfferPanel } from "@/components/hr/offer-panel"
+import { ResumePanel } from "@/components/hr/resume-panel"
+import type { HrData } from "@/lib/hr/types"
 import { statusLabel, type Stage } from "@/lib/status"
 
 export type ProfileData = {
@@ -30,6 +34,8 @@ export type ProfileData = {
   nextStages: Stage[]
   events: { id: number; message: string; when: string }[]
   assessments: { invitationId: string; title: string; status: string; submissionId: string | null; finalPct: number | null; scored: boolean }[]
+  /** Null when the hiring-flow tables are not available yet. */
+  hr: HrData | null
 }
 
 async function patch(id: string, body: { email?: string | null; stage?: Stage }): Promise<string | null> {
@@ -162,6 +168,12 @@ export function CandidateSheet({ candidate }: { candidate: ProfileData }) {
             {candidate.phone ? <p className="t-callout mt-3 text-ink-2">WhatsApp {candidate.phone}</p> : null}
           </Block>
 
+          {candidate.hr ? (
+            <Block title="Resume match">
+              <ResumePanel candidateId={candidate.id} roleTitle={candidate.jobTitle} hr={candidate.hr} />
+            </Block>
+          ) : null}
+
           <Block title="Stage">
             <div className="flex items-center gap-3">
               <StatusPill kind="candidate" value={candidate.stage} />
@@ -202,6 +214,22 @@ export function CandidateSheet({ candidate }: { candidate: ProfileData }) {
               </GroupedList>
             )}
           </Block>
+
+          {candidate.hr ? (
+            <Block title="Interview">
+              <InterviewPanel candidateId={candidate.id} candidateName={candidate.fullName} email={candidate.email} interviews={candidate.hr.interviews} />
+            </Block>
+          ) : null}
+
+          {candidate.hr ? (
+            <Block title="Offer letter">
+              <OfferPanel candidateId={candidate.id} candidateName={candidate.fullName} email={candidate.email} offers={candidate.hr.offers} />
+            </Block>
+          ) : null}
+
+          {candidate.hr ? (
+            <div className="mt-8"><Button asChild variant="secondary" size="sm"><a href={`/candidates/${candidate.id}/portfolio`}>Open the full portfolio</a></Button></div>
+          ) : null}
 
           <Block title="Data and privacy">
             <p className="t-callout text-ink-2">If this person asks for a copy of their data, or asks you to delete it, you can do both here.</p>
