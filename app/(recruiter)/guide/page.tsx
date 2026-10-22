@@ -42,6 +42,7 @@ const FAQ = [
   ["Is anyone failed automatically?", "No. Alerts are signals worded as Review this moment. A person always decides."],
   ["Where does the video go?", "Into a private store. Only a signed-in recruiter can watch it, through short-lived links. No recording goes to any AI. Deleting a candidate deletes their recordings."],
   ["What if a candidate refuses the camera?", "A proctored exam can't start without it. Create the assessment without the camera option for them."],
+  ["The email went to Spam.", "Mail from a new sender often does. Under each person on the run page, press Send on WhatsApp (or Copy message for WhatsApp). It opens the chat with their personal link filled in, so it always arrives. Also ask people to check Spam or Promotions and mark the email Not spam; after that your emails reach the inbox."],
   ["The email bounced.", "The address doesn't exist. Ask the person for the exact address, fix it in their profile or with Use a real email on the approval screen, and send a fresh assessment."],
   ["Do candidates need an account?", "No. The link in the email is their way in. It is personal, works once, and the timer is kept by the server."],
 ] as const

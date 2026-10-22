@@ -43,6 +43,8 @@ const schema = z
     // Send from a Gmail account (any recipient). Needs a Google app password, not the normal password.
     // Lets a scheduler call /api/cron/reminders. Without it that route is off.
     CRON_SECRET: z.string().min(16).optional(),
+    // The name people see as the sender, for example "Abhishek from Acme". A personal name is trusted more than a product name.
+    EMAIL_SENDER_NAME: z.string().max(60).optional(),
     GMAIL_USER: z.string().optional(),
     GMAIL_APP_PASSWORD: z.string().optional(),
   })
@@ -81,8 +83,9 @@ export type EmailStatus = 'configured' | 'not_configured' | 'test_sender_without
 export const gmailConfigured = (env: Pick<Env, 'GMAIL_USER' | 'GMAIL_APP_PASSWORD'>): boolean => Boolean(env.GMAIL_USER && env.GMAIL_APP_PASSWORD);
 
 /** The From header actually used: the Gmail account when it is set, otherwise EMAIL_FROM. */
-export function fromAddress(env: Pick<Env, 'GMAIL_USER' | 'GMAIL_APP_PASSWORD' | 'EMAIL_FROM'>): string {
-  return gmailConfigured(env) ? `Rekrutly <${env.GMAIL_USER}>` : env.EMAIL_FROM;
+export function fromAddress(env: Pick<Env, 'GMAIL_USER' | 'GMAIL_APP_PASSWORD' | 'EMAIL_FROM'> & Partial<Pick<Env, 'EMAIL_SENDER_NAME'>>): string {
+  const name = (env.EMAIL_SENDER_NAME ?? '').replace(/[<>"\r\n]/g, '').trim() || 'Rekrutly';
+  return gmailConfigured(env) ? `${name} <${env.GMAIL_USER}>` : env.EMAIL_FROM;
 }
 
 export function emailStatus(env: Pick<Env, 'RESEND_API_KEY' | 'EMAIL_FROM' | 'DEMO_CANDIDATE_EMAIL'> & Partial<Pick<Env, 'GMAIL_USER' | 'GMAIL_APP_PASSWORD'>>): EmailStatus {

@@ -18,7 +18,7 @@ export type LiveInvitation = {
   /** Proctored tests only: when the latest camera picture arrived, and how many camera alerts there have been. */
   proctored: boolean; snapshot_at: string | null; alerts: number;
   /** Set when the invitation email bounced or could not be sent, with the address it went to so it can be fixed. */
-  email: string | null; delivery_error: string | null;
+  email: string | null; delivery_error: string | null; phone: string | null;
 };
 export type LiveAlert = { id: string; invitation_id: string; name: string; type: string; occurred_at: string; video_ms: number | null };
 export type LiveTask = {
@@ -103,7 +103,7 @@ export async function getRunLive(runId: string): Promise<Result<RunLive | null>>
       id: i.id, candidate_id: i.candidateId, name: i.name, has_email: Boolean(i.email), status: i.status, delivery_status: i.deliveryStatus,
       current_question: i.currentQuestion, deadline_at: i.deadlineAt, submitted_at: i.submittedAt, last_activity_at: i.lastActivityAt,
       signals: signalsOf.get(i.id) ?? { tab_hidden: 0, paste: 0 },
-      email: i.email ?? null, delivery_error: errorOf.get(i.id) ?? null,
+      email: i.email ?? null, phone: i.phone ?? null, delivery_error: errorOf.get(i.id) ?? null,
       proctored: emb.proctored, snapshot_at: snapshotOf.get(i.id) ?? null, alerts: camera.get(i.id) ?? 0,
       seconds_left: i.status === 'started' && i.deadlineAt ? Math.max(0, Math.round((new Date(i.deadlineAt).getTime() - now) / 1000)) : null,
     }));

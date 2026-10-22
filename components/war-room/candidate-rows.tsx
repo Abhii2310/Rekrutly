@@ -5,6 +5,7 @@ import { cn } from "cn"
 import { formatTime } from "@/lib/format"
 import type { LiveAlert, LiveInvitation } from "@/lib/db/queries/live"
 import { FixEmail, ResendButton } from "./fix-email"
+import { ShareLinkButton } from "./share-link"
 import { reviewHref } from "./live-alerts"
 import { signalLabel } from "@/lib/proctor/signals"
 import { signalNote } from "@/lib/scoring/labels"
@@ -25,7 +26,7 @@ function useElapsed(key: string): number {
 const DOT: Record<string, string> = { started: "bg-action", submitted: "bg-success", opened: "bg-ink-3", expired: "bg-warning" }
 
 /** Candidates in three aligned columns: name, where they are, time left or submitted time. */
-export function CandidateRows({ invitations, questionCount, serverNow, alerts = [] }: { invitations: LiveInvitation[]; questionCount: number; serverNow: string; alerts?: LiveAlert[] }) {
+export function CandidateRows({ invitations, questionCount, serverNow, alerts = [], title = null, minutes = 30, sender = null }: { invitations: LiveInvitation[]; questionCount: number; serverNow: string; alerts?: LiveAlert[]; title?: string | null; minutes?: number; sender?: string | null }) {
   const elapsed = useElapsed(serverNow)
 
   // A row's dot pulses once when that row changes. Compared during render (React's "previous value" pattern), no effect needed.
@@ -65,7 +66,12 @@ export function CandidateRows({ invitations, questionCount, serverNow, alerts = 
                 )}
                 <span className="min-w-0">
                   <span className="t-headline block break-words text-ink">{i.name}</span>
-                  {i.delivery_status === "sent" && i.status !== "started" && i.status !== "submitted" ? <ResendButton invitation={i} /> : null}
+                  {i.status !== "started" && i.status !== "submitted" && i.delivery_status !== "failed" ? (
+                    <span className="flex flex-wrap items-center gap-x-4">
+                      {i.delivery_status === "sent" ? <ResendButton invitation={i} /> : null}
+                      {title ? <ShareLinkButton invitation={i} title={title} durationMinutes={minutes} sender={sender} /> : null}
+                    </span>
+                  ) : null}
                   {latest && recent ? (
                     <span className="t-footnote block text-danger">
                       {signalLabel(latest.type)}.{" "}

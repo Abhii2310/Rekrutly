@@ -32,7 +32,7 @@ async function post(url: string): Promise<string | null> {
 }
 
 /** The whole workflow on one screen, kept current by polling. */
-export function WarRoom({ runId, initial }: { runId: string; initial: RunLive }) {
+export function WarRoom({ runId, initial, sender = null }: { runId: string; initial: RunLive; sender?: string | null }) {
   const { data: live = initial, reconnecting } = usePoll<RunLive>(`/api/runs/${runId}/live`, { initial })
   const [busy, setBusy] = React.useState(false)
   const status = live.run.status
@@ -102,7 +102,7 @@ export function WarRoom({ runId, initial }: { runId: string; initial: RunLive })
               </span>
             ) : undefined}
           >
-            <CandidateRows invitations={live.invitations} questionCount={live.assessment?.question_count ?? 0} serverNow={live.serverNow} alerts={live.alerts} />
+            <CandidateRows invitations={live.invitations} questionCount={live.assessment?.question_count ?? 0} serverNow={live.serverNow} alerts={live.alerts} title={live.assessment?.title ?? null} minutes={live.assessment?.duration_minutes ?? 30} sender={sender} />
           </Section>
 
           {live.assessment?.proctored ? (

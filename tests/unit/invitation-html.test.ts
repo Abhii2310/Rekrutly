@@ -8,7 +8,8 @@ describe('invitationHtml', () => {
   const html = invitationHtml(body, link);
   it('has a button and the full link twice, unbroken', () => {
     expect(html).toContain(`href="${link}"`);
-    expect(html.split(link).length - 1).toBeGreaterThanOrEqual(3);
+    // One link only, in the button; the plain-text part carries the visible address.
+    expect(html.split(link).length - 1).toBe(1);
     expect(html).toContain('Start your assessment');
   });
   it('escapes anything that came from outside', () => {
@@ -36,5 +37,18 @@ describe('submissionText', () => {
     const { body } = submissionText({ firstName: 'D', role: 'R', autoSubmitted: true, proctored: false });
     expect(body).toContain('submitted automatically');
     expect(body).not.toContain('recording');
+  });
+});
+
+import { shareMessage } from '@/lib/invitations/template';
+
+describe('shareMessage', () => {
+  it('has the name, the time and the link, and tells them where the email came from', () => {
+    const m = shareMessage({ firstName: 'Rushabh', title: 'Product Designer Assessment', durationMinutes: 30, url: 'https://x/a/tok', sender: 'me@gmail.com' });
+    expect(m).toContain('Hi Rushabh');
+    expect(m).toContain('about 30 minutes');
+    expect(m).toContain('https://x/a/tok');
+    expect(m).toContain('I also emailed it from me@gmail.com');
+    expect(shareMessage({ firstName: 'D', title: 'T', durationMinutes: 5, url: 'u' })).not.toContain('emailed');
   });
 });
