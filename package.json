@@ -18,7 +18,8 @@
     "ai:check": "tsx --env-file=.env.local scripts/check-ai.ts",
     "ai:models": "tsx --env-file=.env.local scripts/list-models.ts",
     "screenshot": "tsx --env-file=.env.local scripts/screenshot.ts",
-    "dev:live-run": "tsx --conditions=react-server --env-file=.env.local scripts/dev-live-run.ts"
+    "dev:live-run": "tsx --conditions=react-server --env-file=.env.local scripts/dev-live-run.ts",
+    "proctor:setup": "tsx --env-file=.env.local scripts/setup-proctoring.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "4.0.85",
