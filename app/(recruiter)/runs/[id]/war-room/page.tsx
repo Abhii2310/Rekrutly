@@ -3,6 +3,7 @@ import { QueryError } from "@/components/frame/query-error"
 import { PageBody, PageHeader } from "@/components/ui/page-header"
 import { DemoTag } from "@/components/ui/tags"
 import { WarRoom } from "@/components/war-room/war-room"
+import { env, fromAddress } from "@/lib/env"
 import { getRunLive } from "@/lib/db/queries/live"
 import { getRunWithSteps } from "@/lib/db/queries/runs"
 
@@ -29,7 +30,7 @@ export default async function WarRoomPage({ params }: { params: Promise<{ id: st
         description="Everything about this workflow, live."
         actions={run.is_demo ? <DemoTag /> : undefined}
       />
-      <PageBody><WarRoom runId={run.id} initial={live.data} /></PageBody>
+      <PageBody><WarRoom runId={run.id} initial={live.data} sender={/<([^>]+)>/.exec(fromAddress(env))?.[1] ?? null} /></PageBody>
     </>
   )
 }

@@ -11,6 +11,7 @@ import { StatusPill } from "@/components/ui/status-pill"
 import { SimulatedTag } from "@/components/ui/tags"
 import { toast } from "@/components/ui/toaster"
 import { FixEmail, ResendButton } from "@/components/war-room/fix-email"
+import { ShareLinkButton } from "@/components/war-room/share-link"
 import { useDeliveryWatch } from "@/hooks/use-delivery-watch"
 import { usePoll } from "@/hooks/use-poll"
 import { copyText } from "@/lib/copy-text"
@@ -145,7 +146,12 @@ export function RunLive({ runId, initial, sender = null }: { runId: string; init
                   }
                 />
                 {i.delivery_status === "failed" && i.status !== "started" && i.status !== "submitted" ? <li className="list-none px-4 pb-3"><FixEmail invitation={i} /></li> : null}
-                {i.delivery_status === "sent" && i.status !== "started" && i.status !== "submitted" ? <li className="list-none px-4 pb-2 pl-4"><ResendButton invitation={i} /></li> : null}
+                {i.status !== "started" && i.status !== "submitted" && i.delivery_status !== "failed" ? (
+                  <li className="flex list-none items-center gap-4 px-4 pb-2">
+                    {i.delivery_status === "sent" ? <ResendButton invitation={i} /> : null}
+                    <ShareLinkButton invitation={i} title={live.assessment?.title ?? "assessment"} durationMinutes={live.assessment?.duration_minutes ?? 30} sender={sender} />
+                  </li>
+                ) : null}
                 </React.Fragment>
               ))}
             </GroupedList>

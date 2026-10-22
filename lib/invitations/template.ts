@@ -77,8 +77,8 @@ export function invitationHtml(body: string, link: string | undefined): string {
   const blocks = body.split('\n\n').map((block) => {
     const action = block.startsWith('Start here:') ? 'Start your assessment' : block.startsWith('Join here:') ? 'Join the interview' : block.startsWith('Pick a time here:') ? 'Choose a time' : null;
     if (link && action) {
-      return `<p style="margin:24px 0"><a href="${esc(link)}" style="display:inline-block;background:#0071E3;color:#ffffff;text-decoration:none;font-weight:600;padding:14px 28px;border-radius:999px">${action}</a></p>`
-        + `<p style="margin:0 0 16px;color:#6e6e73;font-size:13px">If the button does not work, copy this link into your browser:<br><a href="${esc(link)}" style="color:#0071E3;word-break:break-all">${esc(link)}</a></p>`;
+      // One link only: a mail filter reads many links, repeated links and long raw URLs as signs of bulk mail. The plain-text part has the full address.
+      return `<p style="margin:24px 0"><a href="${esc(link)}" style="display:inline-block;background:#0071E3;color:#ffffff;text-decoration:none;font-weight:600;padding:14px 28px;border-radius:999px">${action}</a></p>`;
     }
     const cal = /^Add it to your calendar: (https:\/\/\S+)$/.exec(block);
     if (cal) return `<p style="margin:0 0 16px"><a href="${esc(cal[1] as string)}" style="color:#0071E3">Add it to your calendar</a></p>`;
@@ -92,4 +92,14 @@ export function invitationHtml(body: string, link: string | undefined): string {
     return `<p style="margin:0 0 16px">${lines.map(esc).join('<br>')}</p>`;
   });
   return `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.5;color:#1d1d1f;max-width:560px">${blocks.join('')}</div>`;
+}
+
+/** A short message to send the exam link by WhatsApp or any chat, for when an email does not arrive. */
+export function shareMessage(input: { firstName: string; title: string; durationMinutes: number; url: string; sender?: string | null }): string {
+  return [
+    `Hi ${input.firstName}, here is your link for the ${input.title}.`,
+    `It takes about ${input.durationMinutes} minutes. Open it on a laptop or phone with a good connection:`,
+    input.url,
+    input.sender ? `I also emailed it from ${input.sender}. If you can't find it, check Spam or Promotions.` : '',
+  ].filter(Boolean).join('\n');
 }
