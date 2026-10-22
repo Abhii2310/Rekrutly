@@ -126,3 +126,6 @@ Prompt 14 (ship and demo readiness), done locally. All 14 prompts are built. Rem
 - Roles created in the app are real (not demo), so a demo reset keeps them. The admin e2e spec removes the role it creates; delete any other test role from the database if you add one.
 - Deleting a candidate cannot be undone. Deleting a seeded demo candidate is allowed; reset the demo data to bring them back.
 - The landing page is checked at 1280px and 375px by screenshot; its animations were not run on a real phone.
+
+- Working: Skills Growth Report. A rejected candidate who took a scored test can open `/a/<token>/growth`: their own skill percentages, strengths and practice ideas, made by code (no AI, no comparison). The reject dialog can add the link to the email.
+- Working: Overview cost estimate (tests taken x ~$20 per-attempt price on paid platforms). An estimate; verify vendor pricing before quoting.

@@ -15,6 +15,7 @@ export function RejectDialog({ candidateId, firstName, name, role, email, onDone
   const [open, setOpen] = React.useState(false)
   const [text, setText] = React.useState(draft.body)
   const [busy, setBusy] = React.useState<null | "email" | "quiet">(null)
+  const [report, setReport] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
 
   async function reject(sendEmail: boolean) {
@@ -24,7 +25,7 @@ export function RejectDialog({ candidateId, firstName, name, role, email, onDone
     try {
       const res = await fetch(`/api/candidates/${candidateId}/reject`, {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify(sendEmail ? { sendEmail: true, subject: draft.subject, body: text } : { sendEmail: false }),
+        body: JSON.stringify(sendEmail ? { sendEmail: true, subject: draft.subject, body: text, includeReport: report } : { sendEmail: false }),
       })
       const json = (await res.json().catch(() => null)) as { error?: { message?: string } } | null
       if (res.ok) {
@@ -49,6 +50,7 @@ export function RejectDialog({ candidateId, firstName, name, role, email, onDone
             <DialogDescription>{email ? `You can send this note to ${email}. Read it and edit it first. It can't be unsent.` : "They have no email, so you can only reject without one."}</DialogDescription>
           </DialogHeader>
           {email ? <Textarea aria-label="Rejection email" value={text} onChange={(e) => setText(e.target.value)} className="min-h-56 font-sans text-[15px] leading-6" /> : null}
+          {email ? <label className="t-callout flex items-start gap-2 text-ink"><input type="checkbox" checked={report} onChange={(e) => setReport(e.target.checked)} className="mt-1" /><span>Add a private skills report link, if they took a test. It shows only their own results and what to practise, with no comparison and no answers.</span></label> : null}
           {error ? <p role="alert" className="t-callout text-danger">{error}</p> : null}
           <DialogFooter className="sm:justify-between">
             <Button variant="secondary" onClick={() => setOpen(false)}>Keep them</Button>

@@ -10,6 +10,8 @@ import { Stat } from "@/components/ui/stat"
 import { StatusPill } from "@/components/ui/status-pill"
 import { SimulatedTag } from "@/components/ui/tags"
 import { EmptyState } from "@/components/ui/empty-state"
+import { getDb } from "@/lib/db/server"
+import { attemptCostUsd, PER_ATTEMPT_USD } from "@/lib/growth/savings"
 import { listJobs } from "@/lib/db/queries/jobs"
 import { getOverviewStats, listActiveRuns, listOpenTasks, listRecentEvents } from "@/lib/db/queries/overview"
 import { formatPercent, formatRelative } from "@/lib/format"
@@ -33,6 +35,8 @@ export default async function OverviewPage() {
     )
   }
 
+  const taken = await getDb().from("invitations").select("id", { count: "exact", head: true }).eq("status", "submitted")
+  const testsTaken = taken.error ? null : (taken.count ?? 0)
   const openRoles = jobs.data.filter((j) => j.status === "open").length
   const now = new Date()
 
@@ -54,6 +58,12 @@ export default async function OverviewPage() {
           />
           <Stat value={stats.data.openTasks} label="Need you" />
         </div>
+
+        {testsTaken ? (
+          <p className="t-callout mt-8 rounded-group bg-mist px-4 py-3 text-ink-2">
+            {testsTaken} candidate {testsTaken === 1 ? "test" : "tests"} taken here. Paid per-candidate platforms charge about ${PER_ATTEMPT_USD} an attempt, so roughly <span className="tabular text-ink">${attemptCostUsd(testsTaken).toLocaleString("en-US")}</span> elsewhere. Rekrutly adds no per-test fee; you pay only your own AI and email accounts. An estimate, so check current vendor pricing.
+          </p>
+        ) : null}
 
         <Section title="Needs your attention" className="mt-12">
           {tasks.data.length === 0 ? (

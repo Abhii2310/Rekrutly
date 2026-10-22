@@ -7,6 +7,8 @@ import { sendEmail } from '@/lib/executor/email';
 import { planDelivery } from '@/lib/executor/email-plan';
 import { logEvent } from '@/lib/events';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
+import { growthLink } from '@/lib/growth/link';
+import { reportLine } from '@/lib/growth/report';
 import { canTransition, type Stage } from '@/lib/status';
 
 export const maxDuration = 30;
@@ -15,6 +17,7 @@ const Body = z.object({
   sendEmail: z.boolean(),
   subject: z.string().trim().max(200).optional(),
   body: z.string().trim().max(4000).optional(),
+  includeReport: z.boolean().optional(),
 });
 
 /** Moves a candidate to Rejected. With `sendEmail`, the letter the recruiter approved goes out first; a failed email stops the rejection. */
@@ -44,7 +47,9 @@ async function handlePOST(request: Request, { params }: { params: Promise<{ id: 
     const claim = await db.from('candidates').update({ rejection_emailed_at: new Date().toISOString() }).eq('id', id).is('rejection_emailed_at', null).select('id');
     if (claim.error) return apiError('db_error', "Couldn't send the email.", 500);
     if (!claim.data || claim.data.length === 0) return apiError('already_sent', 'A rejection email was already sent to this person.', 409);
-    const sent = await sendEmail({ to: cand.email, subject: b.subject || 'Your application', text: b.body, idempotencyKey: `reject-${id}` });
+    const link = b.includeReport ? await growthLink(id) : null;
+    const text = link ? `${b.body}${reportLine(link)}` : b.body;
+    const sent = await sendEmail({ to: cand.email, subject: b.subject || 'Your application', text, idempotencyKey: `reject-${id}` });
     if (!sent.ok) {
       await db.from('candidates').update({ rejection_emailed_at: null }).eq('id', id);
       await logEvent({ ...base, type: 'email.failed', level: 'error', message: `Couldn't email ${cand.full_name}: ${sent.error.message}` });
