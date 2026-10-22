@@ -43,11 +43,11 @@ describe('planDelivery', () => {
 describe('invitation template', () => {
   it('uses the first name, role, duration and the personal-link warning', () => {
     const { subject, body } = invitationText({ firstName: 'Aarav', role: 'Full-Stack Developer', durationMinutes: 30, link: 'http://x/a/tok' });
-    expect(subject).toBe('Your Full-Stack Developer assessment');
+    expect(subject).toBe('Your next step for the Full-Stack Developer role');
     expect(body).toContain('Hi Aarav,');
     expect(body).toContain('about 30 minutes');
     expect(body).toContain('http://x/a/tok');
-    expect(body).toContain("Your link is personal. Please don't share it.");
+    expect(body).toContain("Your link is personal, so please don't share it.");
   });
   it('previews without a link, and finds the first name', () => {
     expect(invitationText({ firstName: 'Diya', role: 'R', durationMinutes: 20 }).body).toContain('your personal link');

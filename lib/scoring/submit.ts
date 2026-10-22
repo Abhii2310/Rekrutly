@@ -1,4 +1,5 @@
 import 'server-only';
+import { sendSubmissionEmail } from '@/lib/executor/submission-email';
 import { getDb } from '@/lib/db/server';
 import { logEvent } from '@/lib/events';
 import { updateTrackStep } from '@/lib/portal/progress';
@@ -76,4 +77,5 @@ export async function afterSubmit(inv: ResolvedInvitation, done: { autoSubmitted
     logEvent({ ...base, type: 'score.objective_computed', actor: 'system', message: `Multiple-choice score for ${inv.firstName}: ${done.objective.total} of ${done.objective.max}`, data: done.objective }),
     updateTrackStep(inv.assessment_id, inv.assessment.run_id, inv.assessment.job_id),
   ]);
+  await sendSubmissionEmail(inv, done.autoSubmitted);
 }

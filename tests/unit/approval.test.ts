@@ -28,7 +28,7 @@ describe('buildSnapshot', () => {
   it('stores the invitation text with the first recipient, the role and the duration', () => {
     expect(snap.invitation_preview.body).toContain('Hi Aarav,');
     expect(snap.invitation_preview.body).toContain('about 45 minutes');
-    expect(snap.invitation_preview.subject).toBe('Your Full-Stack Developer assessment');
+    expect(snap.invitation_preview.subject).toBe('Your next step for the Full-Stack Developer role');
   });
 });
 
