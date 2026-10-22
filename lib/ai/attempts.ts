@@ -84,7 +84,7 @@ export async function runAttempts<T>(
       last = r.error;
       const backoff = BACKOFF_MS[rateLimitRetries];
       // A skipped call never reached the provider, so there is nothing to wait for.
-      if (r.error.status === 429 && !r.error.skipped && backoff !== undefined) {
+      if (r.error.status === 429 && !r.error.skipped && !r.error.quota && backoff !== undefined) {
         rateLimitRetries++;
         await deps.sleep(backoff);
         continue;
@@ -95,4 +95,17 @@ export async function runAttempts<T>(
 
   const error: AiError = last ?? { code: 'timeout', message: 'The AI took too long to answer.' };
   return { result: err(error.code, error.message, { status: error.status }), lastError: error };
+}
+
+/**
+ * How long to leave a model alone after it fails, so the next request goes straight to a model that works instead of waiting
+ * on a broken one. A used-up quota stays off for as long as the provider said (up to six hours); overload and slowness for
+ * a few minutes.
+ */
+export function cooldownFor(error: { code: string; status?: number; quota?: boolean; retryAfterSec?: number }): number {
+  if (error.quota) return Math.min(Math.max((error.retryAfterSec ?? 3600) * 1000, 60_000), 6 * 3_600_000);
+  if (error.status === 429) return 90_000;
+  if (error.status !== undefined && error.status >= 500) return 180_000;
+  if (error.code === 'timeout') return 60_000;
+  return 0;
 }

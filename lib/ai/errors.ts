@@ -9,7 +9,18 @@ export type AiError = {
   status?: number;
   /** True when the call was not made because the model is cooling down after rate limits. */
   skipped?: boolean;
+  /** True when the provider said the quota is used up. Waiting a few seconds will not help, so the next model is tried at once. */
+  quota?: boolean;
+  /** Seconds the provider asked us to wait, when it said. */
+  retryAfterSec?: number;
 };
+
+/** Reads "Please retry in 16h20m18.2s" style hints into seconds. */
+export function parseRetryAfter(message: string): number | undefined {
+  const m = /retry in\s+(?:(\d+)h)?\s*(?:(\d+)m)?\s*(?:([\d.]+)s)?/i.exec(message);
+  if (!m || (!m[1] && !m[2] && !m[3])) return undefined;
+  return Math.round(Number(m[1] ?? 0) * 3600 + Number(m[2] ?? 0) * 60 + Number(m[3] ?? 0));
+}
 
 const FRIENDLY: Record<AiErrorCode, string> = {
   timeout: 'The AI took too long to answer.',
@@ -33,7 +44,8 @@ export function classifyError(e: unknown): AiError {
     return { code: 'invalid_output', message: FRIENDLY.invalid_output };
   }
   if (APICallError.isInstance(e)) {
-    return { code: 'provider_error', message: `${FRIENDLY.provider_error} ${scrub(e.message)}`.trim(), status: e.statusCode };
+    const quota = /quota|exceeded your current|billing details/i.test(e.message);
+    return { code: 'provider_error', message: `${FRIENDLY.provider_error} ${scrub(e.message)}`.trim(), status: e.statusCode, ...(quota ? { quota: true } : {}), ...(parseRetryAfter(e.message) !== undefined ? { retryAfterSec: parseRetryAfter(e.message) } : {}) };
   }
   if (
     NoObjectGeneratedError.isInstance(e) || NoOutputGeneratedError.isInstance(e) ||
