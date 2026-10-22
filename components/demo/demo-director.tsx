@@ -226,7 +226,7 @@ export function DemoDirector() {
           <DialogHeader>
             <DialogTitle>Reset the demo data?</DialogTitle>
             <DialogDescription>
-              This deletes every demo run, assessment, invitation and submission, including ones you created by hand. Any exam link you have already emailed stops working, so candidates who click an old email will see \"This link isn't valid\". Never reset while real candidates are waiting. The seeded jobs and candidates are recreated with the same IDs, so saved fallbacks stay valid.
+              This deletes every demo run, assessment, invitation and submission, including ones you created by hand. Any exam link you have already emailed stops working, so candidates who click an old email will be told the link is not valid. Never reset while real candidates are waiting. The seeded jobs and candidates are recreated with the same IDs, so saved fallbacks stay valid.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
