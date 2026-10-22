@@ -20,14 +20,14 @@ async function handlePOST(_request: Request, { params }: { params: Promise<{ id:
 
   const db = getDb();
   const q = await db.from('invitations')
-    .select('id, status, started_at, token_encrypted, candidate_id, candidates(full_name, email), assessments(title, duration_minutes, proctored, job_id, run_id, jobs(title))')
+    .select('id, status, started_at, token_encrypted, candidate_id, candidates(full_name, email), assessments(title, duration_minutes, proctored, ai_interview, job_id, run_id, jobs(title))')
     .eq('id', id).maybeSingle();
   if (q.error) return apiError('db_error', "Couldn't load the invitation.", 500);
   if (!q.data) return apiError('not_found', 'Invitation not found.', 404);
   type Row = {
     id: string; status: string; started_at: string | null; token_encrypted: string; candidate_id: string;
     candidates: { full_name: string; email: string | null } | null;
-    assessments: { title: string; duration_minutes: number; proctored: boolean; job_id: string; run_id: string | null; jobs: { title: string } | null } | null;
+    assessments: { title: string; duration_minutes: number; proctored: boolean; ai_interview: boolean; job_id: string; run_id: string | null; jobs: { title: string } | null } | null;
   };
   const inv = q.data as unknown as Row;
   if (!inv.candidates?.email) return apiError('no_email', 'This candidate has no email yet.', 409);
@@ -37,7 +37,7 @@ async function handlePOST(_request: Request, { params }: { params: Promise<{ id:
   const link = `${env.APP_URL}/a/${decryptToken(inv.token_encrypted)}`;
   const text = invitationText({
     firstName: firstNameOf(inv.candidates.full_name), role: inv.assessments.jobs?.title ?? 'open', durationMinutes: inv.assessments.duration_minutes,
-    link, proctored: inv.assessments.proctored,
+    link, proctored: inv.assessments.proctored, aiInterview: inv.assessments.ai_interview,
   });
   const sent = await sendEmail({ to: inv.candidates.email, subject: text.subject, text: text.body, html: invitationHtml(text.body, link), idempotencyKey: `${id}-${Date.now()}` });
   const base = { runId: inv.assessments.run_id, jobId: inv.assessments.job_id, candidateId: inv.candidate_id };

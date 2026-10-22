@@ -20,7 +20,7 @@ export type ResolvedInvitation = {
   deadline_at: string | null;
   submitted_at: string | null;
   current_question: number | null;
-  assessment: { id: string; title: string; instructions: string; duration_minutes: number; status: string; job_id: string; run_id: string | null; proctored: boolean };
+  assessment: { id: string; title: string; instructions: string; duration_minutes: number; status: string; job_id: string; run_id: string | null; proctored: boolean; ai_interview: boolean };
   jobTitle: string;
   firstName: string;
   /** Set only by the Demo Director. Real candidate routes never set it. */
@@ -32,7 +32,7 @@ const TOKEN_SHAPE = /^[A-Za-z0-9_-]{43}$/;
 
 const COLUMNS =
   'id, assessment_id, candidate_id, status, expires_at, consent_at, proctor_consent_at, opened_at, started_at, deadline_at, submitted_at, current_question, ' +
-  'assessments(id, title, instructions, duration_minutes, status, job_id, run_id, proctored, jobs(title)), candidates(full_name)';
+  'assessments(id, title, instructions, duration_minutes, status, job_id, run_id, proctored, ai_interview, jobs(title)), candidates(full_name)';
 
 type Row = Omit<ResolvedInvitation, 'assessment' | 'jobTitle' | 'firstName'> & {
   assessments: (ResolvedInvitation['assessment'] & { jobs: { title: string } | null }) | null;

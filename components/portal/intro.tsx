@@ -69,6 +69,7 @@ export function Intro({
       <div className="mt-6">
         <Button className="h-12 w-full sm:w-auto sm:px-8" loading={starting} disabled={!ready} onClick={onStart}>Start assessment</Button>
         <p className="t-callout mt-3 text-ink-2">The timer starts when you press the button and keeps running if you close the page.</p>
+        {info.aiInterviewAnnounced ? <p className="t-callout mt-1 text-ink-2">After the test there is a short conversation with an AI interviewer, about 10 minutes. You can speak or type.</p> : null}
         {info.proctored ? <p className="t-callout mt-1 text-ink-2">Keep this page open and your camera on until you submit.</p> : null}
       </div>
     </PortalShell>
