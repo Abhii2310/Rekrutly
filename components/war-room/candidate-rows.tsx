@@ -4,6 +4,7 @@ import * as React from "react"
 import { cn } from "cn"
 import { formatTime } from "@/lib/format"
 import type { LiveAlert, LiveInvitation } from "@/lib/db/queries/live"
+import { FixEmail } from "./fix-email"
 import { reviewHref } from "./live-alerts"
 import { signalLabel } from "@/lib/proctor/signals"
 import { signalNote } from "@/lib/scoring/labels"
@@ -79,6 +80,7 @@ export function CandidateRows({ invitations, questionCount, serverNow, alerts = 
                   ? clockLabel(i.seconds_left - elapsed)
                   : i.status === "submitted" && i.submitted_at ? formatTime(i.submitted_at) : "–"}
               </span>
+              {i.delivery_status === "failed" && i.status !== "started" && i.status !== "submitted" ? <div className="col-span-full pb-1.5"><FixEmail invitation={i} /></div> : null}
             </li>
           )
         })}

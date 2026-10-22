@@ -37,6 +37,15 @@ export function WarRoom({ runId, initial }: { runId: string; initial: RunLive })
   const status = live.run.status
   const paused = status === "paused"
   const canPause = status === "executing" || status === "waiting"
+  // Wrong addresses only show up as a bounce a little later, so look for bounces while invitations are out.
+  const emailsOut = live.invitations.some((i) => i.delivery_status === "sent" && i.status !== "started" && i.status !== "submitted")
+  React.useEffect(() => {
+    if (!emailsOut) return
+    const check = () => { if (document.visibilityState === "visible") void fetch("/api/delivery/check", { method: "POST" }).catch(() => {}) }
+    const first = setTimeout(check, 4000)
+    const timer = setInterval(check, 30_000)
+    return () => { clearTimeout(first); clearInterval(timer) }
+  }, [emailsOut])
   const submitted = live.invitations.filter((i) => i.status === "submitted").length
 
   async function control(kind: "pause" | "resume") {

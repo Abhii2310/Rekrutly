@@ -9,6 +9,27 @@ import { toast } from "@/components/ui/toaster"
 
 type Outcome = { created: number; skipped: { row: number; reason: string }[] }
 
+const COLUMNS: [string, string, string][] = [
+  ["name", "Required", "Asha Rao"],
+  ["email", "Needed to email the exam link", "asha@gmail.com"],
+  ["phone", "Optional, for WhatsApp", "+91 98765 43210"],
+  ["title", "Optional, their current role", "Frontend Engineer"],
+  ["company", "Optional", "Acme"],
+  ["years", "Optional, years of experience", "4"],
+  ["location", "Optional", "Pune"],
+  ["skills", "Optional, separated by semicolons", "React; TypeScript"],
+]
+
+function downloadTemplate() {
+  const csv = `${COLUMNS.map((c) => c[0]).join(",")}\n${COLUMNS.map((c) => c[2]).join(",")}\n`
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }))
+  const a = document.createElement("a")
+  a.href = url
+  a.download = "rekrutly-candidates-template.csv"
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 const SAMPLE = "name,email,phone,title,company,years,location,skills\nAsha Rao,asha@example.com,+91 98765 43210,Frontend Engineer,Acme,4,Pune,React; TypeScript"
 
 /** Adds candidates to a job from a CSV file or pasted text. Rows that can't be used are listed with the reason. */
@@ -58,6 +79,16 @@ export function ImportCandidatesDialog({ jobId }: { jobId: string }) {
               Choose a CSV file or paste it. The first row needs a name column; email, phone, title, company, years, location and skills are optional. Separate skills with semicolons. Nothing is sent to anyone.
             </DialogDescription>
           </DialogHeader>
+          <details className="t-callout rounded-control bg-mist px-4 py-3 text-ink-2">
+            <summary className="focus-ring cursor-pointer rounded text-ink">What can I include? (columns)</summary>
+            <ul className="mt-2 flex flex-col gap-1">
+              {COLUMNS.map(([name, note, example]) => (
+                <li key={name}><span className="font-mono text-[13px] text-ink">{name}</span>: {note}. Example: {example}</li>
+              ))}
+            </ul>
+            <p className="mt-2">Double-check each email: a wrong address bounces and the person never gets the link.</p>
+            <button type="button" onClick={downloadTemplate} className="focus-ring mt-2 rounded text-action hover:text-action-hover">Download a template</button>
+          </details>
           <label className="t-callout flex flex-col gap-1.5 text-ink">
             CSV file
             <input type="file" accept=".csv,text/csv" onChange={onFile} className="focus-ring t-callout text-ink-2 file:mr-3 file:rounded-full file:border-0 file:bg-fog file:px-3.5 file:py-1.5 file:text-ink" />

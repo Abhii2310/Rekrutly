@@ -17,6 +17,8 @@ export type LiveInvitation = {
   signals: { tab_hidden: number; paste: number };
   /** Proctored tests only: when the latest camera picture arrived, and how many camera alerts there have been. */
   proctored: boolean; snapshot_at: string | null; alerts: number;
+  /** Set when the invitation email bounced or could not be sent, with the address it went to so it can be fixed. */
+  email: string | null; delivery_error: string | null;
 };
 export type LiveAlert = { id: string; invitation_id: string; name: string; type: string; occurred_at: string; video_ms: number | null };
 export type LiveTask = {
@@ -58,7 +60,7 @@ export async function getRunLive(runId: string): Promise<Result<RunLive | null>>
     db.from('workflow_runs').select('id, status, error, plan, approved_at').eq('id', runId).maybeSingle(),
     db.from('workflow_steps').select('id, position, action, title, status, result, error, started_at, finished_at').eq('run_id', runId).order('position'),
     db.from('assessments')
-      .select(`id, title, duration_minutes, status, proctored, questions(count), invitations(${INVITATION_SELECT}, proctor_consent_at, last_snapshot_at, integrity_signals(id, type, occurred_at, video_ms))`)
+      .select(`id, title, duration_minutes, status, proctored, questions(count), invitations(${INVITATION_SELECT}, proctor_consent_at, last_snapshot_at, delivery_error, integrity_signals(id, type, occurred_at, video_ms))`)
       .eq('run_id', runId).maybeSingle(),
     db.from('workflow_events').select('id, message, actor, level, is_simulated, created_at').eq('run_id', runId).order('id', { ascending: false }).limit(30),
     db.from('tasks').select('id, type, title, detail, status, candidate_id, dedupe_key, draft, created_at, candidates(full_name, email, phone)').eq('run_id', runId).eq('status', 'open').order('created_at').order('id'),
@@ -80,6 +82,7 @@ export async function getRunLive(runId: string): Promise<Result<RunLive | null>>
     const signalsOf = new Map<string, { tab_hidden: number; paste: number }>();
     const camera = new Map<string, number>();
     const snapshotOf = new Map<string, string | null>();
+    const errorOf = new Map<string, string | null>();
     const sigs: { sig: Sig; invitation: string }[] = [];
     for (const i of emb.invitations ?? []) {
       const cur = { tab_hidden: 0, paste: 0 };
@@ -90,6 +93,7 @@ export async function getRunLive(runId: string): Promise<Result<RunLive | null>>
         if ((CAMERA_SIGNALS as readonly string[]).includes(sg.type)) camera.set(i.id as string, (camera.get(i.id as string) ?? 0) + 1);
       }
       snapshotOf.set(i.id as string, (i.last_snapshot_at as string | null) ?? null);
+      errorOf.set(i.id as string, (i.delivery_error as string | null) ?? null);
       signalsOf.set(i.id as string, cur);
     }
     for (const x of sigs) alertList.push({ id: x.sig.id, invitation_id: x.invitation, type: x.sig.type, occurred_at: x.sig.occurred_at, video_ms: x.sig.video_ms });
@@ -99,6 +103,7 @@ export async function getRunLive(runId: string): Promise<Result<RunLive | null>>
       id: i.id, candidate_id: i.candidateId, name: i.name, has_email: Boolean(i.email), status: i.status, delivery_status: i.deliveryStatus,
       current_question: i.currentQuestion, deadline_at: i.deadlineAt, submitted_at: i.submittedAt, last_activity_at: i.lastActivityAt,
       signals: signalsOf.get(i.id) ?? { tab_hidden: 0, paste: 0 },
+      email: i.deliveryStatus === 'failed' ? i.email : null, delivery_error: errorOf.get(i.id) ?? null,
       proctored: emb.proctored, snapshot_at: snapshotOf.get(i.id) ?? null, alerts: camera.get(i.id) ?? 0,
       seconds_left: i.status === 'started' && i.deadlineAt ? Math.max(0, Math.round((new Date(i.deadlineAt).getTime() - now) / 1000)) : null,
     }));
