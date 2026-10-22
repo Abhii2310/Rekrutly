@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/toaster"
 import { stepTitles } from "@/lib/executor/approval"
+import { isReserved } from "@/lib/executor/email-plan"
 import { firstNameOf, invitationText } from "@/lib/invitations/template"
 
 export type Recipient = { id: string; name: string; email: string | null }
@@ -33,8 +34,8 @@ function EmailField({ candidate }: { candidate: Recipient }) {
   if (!open) {
     return (
       <span className="t-callout text-ink-2">
-        No email, link only.{" "}
-        <button type="button" onClick={() => setOpen(true)} className="focus-ring rounded text-action hover:text-action-hover">Add email</button>
+        {candidate.email ? "Demo address, link only." : "No email, link only."}{" "}
+        <button type="button" onClick={() => setOpen(true)} className="focus-ring rounded text-action hover:text-action-hover">{candidate.email ? "Use a real email" : "Add email"}</button>
       </span>
     )
   }
@@ -133,10 +134,10 @@ export function ApprovalPanel({
                 />
                 <span className="min-w-0">
                   <span className="t-body block text-ink">{r.name}</span>
-                  {r.email ? <span className="t-callout block truncate text-ink-2">{r.email}</span> : null}
+                  {r.email && !isReserved(r.email) ? <span className="t-callout block truncate text-ink-2">{r.email}</span> : null}
                 </span>
               </label>
-              {!r.email ? <div className="pl-7"><EmailField candidate={r} /></div> : null}
+              {!r.email || isReserved(r.email) ? <div className="pl-7"><EmailField candidate={r} /></div> : null}
             </li>
           ))}
         </ul>

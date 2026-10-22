@@ -12,7 +12,7 @@ export const MESSAGES = {
 } as const;
 
 /** Seeded demo candidates use example.com addresses, which are reserved and can never receive mail. Never try them. */
-const isReserved = (email: string | null): boolean => /@(example\.(com|org|net)|[^@]+\.(test|invalid|example))$/i.test(email?.trim() ?? '');
+export const isReserved = (email: string | null): boolean => /@(example\.(com|org|net)|[^@]+\.(test|invalid|example))$/i.test(email?.trim() ?? '');
 
 /**
  * Decides who gets an email. Pure, so every branch can be tested.
