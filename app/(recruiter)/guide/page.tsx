@@ -9,6 +9,8 @@ const STEPS = [
   ["Review and approve", "Edit any question. Choose the time limit and who gets a link. Tick Record the candidate on camera for a proctored exam. Press Approve."],
   ["Candidates take the exam", "Each person gets an email with their personal link and instructions. No account needed. They agree, check their camera, and start."],
   ["Watch it live", "Open the War Room. You see who started, a live camera picture for each person, and alerts with a chime."],
+  ["Shortlist from resumes", "Open a candidate, add their resume (PDF or text) and press Check the match. You see which of the role's skills appear, with quotes. Shortlist is your own decision."],
+  ["Interview and offer", "From the same profile, Schedule an interview (they get a join link and calendar link), take notes and fill in the scorecard, then draft an offer letter, edit it and send it. The Portfolio page shows every step in one place."],
   ["Review and decide", "Open results for scores with evidence. Open the recording to jump to every flagged moment. You decide; Rekrutly never picks a winner."],
 ] as const
 

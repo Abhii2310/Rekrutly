@@ -18,6 +18,7 @@
 - **Landing page** at the root address (the app lives at `/overview`): an aurora hero, a pinned scroll story of the whole product, and almost no text. Nothing on it is a made-up number.
 - **Emails:** a short invitation with a button and the exam rules, and a confirmation after submitting that says a person reviews it and they will be emailed the next steps (never a score).
 - **Delivery safety:** bounced invitation emails are detected from the sending Gmail inbox and shown in the War Room, where the admin corrects the address and sends the same link again.
+- **The rest of the hiring flow (on each candidate):** a resume match (skills counted by code, relevance read by AI, evidence quotes checked against the text) with a shortlist button; booking a live interview with an emailed join link and calendar link, then an interview page with notes and a 1 to 5 scorecard; a full portfolio page; and an offer letter written from typed details, edited by you and sent only when you press Send. Nothing here decides for you.
 - **Select, then create:** tick people on the Candidates page and press Create assessment; the plan, approval, links and emails go only to them.
 - **Guided start:** a "Get started" checklist on Overview that ticks itself from real data, quick-start cards on Command, and a short Guide page for new admins.
 - **Command Centre, Spotlight (Ctrl or Cmd + K) and voice** to plan in a sentence from anywhere.
@@ -88,7 +89,7 @@ Google Gemini (`gemini-3-flash-preview` for planning, questions and reports; `ge
 Requires Node 20.9 or newer.
 
 1. **Install.** `npm install`
-2. **Database.** Create a Supabase project. In the SQL Editor, run [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), then [`0002_proctoring.sql`](supabase/migrations/0002_proctoring.sql), then [`0003_gaze_voice.sql`](supabase/migrations/0003_gaze_voice.sql), then `npm run proctor:setup` (checks the migration and creates the private `proctoring` storage bucket).
+2. **Database.** Create a Supabase project. In the SQL Editor, run [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), then [`0002_proctoring.sql`](supabase/migrations/0002_proctoring.sql), then [`0003_gaze_voice.sql`](supabase/migrations/0003_gaze_voice.sql), then [`0004_hr_flow.sql`](supabase/migrations/0004_hr_flow.sql), then `npm run proctor:setup` (checks the migration and creates the private `proctoring` storage bucket).
 3. **Environment.** `cp .env.example .env.local` and fill it in. You need the Supabase URL and service-role key, one AI provider key, a recruiter passcode, `SESSION_SECRET` (`openssl rand -hex 32`), `TOKEN_ENC_KEY` (`openssl rand -base64 32`) and `APP_URL` (`http://localhost:3000`). Set `DEMO_MODE=true` for the demo tools.
 4. **Check.** `npm run db:check` (all 15 tables) and `npm run ai:check` (the configured models answer).
 5. **Seed.** `npm run db:seed` (add `-- --with-history` for analytics history).

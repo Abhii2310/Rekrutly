@@ -3,22 +3,34 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, Star } from "lucide-react"
 import { cn } from "cn"
 import { Avatar } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { StatusPill } from "@/components/ui/status-pill"
 import type { Stage } from "@/lib/status"
 
-export type SelectableRow = { id: string; jobId: string; jobTitle: string | null; name: string; subtitle: string | null; stage: Stage; href: string }
+export type SelectableRow = {
+  id: string; jobId: string; jobTitle: string | null; name: string; subtitle: string | null; stage: Stage; href: string
+  /** Resume match percent, if scored. Shortlisted, interview and offer are the recruiter's own markers. */
+  match: number | null; shortlisted: boolean; interview: boolean; offer: boolean
+}
 
 /**
  * The candidate list with tick boxes. Tick people from one role, then Create assessment opens the Command Centre with
  * only those people. Nothing is sent from here.
  */
-export function SelectableCandidates({ rows }: { rows: SelectableRow[] }) {
+export function SelectableCandidates({ rows: all }: { rows: SelectableRow[] }) {
   const router = useRouter()
   const [picked, setPicked] = React.useState<string[]>([])
+  const [byMatch, setByMatch] = React.useState(false)
+  const [onlyShort, setOnlyShort] = React.useState(false)
+  const anyScored = all.some((r) => r.match !== null)
+  const anyShort = all.some((r) => r.shortlisted)
+  const rows = React.useMemo(() => {
+    const list = onlyShort ? all.filter((r) => r.shortlisted) : all
+    return byMatch ? [...list].sort((a, b) => (b.match ?? -1) - (a.match ?? -1)) : list
+  }, [all, byMatch, onlyShort])
   const jobOf = rows.find((r) => r.id === picked[0])?.jobId ?? null
   const jobTitle = rows.find((r) => r.id === picked[0])?.jobTitle ?? "this role"
   const jobs = new Set(rows.map((r) => r.jobId))
@@ -45,7 +57,11 @@ export function SelectableCandidates({ rows }: { rows: SelectableRow[] }) {
         ) : (
           <p className="t-callout text-ink-2">Tick people from one role to create an assessment for them.</p>
         )}
-        {picked.length > 0 ? <button type="button" onClick={() => setPicked([])} className="focus-ring t-callout rounded text-action hover:text-action-hover">Clear selection</button> : null}
+        <span className="flex items-center gap-4">
+          {anyScored ? <button type="button" aria-pressed={byMatch} onClick={() => setByMatch((v) => !v)} className={cn("focus-ring t-callout rounded hover:text-action-hover", byMatch ? "text-ink" : "text-action")}>{byMatch ? "Sorted by resume match" : "Sort by resume match"}</button> : null}
+          {anyShort ? <button type="button" aria-pressed={onlyShort} onClick={() => setOnlyShort((v) => !v)} className={cn("focus-ring t-callout rounded hover:text-action-hover", onlyShort ? "text-ink" : "text-action")}>{onlyShort ? "Shortlisted only" : "Show shortlisted only"}</button> : null}
+          {picked.length > 0 ? <button type="button" onClick={() => setPicked([])} className="focus-ring t-callout rounded text-action hover:text-action-hover">Clear selection</button> : null}
+        </span>
       </div>
 
       <div className="rounded-group bg-mist p-1">
@@ -67,6 +83,10 @@ export function SelectableCandidates({ rows }: { rows: SelectableRow[] }) {
                       {r.subtitle ? <span className="t-callout block truncate text-ink-2">{r.subtitle}</span> : null}
                     </span>
                     {r.jobTitle ? <span className="t-callout tabular hidden shrink-0 text-ink-2 sm:block">{r.jobTitle}</span> : null}
+                    {r.shortlisted ? <Star aria-label="Shortlisted" className="size-4 shrink-0 fill-current text-warning" strokeWidth={1.5} /> : null}
+                    {r.match !== null ? <span className="t-footnote tabular shrink-0 rounded-full bg-fog px-2 py-0.5 text-ink" title="Resume match, suggested by AI. A help for looking, never a decision.">Match {r.match}%</span> : null}
+                    {r.interview ? <span className="t-footnote hidden shrink-0 text-ink-2 md:block">Interview set</span> : null}
+                    {r.offer ? <span className="t-footnote hidden shrink-0 text-ink-2 md:block">Offer drafted</span> : null}
                     <span className="shrink-0"><StatusPill kind="candidate" value={r.stage} /></span>
                     <ChevronRight aria-hidden className="size-4 shrink-0 text-ink-3" strokeWidth={1.75} />
                   </Link>
