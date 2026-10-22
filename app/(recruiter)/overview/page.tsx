@@ -1,4 +1,6 @@
 import Link from "next/link"
+import { GettingStarted } from "@/components/guide/getting-started"
+import { getGuideProgress } from "@/lib/db/queries/guide"
 import { QueryError } from "@/components/frame/query-error"
 import { Button } from "@/components/ui/button"
 import { GroupedList, ListRow } from "@/components/ui/grouped-list"
@@ -19,8 +21,8 @@ export const dynamic = "force-dynamic"
 const ACTOR: Record<EventActor, string> = { recruiter: "You", agent: "Rekrutly", system: "System", candidate: "Candidate" }
 
 export default async function OverviewPage() {
-  const [stats, jobs, tasks, runs, events] = await Promise.all([
-    getOverviewStats(), listJobs(), listOpenTasks(), listActiveRuns(), listRecentEvents(8),
+  const [stats, jobs, tasks, runs, events, guide] = await Promise.all([
+    getOverviewStats(), listJobs(), listOpenTasks(), listActiveRuns(), listRecentEvents(8), getGuideProgress(),
   ])
   if (!stats.ok || !jobs.ok || !tasks.ok || !runs.ok || !events.ok) {
     return (
@@ -42,6 +44,7 @@ export default async function OverviewPage() {
         actions={<Button asChild><Link href="/command">New task</Link></Button>}
       />
       <PageBody>
+        {guide.ok ? <div className="mb-10"><GettingStarted progress={guide.data} /></div> : null}
         <div className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4">
           <Stat value={stats.data.totalCandidates} label="Candidates" />
           <Stat value={stats.data.inAssessment} label="In assessment" />

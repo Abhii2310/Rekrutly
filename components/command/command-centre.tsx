@@ -26,6 +26,13 @@ export const EXAMPLES = [
   "Prepare a 30-minute full-stack developer assessment for the five candidates in this job, but only invite candidates under 30.",
 ]
 
+/** Friendly starting points. Each fills the box with a sentence the planner understands. */
+const QUICK_STARTS = [
+  { title: "Create and send an assessment", hint: "Writes the questions, shows you a preview, then emails each candidate their link.", text: EXAMPLES[0] as string },
+  { title: "Chase people who haven't started", hint: "Finds who is stuck and drafts friendly follow-ups. You send them.", text: EXAMPLES[1] as string },
+  { title: "See the fairness guardrail", hint: "Ask for something unfair, like filtering by age, and watch Rekrutly leave it out and say why.", text: EXAMPLES[2] as string },
+] as const
+
 type PlanStep = { position: number; action: string; title: string; status: StepStatus }
 type Result =
   | { status: "ready"; runId: string; plan: ResolvedPlan; steps: PlanStep[] }
@@ -151,17 +158,22 @@ export function CommandCentre({ jobs, defaultJobId, demoMode = false, initialTex
         {speech.error ? <p role="status" className="t-callout mt-3 text-ink-2">{speech.error}</p> : null}
 
         {phase.name === "idle" || phase.name === "error" ? (
-          <div className="mt-6">
-            <p className="t-callout mb-2 text-ink-2">Try</p>
-            <ul className="flex flex-col items-start gap-2">
-              {EXAMPLES.map((ex) => (
-                <li key={ex}>
+          <div className="mt-8">
+            <ol className="t-callout grid gap-3 text-ink-2 sm:grid-cols-3" aria-label="How this works">
+              {["Say what you need, in one sentence.", "Check the plan. Nothing happens yet.", "Approve, and it runs with a receipt for every step."].map((t, i) => (
+                <li key={t} className="flex items-start gap-2.5"><span aria-hidden className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-fog text-[12px] text-ink">{i + 1}</span>{t}</li>
+              ))}
+            </ol>
+            <p className="t-callout mb-3 mt-8 text-ink-2">Quick start. Click one to fill the box, then press Enter.</p>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {QUICK_STARTS.map((q) => (
+                <li key={q.title}>
                   <button
-                    type="button"
-                    onClick={() => setText(ex)}
-                    className="focus-ring t-callout rounded-md text-left text-action hover:text-action-hover"
+                    type="button" onClick={() => setText(q.text)}
+                    className="focus-ring flex h-full w-full flex-col items-start rounded-group bg-mist p-4 text-left transition-colors hover:bg-fog"
                   >
-                    {ex}
+                    <span className="t-headline text-ink">{q.title}</span>
+                    <span className="t-callout mt-1 text-ink-2">{q.hint}</span>
                   </button>
                 </li>
               ))}
