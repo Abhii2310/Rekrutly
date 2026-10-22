@@ -53,7 +53,7 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
             ["Resume match", d.match ? `${d.match.score}%` : "Not checked", d.match && d.match.relevance !== null ? "Suggested by AI" : null],
             ["Assessment", assessment?.finalPct != null ? `${assessment.finalPct}%` : assessment ? "Scoring" : "Not taken", null],
             ["Camera exam", d.proctoring ? (d.proctoring.flagged === 0 ? "Nothing flagged" : `${d.proctoring.flagged} to review`) : "Not recorded", null],
-            ["Interview", interview?.scorecard ? `${(Object.values(interview.scorecard.ratings).reduce((a, b) => a + b, 0) / Math.max(1, Object.values(interview.scorecard.ratings).length)).toFixed(1)} of 5` : d.interviews.length ? "Booked" : "Not yet", interview ? "Your ratings" : null],
+            ["Interview", interview?.scorecard ? "Scorecard saved" : d.interviews.length ? "Booked" : "Not yet", interview ? "Ratings below" : null],
           ].map(([label, value, note]) => (
             <div key={label as string}><p className="t-callout text-ink-2">{label}</p><p className="t-title tabular mt-0.5 text-ink">{value}</p>{note ? <p className="t-footnote text-ink-3">{note}</p> : null}</div>
           ))}
