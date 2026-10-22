@@ -154,6 +154,15 @@ export default async function SubmissionPage({ params }: { params: Promise<{ id:
             ) : null}
           </Section>
 
+          {d.recording ? (
+            <Section title="Camera recording">
+              <p className="t-body text-ink-2">
+                This assessment was recorded on camera with the candidate&apos;s consent. {d.recording.flagged === 0 ? "Nothing was flagged." : `${d.recording.flagged} ${d.recording.flagged === 1 ? "moment was" : "moments were"} flagged for you to review.`}
+              </p>
+              <Button asChild variant="secondary" className="mt-3"><Link href={`/proctoring/${d.recording.invitationId}`}>Open the recording</Link></Button>
+            </Section>
+          ) : null}
+
           <p className="t-callout mt-12 text-ink-2">
             <Tooltip>
               <TooltipTrigger asChild>

@@ -5,7 +5,10 @@ import { withInvitation } from '@/lib/portal/http';
 import { afterStart, startAssessment } from '@/lib/portal/service';
 import { getPortalState, toIso } from '@/lib/portal/state';
 
-const Body = z.object({ consent: z.literal(true, { error: 'Please tick the box to confirm you understand.' }) });
+const Body = z.object({
+  consent: z.literal(true, { error: 'Please tick the box to confirm you understand.' }),
+  proctorConsent: z.boolean().optional(),
+});
 
 async function handlePOST(request: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
   const { token } = await params;
@@ -24,7 +27,10 @@ async function handlePOST(request: Request, { params }: { params: Promise<{ toke
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError('consent_required', parsed.error.issues[0]?.message ?? 'Please confirm you understand.', 400);
 
-  const started = await startAssessment(inv, now);
+  const proctorConsent = parsed.data.proctorConsent === true;
+  if (inv.assessment.proctored && !proctorConsent) return apiError('proctor_consent_required', 'Please agree to the camera recording to start.', 400);
+
+  const started = await startAssessment(inv, now, inv.assessment.proctored && proctorConsent);
   if (!started.ok) return apiError(started.error.code, 'Something went wrong starting the assessment. Try again.', 500);
   after(() => afterStart(inv));
   return apiOk({ deadlineAt: toIso(started.data.deadlineAt), serverNow: now.toISOString() });

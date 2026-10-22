@@ -10,6 +10,8 @@ import { ReviewScreen } from "./review-screen"
 import { PortalShell, StateMessage } from "./shell"
 import { TimerPill } from "./timer-pill"
 import { useAutosave } from "./use-autosave"
+import { openCamera } from "./proctor/camera-check"
+import { ProctorSession, type ProctorHandle } from "./proctor/proctor-session"
 import { useSignals } from "./use-signals"
 
 type Load = { name: "loading" } | { name: "network" } | { name: "invalid" } | { name: "ready"; info: PortalInfo }
@@ -26,6 +28,10 @@ export function PortalApp({ token }: { token: string }) {
   const [submitting, setSubmitting] = React.useState(false)
   const [submitError, setSubmitError] = React.useState<string | null>(null)
   const finishing = React.useRef(false)
+  const [stream, setStream] = React.useState<MediaStream | null>(null)
+  const [cameraLost, setCameraLost] = React.useState(false)
+  const [recordingStart] = React.useState(() => Date.now())
+  const proctorHandle = React.useRef<ProctorHandle | null>(null)
 
   const loadInfo = React.useCallback(async (): Promise<PortalInfo | null> => {
     const res = await portalFetch<PortalInfo>(token, "")
@@ -54,7 +60,20 @@ export function PortalApp({ token }: { token: string }) {
   const onClosed = React.useCallback(() => { void loadInfo() }, [loadInfo])
   const autosave = useAutosave(token, onClosed)
   const inProgress = load.name === "ready" && load.info.state === "in_progress" && qs !== null
-  const { flushSignals } = useSignals(token, inProgress)
+  const proctoredNow = inProgress && load.name === "ready" && load.info.proctored
+  const { flushSignals, push } = useSignals(token, inProgress, proctoredNow ? recordingStart : null)
+
+  // After a reload the camera is gone: try to bring it back, and say so if it can't.
+  React.useEffect(() => {
+    if (!proctoredNow || stream) return
+    let alive = true
+    openCamera().then((s) => { if (alive) { setStream(s); setCameraLost(false) } }).catch(() => { if (alive) setCameraLost(true) })
+    return () => { alive = false }
+  }, [proctoredNow, stream])
+
+  const turnCameraBackOn = React.useCallback(async () => {
+    try { setStream(await openCamera()); setCameraLost(false) } catch { /* the banner stays */ }
+  }, [])
 
   const total = qs?.questions.length ?? 0
   const answered = React.useMemo(
@@ -78,6 +97,8 @@ export function PortalApp({ token }: { token: string }) {
       return
     }
     flushSignals()
+    // Finish and upload the last piece of the recording before the assessment closes.
+    await proctorHandle.current?.stop()
     const res = await portalFetch<{ submittedAt: string }>(token, "/submit", { method: "POST" }, 30_000)
     if (!res.ok && res.status !== 409) {
       setSubmitting(false)
@@ -134,7 +155,8 @@ export function PortalApp({ token }: { token: string }) {
   async function start() {
     setStarting(true)
     setStartError(null)
-    const res = await portalFetch<{ deadlineAt: string }>(token, "/start", { method: "POST", body: JSON.stringify({ consent: true }) }, 30_000)
+    if (stream) void document.documentElement.requestFullscreen?.().catch(() => {})
+    const res = await portalFetch<{ deadlineAt: string }>(token, "/start", { method: "POST", body: JSON.stringify({ consent: true, proctorConsent: Boolean(stream) }) }, 30_000)
     if (!res.ok) {
       setStarting(false)
       setStartError(res.status === 0 ? "Couldn't reach the server. Check your connection and try again." : res.message)
@@ -170,7 +192,7 @@ export function PortalApp({ token }: { token: string }) {
       </StateMessage>
     )
   }
-  if (info.state === "ready") return <Intro info={info} onStart={start} starting={starting} error={startError} />
+  if (info.state === "ready") return <Intro info={info} onStart={start} starting={starting} error={startError} stream={stream} onStream={setStream} />
 
   if (!qs) {
     return (
@@ -204,6 +226,13 @@ export function PortalApp({ token }: { token: string }) {
           nextLabel={index === total - 1 ? "Review and submit" : "Next"} saveStatus={autosave.status}
         />
       )}
+      {proctoredNow && stream ? <ProctorSession token={token} stream={stream} startedAt={recordingStart} push={push} handleRef={proctorHandle} /> : null}
+      {proctoredNow && !stream && cameraLost ? (
+        <div role="alert" className="mt-6 rounded-group bg-mist p-4">
+          <p className="t-body text-ink">Your camera is off. This assessment is recorded, so please turn it back on.</p>
+          <button type="button" onClick={() => void turnCameraBackOn()} className="focus-ring t-callout mt-2 rounded text-action hover:text-action-hover">Turn camera on</button>
+        </div>
+      ) : null}
       {total > 0 ? <Navigator total={total} current={onReview ? -1 : index} answered={answered} onJump={goTo} /> : null}
     </PortalShell>
   )

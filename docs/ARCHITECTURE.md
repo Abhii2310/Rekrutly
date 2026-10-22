@@ -87,7 +87,8 @@ The SQL in `supabase/migrations/0001_init.sql` is the source of truth. Mirror it
 | answers | Autosaved, one per question per invitation (upsert). |
 | submissions | One per invitation (unique). Scores, skill breakdown, report. |
 | question_scores | Per-question score with method, evidence, overrides. |
-| integrity_signals | Tab hidden / paste / blur. Signals, never verdicts. |
+| integrity_signals | Tab hidden / paste / blur, plus camera and screen signals on proctored tests (`detail`, `video_ms`). Signals, never verdicts. |
+| proctor_segments | 30-second recording pieces (private `proctoring` bucket). Rows cascade with the invitation; files are removed by `deleteRecordings`. |
 | tasks | Follow-up queue with drafts; `dedupe_key` keeps rule generation idempotent. |
 | workflow_events | Append-only receipts. `type` is `noun.verb`, e.g. `step.completed`. |
 
@@ -272,6 +273,9 @@ Single recruiter, passcode-based (production would use SSO). `POST /api/auth/log
 | GET /api/c/[token]/questions | candidate | safe question list + saved answers |
 | PUT /api/c/[token]/answers | candidate | upsert one answer, update current_question + last_activity_at |
 | POST /api/c/[token]/signals | candidate | integrity signal |
+| POST /api/c/[token]/segments | candidate (proctored, consented) | one 30 s recording piece |
+| POST /api/c/[token]/snapshot | candidate (proctored, consented) | latest small picture for the live thumbnail |
+| GET /api/proctor/[invitationId]/snapshot | recruiter | live thumbnail |
 | POST /api/c/[token]/submit | candidate | create submission (unique), objective score, `after()` AI scoring |
 | POST /api/demo/reset, POST /api/demo/simulate | recruiter + DEMO_MODE | Demo Director |
 

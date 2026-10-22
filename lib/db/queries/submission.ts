@@ -1,4 +1,5 @@
 import 'server-only';
+import { ALERT_SIGNALS } from '@/lib/proctor/signals';
 import { getDb } from '@/lib/db/server';
 import { err, ok, type Result } from '@/lib/result';
 import type { CandidateReport } from '@/lib/ai/schemas';
@@ -37,6 +38,8 @@ export type SubmissionDetail = {
   questions: DetailQuestion[];
   answeredCount: number;
   signals: { tab_hidden: number; paste: number; window_blur: number };
+  /** Set when this assessment was recorded on camera: where the reviewer finds the recording. */
+  recording: { invitationId: string; flagged: number } | null;
 };
 
 const num = (n: unknown): number | null => (n === null || n === undefined ? null : Number(n));
@@ -51,16 +54,16 @@ export async function getSubmissionDetail(id: string): Promise<Result<Submission
   if (!s.data) return ok(null);
   const sub = s.data as Record<string, unknown>;
 
-  const inv = await db.from('invitations').select('id, assessment_id, candidate_id, started_at, candidates(id, full_name, stage), assessments(id, title, run_id, jobs(title))').eq('id', sub.invitation_id as string).single();
+  const inv = await db.from('invitations').select('id, assessment_id, candidate_id, started_at, candidates(id, full_name, stage), assessments(id, title, run_id, proctored, jobs(title))').eq('id', sub.invitation_id as string).single();
   if (inv.error || !inv.data) return err('db_error', "Couldn't load the candidate.", inv.error?.message);
-  type InvJoin = { assessment_id: string; started_at: string | null; candidates: { id: string; full_name: string; stage: Stage } | null; assessments: { id: string; title: string; run_id: string | null; jobs: { title: string } | null } | null };
+  type InvJoin = { assessment_id: string; started_at: string | null; candidates: { id: string; full_name: string; stage: Stage } | null; assessments: { id: string; title: string; run_id: string | null; proctored: boolean; jobs: { title: string } | null } | null };
   const iv = inv.data as unknown as InvJoin;
 
   const [qs, ans, scores, signals] = await Promise.all([
     db.from('questions').select('id, position, type, prompt, options, skill, difficulty, max_score').eq('assessment_id', iv.assessment_id).order('position'),
     db.from('answers').select('question_id, selected_option, text_answer').eq('invitation_id', sub.invitation_id as string),
     db.from('question_scores').select('id, question_id, method, score, max_score, is_correct, unanswered, reasoning, evidence_quote, matched_criteria, missing_criteria, confidence, overridden_score, override_reason').eq('submission_id', id),
-    db.from('integrity_signals').select('type').eq('invitation_id', sub.invitation_id as string),
+    db.from('integrity_signals').select('type').in('type', ['tab_hidden', 'paste', 'window_blur']).eq('invitation_id', sub.invitation_id as string),
   ]);
   const bad = [qs, ans, scores, signals].find((r) => r.error);
   if (bad?.error) return err('db_error', "Couldn't load the answers.", bad.error.message);
@@ -85,6 +88,7 @@ export async function getSubmissionDetail(id: string): Promise<Result<Submission
     };
   });
   const answeredCount = detailQuestions.filter((q) => q.answer && (q.type === 'mcq' ? q.answer.selected_option !== null : Boolean(q.answer.text_answer?.trim()))).length;
+  const flagged = await db.from('integrity_signals').select('id', { count: 'exact', head: true }).eq('invitation_id', sub.invitation_id as string).in('type', [...ALERT_SIGNALS]);
   const sigs = (signals.data as { type: keyof SubmissionDetail['signals'] }[]).reduce((acc, r) => ({ ...acc, [r.type]: acc[r.type] + 1 }), { tab_hidden: 0, paste: 0, window_blur: 0 });
 
   return ok({
@@ -100,5 +104,6 @@ export async function getSubmissionDetail(id: string): Promise<Result<Submission
     jobTitle: iv.assessments?.jobs?.title ?? 'this role',
     assessment: { id: iv.assessments?.id ?? '', title: iv.assessments?.title ?? 'Assessment', runId: iv.assessments?.run_id ?? null },
     questions: detailQuestions, answeredCount, signals: sigs,
+    recording: iv.assessments?.proctored ? { invitationId: sub.invitation_id as string, flagged: flagged.count ?? 0 } : null,
   });
 }

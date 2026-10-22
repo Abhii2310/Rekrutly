@@ -13,6 +13,7 @@ import { usePoll } from "@/hooks/use-poll"
 import { formatRelative, formatTime } from "@/lib/format"
 import type { RunLive } from "@/lib/db/queries/live"
 import { CandidateRows } from "./candidate-rows"
+import { LiveAlerts } from "./live-alerts"
 import { NeedsYou } from "./needs-you"
 
 const ACTOR = { recruiter: "You", agent: "Rekrutly", system: "System", candidate: "Candidate" } as const
@@ -89,8 +90,14 @@ export function WarRoom({ runId, initial }: { runId: string; initial: RunLive })
               </span>
             ) : undefined}
           >
-            <CandidateRows invitations={live.invitations} questionCount={live.assessment?.question_count ?? 0} serverNow={live.serverNow} />
+            <CandidateRows invitations={live.invitations} questionCount={live.assessment?.question_count ?? 0} serverNow={live.serverNow} alerts={live.alerts} />
           </Section>
+
+          {live.assessment?.proctored ? (
+            <Section title="Live alerts">
+              <LiveAlerts alerts={live.alerts} serverNow={live.serverNow} />
+            </Section>
+          ) : null}
 
           <Section title="Next actions">
             {live.nextActions.length === 0 ? (
