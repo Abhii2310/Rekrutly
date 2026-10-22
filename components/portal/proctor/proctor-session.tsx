@@ -1,10 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { newRuleState, step } from "@/lib/proctor/rules"
+import { newRuleState, newVoiceState, step, stepVoice } from "@/lib/proctor/rules"
 import type { SignalType } from "@/lib/proctor/signals"
 import { loadFaceDetector } from "./face-detector"
 import { startRecorder, type Recorder } from "./use-recorder"
+import { startVoiceMeter } from "./voice-detector"
 
 export type ProctorHandle = { stop: () => Promise<void> }
 
@@ -25,7 +26,6 @@ export function ProctorSession({
   handleRef: React.RefObject<ProctorHandle | null>
 }) {
   const video = React.useRef<HTMLVideoElement>(null)
-  const [watching, setWatching] = React.useState(false)
   const pushRef = React.useRef(push)
   React.useEffect(() => { pushRef.current = push }, [push])
 
@@ -41,7 +41,7 @@ export function ProctorSession({
     let alive = true
     const rules = newRuleState()
     let detector: Awaited<ReturnType<typeof loadFaceDetector>> = null
-    void loadFaceDetector().then((d) => { if (alive) { detector = d; setWatching(Boolean(d)) } })
+    void loadFaceDetector().then((d) => { if (alive) detector = d })
 
     const look = setInterval(() => {
       if (!detector || el.readyState < 2) return
@@ -49,6 +49,9 @@ export function ProctorSession({
         for (const s of step(rules, detector.look(el, performance.now()), Date.now())) pushRef.current(s)
       } catch { /* a bad frame is skipped */ }
     }, LOOK_EVERY_MS)
+
+    const voice = newVoiceState()
+    const stopVoice = startVoiceMeter(stream, (level, now) => { if (stepVoice(voice, level, now)) pushRef.current("voice_detected") })
 
     const canvas = document.createElement("canvas")
     canvas.width = 320
@@ -79,6 +82,7 @@ export function ProctorSession({
       alive = false
       clearInterval(look)
       clearInterval(snap)
+      stopVoice?.()
       track?.removeEventListener("ended", onEnded)
       track?.removeEventListener("mute", onEnded)
       document.removeEventListener("copy", onCopy)
@@ -94,7 +98,7 @@ export function ProctorSession({
       <video ref={video} muted playsInline className="aspect-[4/3] w-full -scale-x-100 object-cover" />
       <div className="t-footnote flex items-center gap-1.5 bg-ink px-2 py-1 text-canvas">
         <span aria-hidden className="size-2 animate-pulse rounded-full bg-[#FF453A]" />
-        Recording{watching ? "" : ""}
+        Recording{stream.getAudioTracks().length > 0 ? " with sound" : ""}
       </div>
     </div>
   )

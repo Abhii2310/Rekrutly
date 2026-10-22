@@ -25,6 +25,15 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // Migration 0003: the type list must accept the eye and voice signals. A check failure (23514) means it does not;
+  // a foreign-key failure (23503) means the type was accepted and only the made-up invitation was refused.
+  const probe = await db.from('integrity_signals').insert({ invitation_id: '00000000-0000-4000-8000-000000000000', type: 'voice_detected' });
+  if (probe.error?.code === '23514') {
+    console.error('MISSING signal types eyes_away, voice_detected\nRun supabase/migrations/0003_gaze_voice.sql in the Supabase SQL Editor, then run this again.');
+    process.exit(1);
+  }
+  console.log('ok      signal types eyes_away, voice_detected');
+
   const list = await db.storage.listBuckets();
   if (list.error) throw new Error(list.error.message);
   if (list.data.some((b) => b.name === BUCKET)) {

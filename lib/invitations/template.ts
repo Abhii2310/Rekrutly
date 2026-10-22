@@ -16,9 +16,9 @@ export function invitationText(input: { firstName: string; role: string; duratio
     '- Close other tabs and apps. Answers save as you go, so a refresh will not lose your work.',
     ...(proctored
       ? [
-          '- This assessment is recorded on your camera (video only, no sound). You will see a consent screen and a camera check first.',
-          '- Sit in a quiet, well-lit room, alone, with your face in view of the camera for the whole assessment.',
-          '- Allow camera access when your browser asks. Keep the page open and your camera on until you submit.',
+          '- This assessment is recorded on your camera and microphone. You will see a consent screen and a camera check first.',
+          '- Sit in a quiet, well-lit room, alone, with your face in view of the camera for the whole assessment. Please keep your eyes on the screen and do not talk or have others speak nearby.',
+          '- Allow camera and microphone access when your browser asks. Keep the page open and your camera on until you submit.',
           '- Please do not switch tabs, copy or paste, or leave full screen. These moments are shown to the reviewer as signals to look at, never as proof, and nothing fails automatically.',
         ]
       : ['- Please do not switch tabs or paste text. These are shown to the reviewer as signals, not as proof.']),

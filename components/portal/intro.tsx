@@ -36,7 +36,7 @@ export function Intro({
         <h2 id="consent-title" className="t-headline text-ink">Before you start</h2>
         <ul className="t-callout mt-3 flex flex-col gap-2 text-ink-2">
           <li>We collect your answers, your start and finish times, and when you switch tabs or paste text.</li>
-          {info.proctored ? <li>This assessment is recorded on your camera, with no sound. A reviewer can watch the recording.</li> : null}
+          {info.proctored ? <li>This assessment is recorded on your camera and microphone. A reviewer can watch and listen to the recording.</li> : null}
           <li>We collect this to assess your application for this role.</li>
           <li>A person reviews your results. Nothing is decided automatically.</li>
           <li>Switching tabs is shown to the reviewer as a signal, not as proof of anything.</li>
@@ -52,14 +52,14 @@ export function Intro({
         <section className="mt-4 rounded-group bg-mist p-5" aria-labelledby="camera-title">
           <h2 id="camera-title" className="t-headline text-ink">Camera recording</h2>
           <ul className="t-callout mt-3 flex flex-col gap-2 text-ink-2">
-            <li>Your camera records video only, no sound, from the moment you start until you submit.</li>
-            <li>Your device checks, on the device itself, whether your face is in view. The video is not sent to any AI.</li>
-            <li>The reviewer is told about moments worth a look, such as your face leaving view. These are signals, not proof, and nothing fails automatically.</li>
+            <li>Your camera and microphone record from the moment you start until you submit.</li>
+            <li>Your device checks, on the device itself, whether your face is in view, where your eyes point, and whether a voice is heard. The recording is not sent to any AI, and nothing you say is transcribed.</li>
+            <li>The reviewer is told about moments worth a look, such as your face leaving view, your eyes looking away for a while, or a voice in the room. These are signals, not proof, and nothing fails automatically.</li>
             <li>Only the hiring team can watch the recording. You can ask them to delete it.</li>
           </ul>
           <label className="mt-5 flex min-h-11 cursor-pointer items-center gap-3">
             <input type="checkbox" checked={agreedCamera} onChange={(e) => setAgreedCamera(e.target.checked)} className="focus-ring size-5 shrink-0 accent-[var(--color-action)]" />
-            <span className="t-body text-ink">I agree to be recorded on camera</span>
+            <span className="t-body text-ink">I agree to be recorded on camera and microphone</span>
           </label>
           {agreedCamera ? <CameraCheck stream={stream} onStream={onStream} /> : null}
         </section>

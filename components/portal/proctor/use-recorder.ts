@@ -4,7 +4,7 @@ const PIECE_MS = 30_000
 
 function pickMime(): string {
   if (typeof MediaRecorder === "undefined") return ""
-  return ["video/webm;codecs=vp8", "video/webm", "video/mp4"].find((m) => MediaRecorder.isTypeSupported(m)) ?? ""
+  return ["video/webm;codecs=vp8,opus", "video/webm", "video/mp4"].find((m) => MediaRecorder.isTypeSupported(m)) ?? ""
 }
 
 async function upload(token: string, seq: number, startedMs: number, durationMs: number, blob: Blob): Promise<void> {
@@ -22,7 +22,7 @@ export type Recorder = { stop: () => Promise<void> }
 
 /**
  * Records the camera as 30-second pieces, each playable on its own, and uploads each as soon as it is done.
- * Video only: no microphone. Stopping uploads the last piece, so call it before submitting.
+ * Video, plus sound when the microphone is on. Stopping uploads the last piece, so call it before submitting.
  */
 export function startRecorder(token: string, stream: MediaStream, startedAt: number): Recorder | null {
   const mimeType = pickMime()
@@ -37,7 +37,7 @@ export function startRecorder(token: string, stream: MediaStream, startedAt: num
     if (stopped) return
     const pieceStart = Date.now()
     const chunks: Blob[] = []
-    const rec = new MediaRecorder(stream, { ...(mimeType ? { mimeType } : {}), videoBitsPerSecond: 250_000 })
+    const rec = new MediaRecorder(stream, { ...(mimeType ? { mimeType } : {}), videoBitsPerSecond: 250_000, audioBitsPerSecond: 32_000 })
     const mySeq = seq++
     rec.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data) }
     rec.onstop = () => {

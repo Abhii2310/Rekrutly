@@ -8,7 +8,7 @@ type Detail = Record<string, string | number | boolean>
 type Signal = { type: SignalType; at: string; videoMs?: number; detail?: Detail }
 
 // Camera and screen signals reach the recruiter within a second. The quiet ones travel in 10-second batches.
-const URGENT = new Set<SignalType>(["face_missing", "multiple_faces", "looking_away", "camera_off", "fullscreen_exit", "copy", "offline", "tab_hidden"])
+const URGENT = new Set<SignalType>(["face_missing", "multiple_faces", "looking_away", "eyes_away", "voice_detected", "camera_off", "fullscreen_exit", "copy", "offline", "tab_hidden"])
 
 /**
  * Collects tab-switch, paste and window-blur hints, plus the camera and screen signals pushed by the proctor, and sends
