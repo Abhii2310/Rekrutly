@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/toaster"
 import { stepTitles } from "@/lib/executor/approval"
+import { isReserved } from "@/lib/executor/email-plan"
 import { firstNameOf, invitationText } from "@/lib/invitations/template"
 
 export type Recipient = { id: string; name: string; email: string | null }
@@ -33,8 +34,8 @@ function EmailField({ candidate }: { candidate: Recipient }) {
   if (!open) {
     return (
       <span className="t-callout text-ink-2">
-        No email, link only.{" "}
-        <button type="button" onClick={() => setOpen(true)} className="focus-ring rounded text-action hover:text-action-hover">Add email</button>
+        {candidate.email ? "Demo address, link only." : "No email, link only."}{" "}
+        <button type="button" onClick={() => setOpen(true)} className="focus-ring rounded text-action hover:text-action-hover">{candidate.email ? "Use a real email" : "Add email"}</button>
       </span>
     )
   }
@@ -73,17 +74,18 @@ export function ApprovalPanel({
   const [cancelOpen, setCancelOpen] = React.useState(false)
   const [cancelling, setCancelling] = React.useState(false)
   const [showFull, setShowFull] = React.useState(false)
+  const [proctored, setProctored] = React.useState(false)
 
   const picked = recipients.filter((r) => chosen.has(r.id))
   const withEmail = picked.filter((r) => r.email).length
   const titles = stepTitles(picked.length, withEmail)
-  const preview = invitationText({ firstName: picked[0] ? firstNameOf(picked[0].name) : "there", role: roleTitle, durationMinutes: minutes })
+  const preview = invitationText({ firstName: picked[0] ? firstNameOf(picked[0].name) : "there", role: roleTitle, durationMinutes: minutes, proctored })
 
   async function approve() {
     if (pending || picked.length === 0) return
     setPending(true)
     setError(null)
-    const message = await send(`/api/runs/${runId}/approve`, "POST", { durationMinutes: minutes, recipientIds: picked.map((r) => r.id) })
+    const message = await send(`/api/runs/${runId}/approve`, "POST", { durationMinutes: minutes, proctored, recipientIds: picked.map((r) => r.id) })
     if (message) {
       setPending(false)
       return setError(message)
@@ -132,13 +134,28 @@ export function ApprovalPanel({
                 />
                 <span className="min-w-0">
                   <span className="t-body block text-ink">{r.name}</span>
-                  {r.email ? <span className="t-callout block truncate text-ink-2">{r.email}</span> : null}
+                  {r.email && !isReserved(r.email) ? <span className="t-callout block truncate text-ink-2">{r.email}</span> : null}
                 </span>
               </label>
-              {!r.email ? <div className="pl-7"><EmailField candidate={r} /></div> : null}
+              {!r.email || isReserved(r.email) ? <div className="pl-7"><EmailField candidate={r} /></div> : null}
             </li>
           ))}
         </ul>
+      </section>
+
+      <section>
+        <h3 className="t-headline text-ink">Proctoring</h3>
+        <label className="mt-2 flex cursor-pointer items-start gap-3">
+          <input type="checkbox" checked={proctored} onChange={(e) => setProctored(e.target.checked)} className="focus-ring mt-1 size-4 shrink-0 accent-[var(--color-action)]" />
+          <span className="min-w-0">
+            <span className="t-body block text-ink">Record the candidate on camera</span>
+            <span className="t-callout block text-ink-2">
+              {proctored
+                ? "Candidates see a clear consent screen and a camera check first. You get live alerts and a recording to review. Alerts are signals for you to look at, never proof, and nothing fails automatically."
+                : "Off. Candidates are not recorded."}
+            </span>
+          </span>
+        </label>
       </section>
 
       <section>

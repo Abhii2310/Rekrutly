@@ -52,6 +52,7 @@ async function handleGET(_request: Request, { params }: { params: Promise<{ toke
     assessmentTitle: showTest ? inv.assessment.title : null,
     durationMinutes: showTest ? inv.assessment.duration_minutes : null,
     questionCount: showTest ? await questionCount(inv.assessment_id) : null,
+    proctored: showTest ? inv.assessment.proctored : false,
     instructions: state === 'ready' ? inv.assessment.instructions : null,
     deadlineAt: state === 'in_progress' ? toIso(inv.deadline_at) : null,
     submittedAt: state === 'submitted' ? toIso(inv.submitted_at) : null,

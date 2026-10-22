@@ -1,7 +1,7 @@
 import 'server-only';
 import { z } from 'zod';
 import { getDb } from '@/lib/db/server';
-import { env, emailStatus } from '@/lib/env';
+import { env, emailStatus, fromAddress } from '@/lib/env';
 import { logEvent } from '@/lib/events';
 import { invitationText, firstNameOf } from '@/lib/invitations/template';
 import { err, ok, type Result } from '@/lib/result';
@@ -34,11 +34,11 @@ export interface ActionDef<P> {
 const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const ids = z.array(z.uuid());
 
-async function assessmentFor(runId: string): Promise<Result<{ id: string; title: string; status: AssessmentStatus; duration: number }>> {
-  const a = await getDb().from('assessments').select('id, title, status, duration_minutes').eq('run_id', runId).maybeSingle();
+async function assessmentFor(runId: string): Promise<Result<{ id: string; title: string; status: AssessmentStatus; duration: number; proctored: boolean }>> {
+  const a = await getDb().from('assessments').select('id, title, status, duration_minutes, proctored').eq('run_id', runId).maybeSingle();
   if (a.error) return err('db_error', "Couldn't load the assessment.", a.error.message);
   if (!a.data) return err('no_assessment', 'There is no assessment for this workflow yet. Write the questions first.');
-  return ok({ id: a.data.id as string, title: a.data.title as string, status: a.data.status as AssessmentStatus, duration: a.data.duration_minutes as number });
+  return ok({ id: a.data.id as string, title: a.data.title as string, status: a.data.status as AssessmentStatus, duration: a.data.duration_minutes as number, proctored: Boolean(a.data.proctored) });
 }
 
 const createAssessment: ActionDef<{ title: string; durationMinutes: number }> = {
@@ -133,7 +133,7 @@ const sendInvitations: ActionDef<{ candidateIds: string[] }> = {
     const todo = (rows.data as unknown as Row[]).filter((r) => r.delivery_status !== 'sent');
 
     const plan = planDelivery(
-      { status: emailStatus(env), from: env.EMAIL_FROM, demoEmail: env.DEMO_CANDIDATE_EMAIL },
+      { status: emailStatus(env), from: fromAddress(env), demoEmail: env.DEMO_CANDIDATE_EMAIL },
       todo.map((r) => ({ id: r.id, email: r.candidates?.email ?? null })),
     );
 
@@ -151,7 +151,7 @@ const sendInvitations: ActionDef<{ candidateIds: string[] }> = {
       const c = r.candidates;
       if (!c?.email) continue;
       const link = `${env.APP_URL}/a/${decryptToken(r.token_encrypted)}`;
-      const text = invitationText({ firstName: firstNameOf(c.full_name), role, durationMinutes: a.data.duration, link });
+      const text = invitationText({ firstName: firstNameOf(c.full_name), role, durationMinutes: a.data.duration, link, proctored: a.data.proctored });
       const res = await sendEmail({ to: c.email, subject: text.subject, text: text.body, idempotencyKey: r.id });
       if (res.ok) {
         sent++;

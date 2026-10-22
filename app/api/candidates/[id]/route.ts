@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { apiError, apiOk, withErrors } from '@/lib/api';
 import { getDb } from '@/lib/db/server';
 import { logEvent } from '@/lib/events';
+import { deleteRecordings } from '@/lib/proctor/service';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
 import { CANDIDATE_STAGES, assertTransition, statusLabel, type Stage } from '@/lib/status';
 
@@ -88,6 +89,10 @@ async function handleDELETE(request: Request, { params }: { params: Promise<{ id
   const cand = await db.from('candidates').select('id, job_id').eq('id', id).maybeSingle();
   if (cand.error) return apiError('db_error', 'Could not load the candidate.', 500);
   if (!cand.data) return apiError('not_found', 'Candidate not found.', 404);
+
+  // Recordings are files, not rows, so they are removed first: deleting a candidate deletes their video too.
+  const invs = await db.from('invitations').select('id').eq('candidate_id', id);
+  await deleteRecordings(((invs.data ?? []) as { id: string }[]).map((r) => r.id)).catch((e) => console.error('recordings delete failed:', e));
 
   const del = await db.from('candidates').delete().eq('id', id);
   if (del.error) {

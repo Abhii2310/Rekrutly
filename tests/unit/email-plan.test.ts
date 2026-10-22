@@ -3,8 +3,8 @@ import { MESSAGES, planDelivery } from '@/lib/executor/email-plan';
 import { firstNameOf, invitationText } from '@/lib/invitations/template';
 
 const inv = [
-  { id: 'a', email: 'aarav@example.com' },
-  { id: 'b', email: 'diya@example.com' },
+  { id: 'a', email: 'aarav@acme.io' },
+  { id: 'b', email: 'diya@acme.io' },
   { id: 'c', email: null },
 ];
 
@@ -19,7 +19,7 @@ describe('planDelivery', () => {
     expect(p.mode === 'skip' && p.message).toBe("Email uses Resend's test sender, which only delivers to your own address. Set DEMO_CANDIDATE_EMAIL to receive one.");
   });
   it('sends only to the demo address with the test sender, and marks the rest unconfigured', () => {
-    const p = planDelivery({ status: 'configured', from: 'Rekrutly <onboarding@resend.dev>', demoEmail: 'AARAV@example.com' }, inv);
+    const p = planDelivery({ status: 'configured', from: 'Rekrutly <onboarding@resend.dev>', demoEmail: 'AARAV@acme.io' }, inv);
     expect(p).toEqual({ mode: 'send', sendIds: ['a'], unconfiguredIds: ['b', 'c'] });
   });
   it('explains when nobody matches the test-sender address', () => {
@@ -29,6 +29,10 @@ describe('planDelivery', () => {
   it('sends to everyone with an email on a real sender', () => {
     const p = planDelivery({ status: 'configured', from: 'Rekrutly <hi@rekrutly.app>' }, inv);
     expect(p).toEqual({ mode: 'send', sendIds: ['a', 'b'], unconfiguredIds: ['c'] });
+  });
+  it('never tries reserved example addresses, such as the seeded demo candidates', () => {
+    const p = planDelivery({ status: 'configured', from: 'Rekrutly <me@gmail.com>' }, [{ id: 'x', email: 'a@example.com' }, { id: 'y', email: 'b@acme.io' }]);
+    expect(p).toEqual({ mode: 'send', sendIds: ['y'], unconfiguredIds: ['x'] });
   });
   it('skips with a clear message when nobody has an email on a real sender', () => {
     const p = planDelivery({ status: 'configured', from: 'hi@rekrutly.app' }, [{ id: 'z', email: null }]);

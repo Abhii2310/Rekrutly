@@ -11,6 +11,9 @@ export const MESSAGES = {
   nobodyHasEmail: 'No candidate has an email, so copy the links instead.',
 } as const;
 
+/** Seeded demo candidates use example.com addresses, which are reserved and can never receive mail. Never try them. */
+export const isReserved = (email: string | null): boolean => /@(example\.(com|org|net)|[^@]+\.(test|invalid|example))$/i.test(email?.trim() ?? '');
+
 /**
  * Decides who gets an email. Pure, so every branch can be tested.
  * With Resend's test sender (onboarding@resend.dev) only the account owner's address can receive mail.
@@ -25,7 +28,7 @@ export function planDelivery(
 
   const testSender = cfg.from.toLowerCase().includes('resend.dev');
   const demo = cfg.demoEmail?.trim().toLowerCase();
-  const canSend = (email: string | null): boolean => Boolean(email) && (!testSender || email?.trim().toLowerCase() === demo);
+  const canSend = (email: string | null): boolean => Boolean(email) && !isReserved(email) && (!testSender || email?.trim().toLowerCase() === demo);
   const sendIds = invitations.filter((i) => canSend(i.email)).map((i) => i.id);
   const unconfiguredIds = invitations.filter((i) => !canSend(i.email)).map((i) => i.id);
 

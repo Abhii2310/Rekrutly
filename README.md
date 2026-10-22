@@ -21,6 +21,7 @@
 - **Activity:** every receipt, filterable, with a CSV export for an audit.
 - **Data and privacy:** export everything held about a candidate, or delete a candidate and their data on request; a receipt without their name is kept.
 - **Settings:** system status, a one-click AI check that shows which provider answered and how fast, and the keyboard shortcuts.
+- **Proctored exams** (opt-in): a live War Room with a camera thumbnail per candidate, alerts with a chime, and a review page that plays the recording with flagged moments on a timeline. See `docs/PROGRESS.md`.
 - **Demo Director** (demo mode only) to reset, simulate candidates and check the demo is ready.
 
 ## Architecture
@@ -54,7 +55,8 @@ Answer keys and rubrics live in their own table (`question_keys`) and are read o
 - **Append-only receipts** for every meaningful action; events are never edited.
 - **Guardrails.** Age, gender, marital status, pregnancy, religion and caste, disability, ethnicity and nationality are removed from instructions before the model sees them, and the removal is logged. No protected characteristics in prompts, filters, scores or rankings.
 - **Consent notice** in plain words before a candidate starts: what is collected, why, that a person reviews the result, and how to ask for deletion.
-- **Signals, not proof.** Tab switches and pastes are disclosed up front, shown to the recruiter as hints, and never treated as evidence. No webcam, no face analysis.
+- **Signals, not proof.** Tab switches and pastes are disclosed up front, shown to the recruiter as hints, and never treated as evidence.
+- **Proctoring is opt-in.** Off by default; the recruiter switches it on per assessment. The candidate sees a plain consent screen and must agree and pass a camera check before the timer can start. Video only, no sound. Faces are counted on the candidate's own device (no video goes to any AI, and there is no identity or emotion analysis). Alerts are worded "Review this moment", never "cheating", and nothing fails automatically. Recordings sit in a private storage bucket, are shown only to a signed-in recruiter through short-lived links, and are deleted when the candidate is deleted. Automatic 30-day expiry is not built yet.
 - **No automatic decisions.** AI scores are labelled "Suggested by AI" and overridable with a reason. No "best" or "recommended" labels anywhere.
 - **Recruiter access** is a passcode with an httpOnly, SameSite session cookie; every recruiter route checks the session as well as the proxy.
 - **Minimal data to the model.** Grading sees the question, rubric and answer, never the candidate's name. Follow-up drafts see a first name, the role, the duration and a date, and the candidate link is added by code afterwards.
@@ -82,7 +84,7 @@ Google Gemini (`gemini-3-flash-preview` for planning, questions and reports; `ge
 Requires Node 20.9 or newer.
 
 1. **Install.** `npm install`
-2. **Database.** Create a Supabase project. In the SQL Editor, run [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql).
+2. **Database.** Create a Supabase project. In the SQL Editor, run [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), then [`0002_proctoring.sql`](supabase/migrations/0002_proctoring.sql), then `npm run proctor:setup` (checks the migration and creates the private `proctoring` storage bucket).
 3. **Environment.** `cp .env.example .env.local` and fill it in. You need the Supabase URL and service-role key, one AI provider key, a recruiter passcode, `SESSION_SECRET` (`openssl rand -hex 32`), `TOKEN_ENC_KEY` (`openssl rand -base64 32`) and `APP_URL` (`http://localhost:3000`). Set `DEMO_MODE=true` for the demo tools.
 4. **Check.** `npm run db:check` (all 15 tables) and `npm run ai:check` (the configured models answer).
 5. **Seed.** `npm run db:seed` (add `-- --with-history` for analytics history).

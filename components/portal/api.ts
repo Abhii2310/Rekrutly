@@ -6,6 +6,7 @@ export type PortalInfo = {
   assessmentTitle: string | null
   durationMinutes: number | null
   questionCount: number | null
+  proctored: boolean
   instructions: string | null
   deadlineAt: string | null
   submittedAt: string | null

@@ -88,6 +88,9 @@ describe('parseEnv', () => {
 });
 
 describe('emailStatus', () => {
+  it('is configured with a Gmail account, whatever the Resend settings are', () => {
+    expect(emailStatus({ RESEND_API_KEY: undefined, EMAIL_FROM: 'Rekrutly <onboarding@resend.dev>', GMAIL_USER: 'me@gmail.com', GMAIL_APP_PASSWORD: 'abcdabcdabcdabcd' })).toBe('configured');
+  });
   const e = { RESEND_API_KEY: 'k', EMAIL_FROM: 'Rekrutly <onboarding@resend.dev>', DEMO_CANDIDATE_EMAIL: undefined };
   it('is not_configured without a key', () => {
     expect(emailStatus({ ...e, RESEND_API_KEY: undefined })).toBe('not_configured');

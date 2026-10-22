@@ -6,7 +6,7 @@ A five-minute demo with a recovery move for every failure. Read it once, rehears
 
 Set these in Vercel (names only here; never write values in a doc) before the first deploy, then redeploy after any change:
 
-`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `AI_PROVIDER`, `AI_FALLBACK_PROVIDER`, `GOOGLE_GENERATIVE_AI_API_KEY`, `GROQ_API_KEY`, `AI_MODEL_SMART`, `AI_MODEL_FAST`, `AI_FALLBACK_MODEL`, `RECRUITER_PASSCODE`, `SESSION_SECRET`, `TOKEN_ENC_KEY`, `APP_URL` (the real Vercel URL), `DEMO_MODE=true`, `TASK_OVERDUE_MINUTES=2`, `DEMO_CANDIDATE_WHATSAPP` (your own number; the reset puts it on Aarav and Kabir so "Open in WhatsApp" works), and optionally `RESEND_API_KEY`, `EMAIL_FROM`, `DEMO_CANDIDATE_EMAIL`.
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `AI_PROVIDER`, `AI_FALLBACK_PROVIDER`, `GOOGLE_GENERATIVE_AI_API_KEY`, `GROQ_API_KEY`, `AI_MODEL_SMART`, `AI_MODEL_FAST`, `AI_FALLBACK_MODEL`, `RECRUITER_PASSCODE`, `SESSION_SECRET`, `TOKEN_ENC_KEY`, `APP_URL` (the real Vercel URL), `DEMO_MODE=true`, `TASK_OVERDUE_MINUTES=2`, `DEMO_CANDIDATE_WHATSAPP` (your own number; the reset puts it on Aarav and Kabir so "Open in WhatsApp" works), and for real email: `GMAIL_USER` and `GMAIL_APP_PASSWORD` (a Google app password; sends to any address), or `RESEND_API_KEY`, `EMAIL_FROM`, `DEMO_CANDIDATE_EMAIL` (test sender, delivers only to your own address).
 
 - `TASK_OVERDUE_MINUTES=2` is what makes a nudge task appear for a candidate who has not started within two minutes. The default is 60.
 - Gemini's free tier ran out of quota during testing. For a smooth demo use a paid or fresh key. Groq is the backup and can rate-limit in bursts.

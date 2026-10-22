@@ -18,12 +18,14 @@
     "ai:check": "tsx --env-file=.env.local scripts/check-ai.ts",
     "ai:models": "tsx --env-file=.env.local scripts/list-models.ts",
     "screenshot": "tsx --env-file=.env.local scripts/screenshot.ts",
-    "dev:live-run": "tsx --conditions=react-server --env-file=.env.local scripts/dev-live-run.ts"
+    "dev:live-run": "tsx --conditions=react-server --env-file=.env.local scripts/dev-live-run.ts",
+    "proctor:setup": "tsx --env-file=.env.local scripts/setup-proctoring.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "4.0.85",
     "@ai-sdk/google": "4.0.102",
     "@ai-sdk/groq": "4.0.67",
+    "@mediapipe/tasks-vision": "0.10.14",
     "@supabase/supabase-js": "2.118.0",
     "ai": "7.0.148",
     "class-variance-authority": "0.7.1",
@@ -32,6 +34,7 @@
     "lucide-react": "1.61.0",
     "motion": "14.5.0",
     "next": "16.4.2",
+    "nodemailer": "^7.0.13",
     "radix-ui": "1.8.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -45,6 +48,7 @@
     "@playwright/test": "1.64.1",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "24.19.2",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.5",

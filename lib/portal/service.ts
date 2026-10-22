@@ -5,6 +5,7 @@ import { err, ok, type Result } from '@/lib/result';
 import { hashToken } from '@/lib/security/tokens';
 import { assertTransition, type Stage } from '@/lib/status';
 import { firstNameOf } from '@/lib/invitations/template';
+import { isSignalType } from '@/lib/proctor/signals';
 
 export type ResolvedInvitation = {
   id: string;
@@ -13,12 +14,13 @@ export type ResolvedInvitation = {
   status: string;
   expires_at: string;
   consent_at: string | null;
+  proctor_consent_at: string | null;
   opened_at: string | null;
   started_at: string | null;
   deadline_at: string | null;
   submitted_at: string | null;
   current_question: number | null;
-  assessment: { id: string; title: string; instructions: string; duration_minutes: number; status: string; job_id: string; run_id: string | null };
+  assessment: { id: string; title: string; instructions: string; duration_minutes: number; status: string; job_id: string; run_id: string | null; proctored: boolean };
   jobTitle: string;
   firstName: string;
   /** Set only by the Demo Director. Real candidate routes never set it. */
@@ -29,8 +31,8 @@ export type ResolvedInvitation = {
 const TOKEN_SHAPE = /^[A-Za-z0-9_-]{43}$/;
 
 const COLUMNS =
-  'id, assessment_id, candidate_id, status, expires_at, consent_at, opened_at, started_at, deadline_at, submitted_at, current_question, ' +
-  'assessments(id, title, instructions, duration_minutes, status, job_id, run_id, jobs(title)), candidates(full_name)';
+  'id, assessment_id, candidate_id, status, expires_at, consent_at, proctor_consent_at, opened_at, started_at, deadline_at, submitted_at, current_question, ' +
+  'assessments(id, title, instructions, duration_minutes, status, job_id, run_id, proctored, jobs(title)), candidates(full_name)';
 
 type Row = Omit<ResolvedInvitation, 'assessment' | 'jobTitle' | 'firstName'> & {
   assessments: (ResolvedInvitation['assessment'] & { jobs: { title: string } | null }) | null;
@@ -74,13 +76,13 @@ export async function questionCount(assessmentId: string): Promise<number> {
  * Starts the timer on the server. Idempotent: if the test was already started, the existing deadline is returned
  * and nothing is reset, so refreshing the page can never give a candidate more time.
  */
-export async function startAssessment(inv: ResolvedInvitation, now: Date): Promise<Result<{ deadlineAt: string; startedAt: string }>> {
+export async function startAssessment(inv: ResolvedInvitation, now: Date, proctorConsent = false): Promise<Result<{ deadlineAt: string; startedAt: string }>> {
   if (inv.started_at && inv.deadline_at) return ok({ deadlineAt: inv.deadline_at, startedAt: inv.started_at });
   const db = getDb();
   const startedAt = now.toISOString();
   const deadlineAt = new Date(now.getTime() + inv.assessment.duration_minutes * 60_000).toISOString();
   const upd = await db.from('invitations')
-    .update({ consent_at: startedAt, started_at: startedAt, deadline_at: deadlineAt, status: 'started', last_activity_at: startedAt })
+    .update({ consent_at: startedAt, started_at: startedAt, deadline_at: deadlineAt, status: 'started', last_activity_at: startedAt, ...(proctorConsent ? { proctor_consent_at: startedAt } : {}) })
     .eq('id', inv.id).is('started_at', null).select('id');
   if (upd.error) return err('db_error', "Couldn't start the assessment.", upd.error.message);
   if (!upd.data || upd.data.length === 0) {
@@ -132,15 +134,20 @@ export async function saveAnswer(inv: ResolvedInvitation, questionId: string, an
   return ok({ savedAt });
 }
 
-const SIGNAL_TYPES = new Set(['tab_hidden', 'paste', 'window_blur']);
+export type SignalInput = { type: string; at?: string; videoMs?: number; detail?: Record<string, unknown> };
 
 /** Signals are recorded as hints for the recruiter, never as proof, and never block the candidate. */
-export async function recordSignals(inv: ResolvedInvitation, events: { type: string; at?: string }[], now: Date): Promise<void> {
+export async function recordSignals(inv: ResolvedInvitation, events: SignalInput[], now: Date): Promise<void> {
   const started = inv.started_at ? new Date(inv.started_at).getTime() : now.getTime();
-  const rows = events.filter((e) => SIGNAL_TYPES.has(e.type)).map((e) => {
+  const rows = events.filter((e) => isSignalType(e.type)).map((e) => {
     const t = e.at ? new Date(e.at).getTime() : NaN;
     const occurred = Number.isFinite(t) && t >= started && t <= now.getTime() ? new Date(t) : now;
-    return { invitation_id: inv.id, type: e.type, occurred_at: occurred.toISOString() };
+    return {
+      invitation_id: inv.id, type: e.type, occurred_at: occurred.toISOString(),
+      // The camera types only make sense for a proctored test; they carry where to look in the recording.
+      video_ms: inv.assessment.proctored && Number.isInteger(e.videoMs) && (e.videoMs ?? -1) >= 0 ? e.videoMs : null,
+      detail: inv.assessment.proctored && e.detail ? e.detail : null,
+    };
   });
   if (rows.length > 0) {
     const { error } = await getDb().from('integrity_signals').insert(rows);

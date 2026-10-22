@@ -4,7 +4,11 @@ import { withInvitation } from '@/lib/portal/http';
 import { recordSignals } from '@/lib/portal/service';
 import { canWriteAnswers } from '@/lib/portal/state';
 
-const Body = z.object({ events: z.array(z.object({ type: z.string().max(40), at: z.string().max(40).optional() })).max(20) });
+const Body = z.object({ events: z.array(z.object({
+  type: z.string().max(40), at: z.string().max(40).optional(),
+  videoMs: z.number().int().min(0).max(86_400_000).optional(),
+  detail: z.record(z.string().max(30), z.union([z.string().max(100), z.number(), z.boolean()])).optional(),
+})).max(20) });
 
 /** Integrity signals are hints for a human, never proof, and never block the candidate. */
 async function handlePOST(request: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
