@@ -134,6 +134,8 @@ export async function saveAnswer(inv: ResolvedInvitation, questionId: string, an
   return ok({ savedAt });
 }
 
+const NEWER_TYPES = new Set(['eyes_away', 'voice_detected']);
+
 export type SignalInput = { type: string; at?: string; videoMs?: number; detail?: Record<string, unknown> };
 
 /** Signals are recorded as hints for the recruiter, never as proof, and never block the candidate. */
@@ -150,7 +152,14 @@ export async function recordSignals(inv: ResolvedInvitation, events: SignalInput
     };
   });
   if (rows.length > 0) {
-    const { error } = await getDb().from('integrity_signals').insert(rows);
-    if (error) console.error('signals insert failed:', error.message);
+    const db = getDb();
+    const { error } = await db.from('integrity_signals').insert(rows);
+    if (error?.code === '23514') {
+      // The database has not had migration 0003 yet, so it refuses the newer types. Keep everything it does accept.
+      const older = rows.filter((r) => !NEWER_TYPES.has(r.type));
+      if (older.length > 0) await db.from('integrity_signals').insert(older);
+    } else if (error) {
+      console.error('signals insert failed:', error.message);
+    }
   }
 }

@@ -3,16 +3,33 @@
 import * as React from "react"
 import { Camera } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { startVoiceMeter } from "./voice-detector"
 
-/** Asks for the camera and shows the candidate what will be recorded before they can start. Video only. */
+const VIDEO = { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" } as const
+
+/**
+ * Asks for the camera and the microphone, and shows the candidate what will be recorded before they can start.
+ * If the microphone is refused or missing, the camera alone is used, so the exam can still go ahead.
+ */
 export async function openCamera(): Promise<MediaStream> {
-  return navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }, audio: false })
+  try {
+    return await navigator.mediaDevices.getUserMedia({ video: VIDEO, audio: { echoCancellation: true, noiseSuppression: false } })
+  } catch {
+    return navigator.mediaDevices.getUserMedia({ video: VIDEO, audio: false })
+  }
 }
 
 export function CameraCheck({ stream, onStream }: { stream: MediaStream | null; onStream: (s: MediaStream | null) => void }) {
   const video = React.useRef<HTMLVideoElement>(null)
   const [error, setError] = React.useState<string | null>(null)
   const [busy, setBusy] = React.useState(false)
+  const [level, setLevel] = React.useState(0)
+  const hasMic = (stream?.getAudioTracks().length ?? 0) > 0
+
+  React.useEffect(() => {
+    if (!stream) return
+    return startVoiceMeter(stream, (l) => setLevel(l)) ?? undefined
+  }, [stream])
 
   React.useEffect(() => {
     const el = video.current
@@ -47,7 +64,21 @@ export function CameraCheck({ stream, onStream }: { stream: MediaStream | null; 
           Turn on my camera
         </Button>
       )}
-      {stream ? <p className="t-callout mt-2 text-ink-2">Camera is working. Sit so your face is in view and the room is lit, then start.</p> : null}
+      {stream ? (
+        <>
+          <p className="t-callout mt-2 text-ink-2">Camera is working. Sit so your face is in view and the room is lit, then start.</p>
+          {hasMic ? (
+            <div className="mt-3 max-w-[320px]">
+              <div className="h-2 overflow-hidden rounded-full bg-fog" role="img" aria-label="Microphone level">
+                <div className="h-full rounded-full bg-success transition-[width] duration-150" style={{ width: `${Math.min(100, level * 600)}%` }} />
+              </div>
+              <p className="t-callout mt-1 text-ink-2">Microphone is working. Say hello and the bar should move.</p>
+            </div>
+          ) : (
+            <p className="t-callout mt-3 text-ink-2">No microphone found or allowed. You can still start; only the camera is recorded.</p>
+          )}
+        </>
+      ) : null}
       {error ? <p role="alert" className="t-callout mt-2 text-danger">{error}</p> : null}
     </div>
   )

@@ -34,7 +34,7 @@ test('proctored exam: consent and camera check, live alert, thumbnail, recording
   await expect(recruiter.getByText(/Sent 1 invitation/).first()).toBeVisible({ timeout: 30_000 });
 
   // Candidate: cannot start without agreeing to the camera and turning it on.
-  const candidateCtx = await browser.newContext({ viewport: { width: 375, height: 812 }, permissions: ['camera'] });
+  const candidateCtx = await browser.newContext({ viewport: { width: 375, height: 812 }, permissions: ['camera', 'microphone'] });
   const candidate = await candidateCtx.newPage();
   await candidate.goto(url);
   await expect(candidate.getByRole('heading', { name: 'Camera recording' })).toBeVisible();

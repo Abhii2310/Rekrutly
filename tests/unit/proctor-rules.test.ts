@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { COOLDOWN_MS, HOLD_MS, newRuleState, step, yawRatio } from '@/lib/proctor/rules';
+import { COOLDOWN_MS, HOLD_MS, newRuleState, newVoiceState, step, stepVoice, VOICE_COOLDOWN_MS, yawRatio } from '@/lib/proctor/rules';
 
-const run = (state = newRuleState(), obs: { faces: number; yaw: number | null }, from: number, to: number) => {
+const run = (state = newRuleState(), obs: { faces: number; yaw: number | null; gaze?: number | null }, from: number, to: number) => {
   const out: string[] = [];
   for (let t = from; t <= to; t += 500) out.push(...step(state, obs, t));
   return out;
@@ -31,5 +31,29 @@ describe('camera rules', () => {
     expect(yawRatio({ x: 0.4, y: 0.4 }, { x: 0.6, y: 0.4 }, { x: 0.5, y: 0.5 })).toBeCloseTo(0);
     expect(yawRatio({ x: 0.4, y: 0.4 }, { x: 0.6, y: 0.4 }, { x: 0.6, y: 0.5 })).toBeCloseTo(0.5);
     expect(yawRatio(undefined, undefined, undefined)).toBeNull();
+  });
+  it('flags eyes pointing sideways, but only when the head faces the screen', () => {
+    expect(run(newRuleState(), { faces: 1, yaw: 0.1, gaze: 0.9 }, 0, 5000)).toEqual(['eyes_away']);
+    expect(run(newRuleState(), { faces: 1, yaw: 0.1, gaze: 0.2 }, 0, 10_000)).toEqual([]);
+    expect(run(newRuleState(), { faces: 1, yaw: 0.9, gaze: 0.9 }, 0, 5000)).toEqual(['looking_away']);
+  });
+});
+
+describe('voice rule', () => {
+  const feed = (s: ReturnType<typeof newVoiceState>, level: number, from: number, to: number) => {
+    let fired = 0;
+    for (let t = from; t <= to; t += 200) if (stepVoice(s, level, t)) fired++;
+    return fired;
+  };
+  it('ignores a quiet room and a short noise', () => {
+    const s = newVoiceState();
+    expect(feed(s, 0.004, 0, 5000)).toBe(0);
+    expect(feed(s, 0.2, 5200, 6000)).toBe(0);
+  });
+  it('flags a voice that goes on, then waits before flagging again', () => {
+    const s = newVoiceState();
+    feed(s, 0.004, 0, 3000);
+    expect(feed(s, 0.2, 3200, 8000)).toBe(1);
+    expect(feed(s, 0.2, 8200, 8000 + VOICE_COOLDOWN_MS + 3000)).toBe(1);
   });
 });
