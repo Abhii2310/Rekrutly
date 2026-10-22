@@ -14,13 +14,16 @@ import { ProgressRail } from "@/components/ui/progress-rail"
 import { Section } from "@/components/ui/section"
 import { Pill, StatusPill } from "@/components/ui/status-pill"
 import { DemoTag } from "@/components/ui/tags"
-import { env } from "@/lib/env"
+import { env, fromAddress } from "@/lib/env"
 import { getDb } from "@/lib/db/server"
 import { getAssessmentForReview } from "@/lib/db/queries/assessments"
 import { getRunLive } from "@/lib/db/queries/live"
 import { getRunWithSteps } from "@/lib/db/queries/runs"
 import { formatRelative } from "@/lib/format"
 import { plural } from "@/lib/format-text"
+
+/** The plain address inside "Name <address>". */
+const senderEmail = (from: string): string => /<([^>]+)>/.exec(from)?.[1] ?? from
 
 export const dynamic = "force-dynamic"
 
@@ -109,7 +112,7 @@ export default async function RunPage({ params, searchParams }: { params: Promis
                 <p className="t-body text-ink">This workflow was cancelled. Nothing was sent.</p>
               </div>
             ) : null}
-            <RunLive runId={run.id} initial={live.data} />
+            <RunLive runId={run.id} initial={live.data} sender={senderEmail(fromAddress(env))} />
           </div>
         ) : isSweep ? (
           <SweepRun runId={run.id} initial={live.data} beforeApproval={beforeApproval} cancelled={run.status === "cancelled"} preview={sweepPreview} targetRunId={sweepTarget} />
