@@ -30,7 +30,8 @@ export function AiInterview({ token, firstName, initial, onDone }: { token: stri
   const talks = canSpeak()
   const voiceIn = useVoice && listening
   const alive = React.useRef(true)
-  React.useEffect(() => () => { alive.current = false; stopSpeaking(); listener.current?.stop() }, [])
+  // Mounted again after React's development double-run, so the flag is set on every mount, not only cleared on unmount.
+  React.useEffect(() => { alive.current = true; return () => { alive.current = false; stopSpeaking(); listener.current?.stop() } }, [])
 
   const ask = React.useCallback(async (prompt: { text: string }) => {
     if (!alive.current) return
@@ -163,6 +164,7 @@ export function AiInterview({ token, firstName, initial, onDone }: { token: stri
       {error ? <p role="alert" className="t-callout mt-4 text-danger">{error}</p> : null}
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
+        {phase === "speaking" ? <Button variant="secondary" onClick={() => stopSpeaking()}>I&apos;m ready to answer</Button> : null}
         {phase === "listening" ? <Button onClick={() => listener.current?.stop()}>I&apos;m done answering</Button> : null}
         {phase === "typing" ? <Button disabled={typed.trim().length < 2} onClick={() => void send(typed, false)}>Send answer</Button> : null}
         {phase === "typing" && voiceIn ? <Button variant="secondary" onClick={() => listen()}><Mic aria-hidden className="size-4" strokeWidth={1.75} />Speak instead</Button> : null}

@@ -45,9 +45,13 @@ const FollowOut = z.object({ followup: z.string().nullable() });
 
 const FOLLOW_SYSTEM = `You are a friendly interviewer. Given a question and the candidate's spoken answer, write ONE short follow-up that digs into something specific they said (their own part, a decision, a trade-off, a result, or an example). It is read aloud: one sentence, under 25 words, plain and warm. If the answer is already complete, or there is nothing specific to dig into, return null. Never criticise, never reveal any score, never ask about personal characteristics. ${FAIR}`;
 
+/** A spoken conversation cannot wait: if the AI has not answered in this long, the interview moves on without a follow-up. */
+export const FOLLOWUP_BUDGET_MS = 5_000;
+
 export async function followUp(question: string, answer: string): Promise<string | null> {
-  const res = await runStructured({ tier: 'fast', system: FOLLOW_SYSTEM, prompt: `Question: ${question}\n\nAnswer: ${answer.slice(0, 1500)}`, schema: FollowOut, temperature: 0.4, thinking: 'minimal', timeoutMs: 9_000 });
-  if (!res.ok) return null;
+  const ask = runStructured({ tier: 'fast', system: FOLLOW_SYSTEM, prompt: `Question: ${question}\n\nAnswer: ${answer.slice(0, 1500)}`, schema: FollowOut, temperature: 0.4, thinking: 'minimal', timeoutMs: 9_000 });
+  const res = await Promise.race([ask, new Promise<null>((resolve) => setTimeout(() => resolve(null), FOLLOWUP_BUDGET_MS))]);
+  if (!res || !res.ok) return null;
   const t = res.data.output.followup?.trim() ?? '';
   return t.length >= 8 && t.length <= 300 ? t : null;
 }
