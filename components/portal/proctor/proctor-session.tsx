@@ -51,15 +51,15 @@ export function ProctorSession({
     }, LOOK_EVERY_MS)
 
     const canvas = document.createElement("canvas")
-    canvas.width = 192
-    canvas.height = 144
+    canvas.width = 320
+    canvas.height = 240
     const snap = setInterval(() => {
       if (el.readyState < 2) return
       canvas.getContext("2d")?.drawImage(el, 0, 0, canvas.width, canvas.height)
       canvas.toBlob((blob) => {
         if (!blob) return
         void fetch(`/api/c/${token}/snapshot`, { method: "POST", body: blob, headers: { "content-type": "image/jpeg" } }).catch(() => {})
-      }, "image/jpeg", 0.55)
+      }, "image/jpeg", 0.6)
     }, SNAPSHOT_EVERY_MS)
 
     const track = stream.getVideoTracks()[0]

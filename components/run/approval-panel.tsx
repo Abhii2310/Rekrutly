@@ -78,7 +78,7 @@ export function ApprovalPanel({
   const picked = recipients.filter((r) => chosen.has(r.id))
   const withEmail = picked.filter((r) => r.email).length
   const titles = stepTitles(picked.length, withEmail)
-  const preview = invitationText({ firstName: picked[0] ? firstNameOf(picked[0].name) : "there", role: roleTitle, durationMinutes: minutes })
+  const preview = invitationText({ firstName: picked[0] ? firstNameOf(picked[0].name) : "there", role: roleTitle, durationMinutes: minutes, proctored })
 
   async function approve() {
     if (pending || picked.length === 0) return

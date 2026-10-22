@@ -84,6 +84,7 @@ async function handlePOST(request: Request, { params }: { params: Promise<{ id: 
   const snapshot = buildSnapshot({
     questionIds: (questions.data as { id: string }[]).map((q) => q.id),
     durationMinutes,
+    proctored,
     recipients: candidates.map((c) => ({ id: c.id, name: c.full_name, hasEmail: Boolean(c.email) })),
     roleTitle: (job.data?.title as string | undefined) ?? 'open',
     steps: stepRows.map((s) => ({ ...s, title: s.action === 'create_invitations' ? titles.create_invitations : s.action === 'send_invitations' ? titles.send_invitations : s.title })),

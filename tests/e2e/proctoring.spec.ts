@@ -29,6 +29,10 @@ test('proctored exam: consent and camera check, live alert, thumbnail, recording
   const aarav = live.invitations.find((i) => i.name === 'Aarav Mehta') as { id: string };
   const url = await candidateUrl(recruiter.request, aarav.id);
 
+  // The recruiter is already watching the War Room when the candidate arrives.
+  await recruiter.goto(`/runs/${runId}/war-room`);
+  await expect(recruiter.getByText(/Sent 1 invitation/).first()).toBeVisible({ timeout: 30_000 });
+
   // Candidate: cannot start without agreeing to the camera and turning it on.
   const candidateCtx = await browser.newContext({ viewport: { width: 375, height: 812 }, permissions: ['camera'] });
   const candidate = await candidateCtx.newPage();
@@ -47,10 +51,10 @@ test('proctored exam: consent and camera check, live alert, thumbnail, recording
   await expect(candidate.getByRole('navigation', { name: 'Questions' })).toBeVisible();
   await expect(candidate.getByLabel('Your camera, being recorded')).toBeVisible();
 
-  // After the first picture has gone up, the War Room shows a live thumbnail.
-  await recruiter.goto(`/runs/${runId}/war-room`);
+  // The recruiter is told the moment the candidate starts, and a live picture appears.
+  await expect(recruiter.getByText('Aarav Mehta just started the assessment.')).toBeVisible({ timeout: 20_000 });
   await expect(recruiter.getByRole('heading', { name: 'Live alerts' })).toBeVisible();
-  await expect(recruiter.getByAltText('Live camera for Aarav Mehta')).toBeVisible({ timeout: 30_000 });
+  await expect(recruiter.getByAltText('Live camera of Aarav Mehta')).toBeVisible({ timeout: 30_000 });
 
   // A copy event becomes a live alert with a "Review this moment" link.
   await candidate.evaluate(() => document.dispatchEvent(new Event('copy')));

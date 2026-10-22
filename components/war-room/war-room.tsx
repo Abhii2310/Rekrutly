@@ -14,6 +14,7 @@ import { formatRelative, formatTime } from "@/lib/format"
 import type { RunLive } from "@/lib/db/queries/live"
 import { CandidateRows } from "./candidate-rows"
 import { LiveAlerts } from "./live-alerts"
+import { LiveCameras, StartNotices } from "./live-cameras"
 import { NeedsYou } from "./needs-you"
 
 const ACTOR = { recruiter: "You", agent: "Rekrutly", system: "System", candidate: "Candidate" } as const
@@ -67,6 +68,7 @@ export function WarRoom({ runId, initial }: { runId: string; initial: RunLive })
           {paused ? <Button variant="secondary" size="sm" loading={busy} onClick={() => void control("resume")}>Resume</Button> : null}
         </div>
       </div>
+      <StartNotices invitations={live.invitations} />
       {paused ? (
         <div role="note" className="mb-8 max-w-[1040px] rounded-group bg-warning-tint p-4">
           <p className="t-callout text-ink">Paused. Rekrutly won&apos;t take any new actions until you resume.</p>
@@ -92,6 +94,12 @@ export function WarRoom({ runId, initial }: { runId: string; initial: RunLive })
           >
             <CandidateRows invitations={live.invitations} questionCount={live.assessment?.question_count ?? 0} serverNow={live.serverNow} alerts={live.alerts} />
           </Section>
+
+          {live.assessment?.proctored ? (
+            <Section title="Live cameras">
+              <LiveCameras invitations={live.invitations} serverNow={live.serverNow} />
+            </Section>
+          ) : null}
 
           {live.assessment?.proctored ? (
             <Section title="Live alerts">

@@ -5,7 +5,7 @@ import { err, ok, type Result } from '@/lib/result';
 export const BUCKET = 'proctoring';
 /** A 30-second piece at a low bit rate is about 1 MB; this keeps a bad client from filling storage. */
 export const MAX_SEGMENT_BYTES = 6 * 1024 * 1024;
-export const MAX_SNAPSHOT_BYTES = 200 * 1024;
+export const MAX_SNAPSHOT_BYTES = 300 * 1024;
 
 const segmentPath = (invitationId: string, seq: number, ext: string): string => `${invitationId}/seg-${String(seq).padStart(4, '0')}.${ext}`;
 export const snapshotPath = (invitationId: string): string => `${invitationId}/latest.jpg`;

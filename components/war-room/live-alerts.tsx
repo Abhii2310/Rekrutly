@@ -8,24 +8,7 @@ import { toast } from "@/components/ui/toaster"
 import { formatRelative } from "@/lib/format"
 import type { LiveAlert } from "@/lib/db/queries/live"
 import { signalLabel } from "@/lib/proctor/signals"
-
-/** A soft two-note chime. Needs the page to have been clicked once, which opening the War Room almost always means. */
-function chime(ctx: AudioContext) {
-  void ctx.resume().catch(() => {})
-  const now = ctx.currentTime
-  ;[660, 880].forEach((freq, n) => {
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.type = "sine"
-    osc.frequency.value = freq
-    gain.gain.setValueAtTime(0.0001, now + n * 0.16)
-    gain.gain.exponentialRampToValueAtTime(0.18, now + n * 0.16 + 0.02)
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + n * 0.16 + 0.35)
-    osc.connect(gain).connect(ctx.destination)
-    osc.start(now + n * 0.16)
-    osc.stop(now + n * 0.16 + 0.4)
-  })
-}
+import { chime } from "./chime"
 
 export const reviewHref = (a: { invitation_id: string; video_ms: number | null }): string =>
   `/proctoring/${a.invitation_id}${a.video_ms !== null ? `?t=${Math.floor(a.video_ms / 1000)}` : ""}`
