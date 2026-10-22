@@ -10,7 +10,7 @@ describe('interview flow', () => {
     expect(firstTurn(plan, T)).toMatchObject({ role: 'ai', kind: 'question', qi: 0, text: 'Question 1?' });
   });
   it('digs in with a follow-up after a real answer, then moves on after the follow-up', () => {
-    let turns = [firstTurn(plan, T)!];
+    const turns = [firstTurn(plan, T)!];
     const s1 = applyAnswer(plan, turns, long, false, 'What was the hardest trade-off you made?', T);
     expect(s1.next).toMatchObject({ kind: 'followup', qi: 0 });
     const s2 = applyAnswer(plan, s1.turns, long, false, 'Another follow-up?', T);
