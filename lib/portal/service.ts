@@ -40,7 +40,9 @@ type Row = Omit<ResolvedInvitation, 'assessment' | 'jobTitle' | 'firstName'> & {
 };
 
 /** Looks the invitation up by the hash of the token. Unknown or malformed tokens are `null`, never an error that hints at why. */
-export async function resolveInvitation(token: string): Promise<Result<ResolvedInvitation | null>> {
+export async function resolveInvitation(rawToken: string): Promise<Result<ResolvedInvitation | null>> {
+  // A mail app can leave a full stop, bracket or space after a link. Drop anything that cannot be part of a token.
+  const token = rawToken.trim().replace(/[^A-Za-z0-9_-]+$/, '');
   if (!TOKEN_SHAPE.test(token)) return ok(null);
   const { data, error } = await getDb().from('invitations').select(COLUMNS).eq('token_hash', hashToken(token)).maybeSingle();
   if (error) return err('db_error', "Couldn't load the assessment.", error.message);

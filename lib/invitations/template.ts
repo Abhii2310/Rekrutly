@@ -31,3 +31,27 @@ export function invitationText(input: { firstName: string; role: string; duratio
 }
 
 export const firstNameOf = (fullName: string): string => fullName.trim().split(/\s+/)[0] ?? fullName;
+
+const esc = (t: string): string => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/**
+ * The same invitation as a small HTML email with a real button, so the link cannot be broken by line wrapping or by a mail
+ * app that does not recognise a plain-text link. The plain text is still sent alongside it.
+ */
+export function invitationHtml(body: string, link: string | undefined): string {
+  const blocks = body.split('\n\n').map((block) => {
+    if (link && block.startsWith('Start here:')) {
+      return `<p style="margin:24px 0"><a href="${esc(link)}" style="display:inline-block;background:#0071E3;color:#ffffff;text-decoration:none;font-weight:600;padding:14px 28px;border-radius:999px">Start your assessment</a></p>`
+        + `<p style="margin:0 0 16px;color:#6e6e73;font-size:13px">If the button does not work, copy this link into your browser:<br><a href="${esc(link)}" style="color:#0071E3;word-break:break-all">${esc(link)}</a></p>`;
+    }
+    const lines = block.split('\n');
+    const firstBullet = lines.findIndex((l) => l.startsWith('- '));
+    if (firstBullet >= 0 && lines.slice(firstBullet).every((l) => l.startsWith('- '))) {
+      const head = lines.slice(0, firstBullet);
+      return (head.length ? `<p style="margin:0 0 8px"><strong>${head.map(esc).join('<br>')}</strong></p>` : '')
+        + `<ul style="margin:0 0 16px;padding-left:20px">${lines.slice(firstBullet).map((l) => `<li style="margin:0 0 6px">${esc(l.slice(2))}</li>`).join('')}</ul>`;
+    }
+    return `<p style="margin:0 0 16px">${lines.map(esc).join('<br>')}</p>`;
+  });
+  return `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.5;color:#1d1d1f;max-width:560px">${blocks.join('')}</div>`;
+}
