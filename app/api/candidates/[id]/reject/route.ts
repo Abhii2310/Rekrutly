@@ -40,12 +40,16 @@ async function handlePOST(request: Request, { params }: { params: Promise<{ id: 
     if (!b.body || b.body.length < 20) return apiError('invalid_input', 'The message looks too short.', 400);
     const plan = planDelivery({ status: emailStatus(env), from: fromAddress(env), demoEmail: env.DEMO_CANDIDATE_EMAIL }, [{ id, email: cand.email }]);
     if (plan.mode === 'skip') return apiError('email_unavailable', plan.message, 409);
+    // Claim it first, so two clicks cannot send two emails.
+    const claim = await db.from('candidates').update({ rejection_emailed_at: new Date().toISOString() }).eq('id', id).is('rejection_emailed_at', null).select('id');
+    if (claim.error) return apiError('db_error', "Couldn't send the email.", 500);
+    if (!claim.data || claim.data.length === 0) return apiError('already_sent', 'A rejection email was already sent to this person.', 409);
     const sent = await sendEmail({ to: cand.email, subject: b.subject || 'Your application', text: b.body, idempotencyKey: `reject-${id}` });
     if (!sent.ok) {
+      await db.from('candidates').update({ rejection_emailed_at: null }).eq('id', id);
       await logEvent({ ...base, type: 'email.failed', level: 'error', message: `Couldn't email ${cand.full_name}: ${sent.error.message}` });
       return apiError('email_failed', `The email didn't send, so nobody was rejected. ${sent.error.message}`, 502);
     }
-    await db.from('candidates').update({ rejection_emailed_at: new Date().toISOString() }).eq('id', id);
     await logEvent({ ...base, type: 'email.sent', level: 'success', message: `Sent ${cand.full_name} a rejection email` });
   }
   await db.from('candidates').update({ stage: 'rejected' }).eq('id', id).eq('stage', cand.stage);

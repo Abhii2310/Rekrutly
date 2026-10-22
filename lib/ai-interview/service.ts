@@ -11,12 +11,17 @@ import { applyAnswer, candidateText, currentPrompt, fallbackPlan, firstTurn, isV
 type Row = { id: string; status: 'in_progress' | 'completed'; plan: PlanQuestion[]; turns: Turn[]; started_at: string };
 
 /** What the candidate's page needs: where they are in the conversation. Never the reasons behind a question. */
-export type CandidateState = { status: 'none' | 'in_progress' | 'completed'; total: number; index: number; prompt: { text: string; kind: 'question' | 'followup' } | null };
+export type CandidateState = {
+  status: 'none' | 'in_progress' | 'completed'; total: number; index: number;
+  prompt: { text: string; kind: 'question' | 'followup' } | null;
+  /** Which line of the conversation the prompt is. The page sends it back with the answer so a repeated request cannot answer the next question. */
+  promptId: number;
+};
 
 function toState(row: Row | null): CandidateState {
-  if (!row) return { status: 'none', total: 0, index: 0, prompt: null };
+  if (!row) return { status: 'none', total: 0, index: 0, prompt: null, promptId: -1 };
   const p = currentPrompt(row.turns);
-  return { status: row.status, total: row.plan.length, index: p ? p.qi + 1 : row.plan.length, prompt: row.status === 'in_progress' && p && p.kind !== 'answer' ? { text: p.text, kind: p.kind } : null };
+  return { status: row.status, total: row.plan.length, index: p ? p.qi + 1 : row.plan.length, prompt: row.status === 'in_progress' && p && p.kind !== 'answer' ? { text: p.text, kind: p.kind } : null, promptId: row.turns.length - 1 };
 }
 
 async function load(invitationId: string): Promise<Row | null> {
@@ -70,12 +75,14 @@ export async function start(inv: ResolvedInvitation, now: Date): Promise<Result<
 }
 
 /** Saves the answer and returns what the AI says next. Returns `done` when the conversation is over. */
-export async function answer(inv: ResolvedInvitation, text: string, skipped: boolean, now: Date): Promise<Result<{ state: CandidateState; done: boolean }>> {
+export async function answer(inv: ResolvedInvitation, text: string, skipped: boolean, now: Date, promptId?: number): Promise<Result<{ state: CandidateState; done: boolean }>> {
   const row = await load(inv.id);
   if (!row) return err('not_started', 'The interview has not started.');
   if (row.status === 'completed') return ok({ state: toState(row), done: true });
   const prompt = currentPrompt(row.turns);
   if (!prompt) return ok({ state: toState(row), done: false });
+  // A repeated request (a retry after a lost response) is answering a line that is already answered: change nothing, say where we are.
+  if (promptId !== undefined && promptId !== row.turns.length - 1) return ok({ state: toState(row), done: false });
 
   const over = timeIsUp(row.started_at, now);
   let follow: string | null = null;

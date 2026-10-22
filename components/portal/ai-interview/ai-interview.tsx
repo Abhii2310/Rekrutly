@@ -9,7 +9,7 @@ import { portalFetch } from "../api"
 import { PortalShell } from "../shell"
 import { canListen, canSpeak, createListener, speak, stopSpeaking, type Listener } from "./voice"
 
-type State = { status: "none" | "in_progress" | "completed"; total: number; index: number; prompt: { text: string; kind: "question" | "followup" } | null }
+type State = { status: "none" | "in_progress" | "completed"; total: number; index: number; prompt: { text: string; kind: "question" | "followup" } | null; promptId: number }
 type Phase = "intro" | "starting" | "speaking" | "listening" | "typing" | "thinking" | "done"
 
 /**
@@ -30,6 +30,7 @@ export function AiInterview({ token, firstName, initial, onDone }: { token: stri
   const talks = canSpeak()
   const voiceIn = useVoice && listening
   const alive = React.useRef(true)
+  const promptRef = React.useRef<number | undefined>(undefined)
   // Mounted again after React's development double-run, so the flag is set on every mount, not only cleared on unmount.
   React.useEffect(() => { alive.current = true; return () => { alive.current = false; stopSpeaking(); listener.current?.stop() } }, [])
 
@@ -68,10 +69,11 @@ export function AiInterview({ token, firstName, initial, onDone }: { token: stri
     stopSpeaking()
     setPhase("thinking")
     setError(null)
-    const res = await portalFetch<{ state: State; done: boolean }>(token, "/interview/answer", { method: "POST", body: JSON.stringify({ text, skipped }) }, 45_000)
+    const res = await portalFetch<{ state: State; done: boolean }>(token, "/interview/answer", { method: "POST", body: JSON.stringify({ text, skipped, promptId: promptRef.current }) }, 45_000)
     if (!alive.current) return
     if (!res.ok) { setError(res.message || "Couldn't send that. Check your connection and try again."); setPhase("typing"); return }
     setState(res.data.state)
+    promptRef.current = res.data.state.promptId
     if (res.data.done || !res.data.state.prompt) { setPhase("done"); stopSpeaking(); return void onDone() }
     void ask(res.data.state.prompt)
   }
@@ -82,6 +84,7 @@ export function AiInterview({ token, firstName, initial, onDone }: { token: stri
     const res = await portalFetch<State>(token, "/interview/start", { method: "POST" }, 60_000)
     if (!res.ok) { setPhase("intro"); setError(res.message || "Couldn't start. Check your connection and try again."); return }
     setState(res.data)
+    promptRef.current = res.data.promptId
     if (res.data.status === "completed" || !res.data.prompt) { setPhase("done"); return void onDone() }
     void ask(res.data.prompt)
   }

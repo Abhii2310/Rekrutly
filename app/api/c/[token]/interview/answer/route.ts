@@ -9,7 +9,7 @@ import { withInvitation } from '@/lib/portal/http';
 import { summarize } from '@/lib/ai-interview/service';
 
 export const maxDuration = 60;
-const Body = z.object({ text: z.string().max(MAX_ANSWER_CHARS * 2).default(''), skipped: z.boolean().default(false) });
+const Body = z.object({ text: z.string().max(MAX_ANSWER_CHARS * 2).default(''), skipped: z.boolean().default(false), promptId: z.number().int().min(0).max(100).optional() });
 
 /** One answer in, the AI's next line out. When the conversation ends, the evidence notes are written after the response. */
 async function handlePOST(request: Request, { params }: { params: Promise<{ token: string }> }): Promise<Response> {
@@ -20,7 +20,7 @@ async function handlePOST(request: Request, { params }: { params: Promise<{ toke
   if (!inv.assessment.ai_interview || !inv.submitted_at) return apiError('not_available', 'There is no interview to take.', 409);
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError('invalid_input', 'Send your answer as text.', 400);
-  const res = await answer(inv, parsed.data.text, parsed.data.skipped || parsed.data.text.trim().length === 0, new Date());
+  const res = await answer(inv, parsed.data.text, parsed.data.skipped || parsed.data.text.trim().length === 0, new Date(), parsed.data.promptId);
   if (!res.ok) return apiError(res.error.code, res.error.message, res.error.code === 'not_started' ? 409 : 500);
   if (res.data.done) {
     after(async () => {
