@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { AddCandidateDialog } from "@/components/jobs/add-candidate-dialog"
 import { ImportCandidatesDialog } from "@/components/jobs/import-candidates-dialog"
 import { QueryError } from "@/components/frame/query-error"
 import { Avatar } from "@/components/ui/avatar"
@@ -44,7 +45,7 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
         </div>
         {j.description ? <p className="t-body mt-6 max-w-[640px] text-ink">{j.description}</p> : null}
 
-        <Section title="Candidates" className="mt-12" action={<ImportCandidatesDialog jobId={j.id} />}>
+        <Section title="Candidates" className="mt-12" action={<span className="flex items-center gap-2"><AddCandidateDialog jobId={j.id} /><ImportCandidatesDialog jobId={j.id} /></span>}>
           <GroupedList>
             {candidates.data.map((c) => (
               <ListRow

@@ -36,6 +36,17 @@ test('admin: create a role, import candidates from CSV, read the receipts, expor
   await page.getByRole('button', { name: 'Done' }).click();
   await expect(page.getByRole('link', { name: /Asha Rao/ })).toBeVisible();
 
+  // Add one candidate by hand: a duplicate email is refused, a new one appears in the list.
+  await page.getByRole('button', { name: 'Add candidate' }).click();
+  await page.getByLabel('Name').fill('Meera Hand');
+  await page.getByLabel('Email').fill('asha.e2e@example.com');
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(page.getByText('Someone in this job already uses that email.')).toBeVisible();
+  await page.getByLabel('Email').fill('meera.hand.e2e@example.com');
+  await page.getByLabel('Role', { exact: true }).fill('Backend Engineer');
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(page.getByRole('link', { name: /Meera Hand/ })).toBeVisible();
+
   // The receipts say so, and the export is a real CSV.
   await page.goto('/activity?group=admin');
   await expect(page.getByText(`Imported 2 candidates into ${ROLE}`)).toBeVisible();
