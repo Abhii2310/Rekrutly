@@ -22,26 +22,40 @@ export async function checkBounces(): Promise<Result<{ marked: number }>> {
   const rows = (waiting.data as unknown as Row[]).filter((r) => r.candidates?.email);
   if (rows.length === 0) return ok({ marked: 0 });
 
-  const client = new ImapFlow({ host: 'imap.gmail.com', port: 993, secure: true, auth: { user: env.GMAIL_USER as string, pass: env.GMAIL_APP_PASSWORD as string }, logger: false, socketTimeout: 15_000 });
+  const client = new ImapFlow({
+    host: 'imap.gmail.com', port: 993, secure: true, auth: { user: env.GMAIL_USER as string, pass: env.GMAIL_APP_PASSWORD as string },
+    logger: false, socketTimeout: 10_000, greetingTimeout: 8_000, connectionTimeout: 8_000,
+  });
   const bounces = new Map<string, Bounce>();
-  try {
+
+  const read = async (): Promise<void> => {
     await client.connect();
     const lock = await client.getMailboxLock('INBOX');
     try {
       const uids = (await client.search({ since: new Date(Date.now() - 2 * 86_400_000), from: 'mailer-daemon' })) || [];
-      // Only the head of each notice is needed: the failed address and the status are near the top.
-      for (const uid of uids.slice(-25)) {
-        const msg = await client.fetchOne(String(uid), { source: { start: 0, maxLength: 12_000 } });
-        if (!msg || !msg.source) continue;
-        const b = parseBounce(msg.source.toString('utf8'));
+      if (uids.length === 0) return;
+      // One request for all notices. Only the head of each is needed: the failed address and status are near the top.
+      for await (const msg of client.fetch(uids.slice(-20), { source: { start: 0, maxLength: 12_000 } }, { uid: true })) {
+        const b = msg.source ? parseBounce(msg.source.toString('utf8')) : null;
         if (b) bounces.set(b.email, b);
       }
     } finally {
       lock.release();
     }
-    await client.logout();
+  };
+
+  // A hard time limit, so a slow connection can never hold the request until the platform kills it.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      read(),
+      new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('timed out after 15 seconds')), 15_000); }),
+    ]);
   } catch (e) {
-    return err('imap_error', "Couldn't check for bounced emails.", e instanceof Error ? e.message : undefined);
+    return err('imap_error', `Couldn't check for bounced emails (${e instanceof Error ? e.message : 'unknown error'}).`);
+  } finally {
+    if (timer) clearTimeout(timer);
+    client.close();
   }
 
   let marked = 0;
