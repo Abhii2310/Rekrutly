@@ -60,3 +60,12 @@ export async function getCandidate(id: string): Promise<Result<CandidateDetail |
   });
   return ok({ ...flatten(cand.data as unknown as JoinedRow), events: events.data as unknown as WorkflowEventRow[], assessments });
 }
+
+/** Names for the people ticked on the Candidates page, in the order they were ticked. Unknown ids are dropped. */
+export async function getCandidateNames(ids: string[]): Promise<Result<{ id: string; name: string; jobId: string }[]>> {
+  if (ids.length === 0) return ok([]);
+  const { data, error } = await getDb().from('candidates').select('id, full_name, job_id').in('id', ids);
+  if (error) return err('db_error', 'Could not load candidates.', error.message);
+  const byId = new Map((data as { id: string; full_name: string; job_id: string }[]).map((c) => [c.id, c]));
+  return ok(ids.flatMap((id) => { const c = byId.get(id); return c ? [{ id, name: c.full_name, jobId: c.job_id }] : []; }));
+}

@@ -2,13 +2,14 @@ import 'server-only';
 import { CommandCentre } from "@/components/command/command-centre"
 import { PageHeader } from "@/components/ui/page-header"
 import { QueryError } from "@/components/frame/query-error"
+import { getCandidateNames } from "@/lib/db/queries/candidates"
 import { listJobs } from "@/lib/db/queries/jobs"
 import { env } from "@/lib/env"
 
 export const dynamic = "force-dynamic"
 
-export default async function CommandPage({ searchParams }: { searchParams: Promise<{ job?: string; q?: string }> }) {
-  const { job, q } = await searchParams
+export default async function CommandPage({ searchParams }: { searchParams: Promise<{ job?: string; q?: string; ids?: string }> }) {
+  const { job, q, ids } = await searchParams
   const jobs = await listJobs()
   if (!jobs.ok) {
     return (
@@ -22,5 +23,9 @@ export default async function CommandPage({ searchParams }: { searchParams: Prom
   // `?job=` wins, otherwise the most recently created open job.
   const defaultJobId = open.find((j) => j.id === job)?.id ?? open[0]?.id ?? null
   const text = (q ?? "").slice(0, 2000)
-  return <CommandCentre key={text} jobs={open} defaultJobId={defaultJobId} demoMode={env.DEMO_MODE} initialText={text} autoPlan={text.trim().length >= 3} />
+  // People ticked on the Candidates page: the plan goes only to them.
+  const wanted = (ids ?? "").split(",").filter((i) => /^[0-9a-f-]{36}$/i.test(i)).slice(0, 50)
+  const chosen = wanted.length > 0 ? await getCandidateNames(wanted) : null
+  const selected = chosen?.ok && chosen.data.length > 0 ? chosen.data : null
+  return <CommandCentre key={text} jobs={open} defaultJobId={defaultJobId} demoMode={env.DEMO_MODE} initialText={text} autoPlan={text.trim().length >= 3} selected={selected} />
 }

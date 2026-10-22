@@ -1,11 +1,9 @@
 import { QueryError } from "@/components/frame/query-error"
 import { CandidateFilters } from "@/components/candidates/filters"
 import { CandidateSheet, type ProfileData } from "@/components/candidates/profile-sheet"
-import { Avatar } from "@/components/ui/avatar"
 import { EmptyState } from "@/components/ui/empty-state"
-import { GroupedList, ListRow } from "@/components/ui/grouped-list"
+import { SelectableCandidates } from "@/components/candidates/selectable-list"
 import { PageBody, PageHeader } from "@/components/ui/page-header"
-import { StatusPill } from "@/components/ui/status-pill"
 import { DemoTag } from "@/components/ui/tags"
 import { groupStages, parseGroup } from "@/lib/candidate-groups"
 import { getCandidate, listCandidates } from "@/lib/db/queries/candidates"
@@ -75,19 +73,13 @@ export default async function CandidatesPage({ searchParams }: { searchParams: P
             <EmptyState message={search || jobId || group !== "all" ? "No candidates match these filters." : "No candidates yet."} />
           </div>
         ) : (
-          <GroupedList>
-            {list.data.map((c) => (
-              <ListRow
-                key={c.id}
-                leading={<Avatar name={c.full_name} />}
-                title={c.full_name}
-                subtitle={c.current_title && c.current_company ? `${c.current_title} at ${c.current_company}` : c.current_title ?? undefined}
-                value={c.job_title ?? undefined}
-                pill={<StatusPill kind="candidate" value={c.stage} />}
-                href={`/candidates?${new URLSearchParams({ ...(sp.g ? { g: sp.g } : {}), ...(jobId ? { job: jobId } : {}), ...(search ? { q: search } : {}), c: c.id }).toString()}`}
-              />
-            ))}
-          </GroupedList>
+          <SelectableCandidates
+            rows={list.data.map((c) => ({
+              id: c.id, jobId: c.job_id, jobTitle: c.job_title, name: c.full_name, stage: c.stage,
+              subtitle: c.current_title && c.current_company ? `${c.current_title} at ${c.current_company}` : c.current_title,
+              href: `/candidates?${new URLSearchParams({ ...(sp.g ? { g: sp.g } : {}), ...(jobId ? { job: jobId } : {}), ...(search ? { q: search } : {}), c: c.id }).toString()}`,
+            }))}
+          />
         )}
         {profile ? <CandidateSheet key={profile.id} candidate={profile} /> : null}
       </PageBody>

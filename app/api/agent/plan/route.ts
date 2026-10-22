@@ -4,7 +4,7 @@ import { apiError, apiOk, withErrors } from '@/lib/api';
 import { AI_ERROR_STATUS } from '@/lib/ai/attempts';
 import { savedPlan } from '@/lib/ai/fallbacks';
 import { planInstruction } from '@/lib/ai/planner';
-import { blockingClarifications, resolvePlan } from '@/lib/ai/resolve-plan';
+import { applySelectedCandidates, blockingClarifications, resolvePlan } from '@/lib/ai/resolve-plan';
 import { getPlannerContext } from '@/lib/db/queries/planner-context';
 import { getDb } from '@/lib/db/server';
 import { env } from '@/lib/env';
@@ -18,6 +18,8 @@ export const maxDuration = 60;
 const Body = z.object({
   instruction: z.string().trim().min(3, 'Type an instruction first.').max(2000),
   jobId: z.uuid().optional(),
+  /** People ticked on the Candidates page. They replace the model's pick, so the assessment goes only to them. */
+  candidateIds: z.array(z.uuid()).min(1).max(50).optional(),
   /** DEMO_MODE only: skip the AI and use the saved demo plan. */
   useSavedPlan: z.boolean().optional(),
 });
@@ -28,7 +30,7 @@ async function handlePOST(request: Request): Promise<Response> {
 
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError('invalid_input', parsed.error.issues[0]?.message ?? 'Type an instruction first.', 400);
-  const { instruction, jobId, useSavedPlan } = parsed.data;
+  const { instruction, jobId, useSavedPlan, candidateIds } = parsed.data;
   if (useSavedPlan && !env.DEMO_MODE) return apiError('not_demo', 'Saved plans are only available in demo mode.', 403);
 
   // 1. Guardrail runs on every instruction, before the model sees it.
@@ -57,8 +59,13 @@ async function handlePOST(request: Request): Promise<Response> {
     return apiError(code, message, status);
   }
 
-  // 3. Code validates and resolves everything the model said.
+  // 3. Code validates and resolves everything the model said. Ticked people fix the job as well.
+  if (candidateIds && jobId) planned.data.output.job_id = jobId;
   const { plan, clarifications } = resolvePlan(planned.data.output, ctx.data, safeInstruction, flagged);
+  if (candidateIds) {
+    const used = applySelectedCandidates(plan, clarifications, ctx.data, candidateIds);
+    if (used === 0 && plan.intent === 'create_assessment_workflow') return apiError('invalid_input', "The people you selected aren't in this role. Pick them again.", 400);
+  }
   if (useSavedPlan) plan.fallback = true;
   const meta = planned.data.meta;
   const aiData = { ai_provider: meta.provider, ai_model: meta.model, ai_fell_back: meta.fellBack };
