@@ -7,7 +7,7 @@ import type { z } from 'zod';
 import { env } from '@/lib/env';
 import type { AiProvider } from '@/lib/env-schema';
 import { err, ok, type Result } from '@/lib/result';
-import { buildAttempts, runAttempts, type Attempt, type AiMeta, type ModelConfig, type Tier } from './attempts';
+import { buildAttempts, cooldownFor, runAttempts, type Attempt, type AiMeta, type ModelConfig, type Tier } from './attempts';
 import { classifyError } from './errors';
 
 export type { AiMeta, Tier } from './attempts';
@@ -32,9 +32,9 @@ function build(provider: AiProvider, id: string): LanguageModel {
  * Models that just returned HTTP 429 sit out for a while, so the next call goes straight to the next
  * model instead of waiting through the 2s and 5s backoff again. In-memory per server instance.
  */
-const COOLDOWN_MS = 90_000;
 const coolingUntil = new Map<string, number>();
 const coolKey = (a: Attempt): string => `${a.provider}/${a.modelId}`;
+
 
 export function getModel(tier: Tier, provider: AiProvider = env.AI_PROVIDER): Result<{ model: LanguageModel; provider: AiProvider; modelId: string }> {
   const modelId = provider === env.AI_PROVIDER ? (tier === 'smart' ? env.AI_MODEL_SMART : env.AI_MODEL_FAST) : env.AI_FALLBACK_MODEL;
@@ -85,7 +85,8 @@ export async function runStructured<S extends z.ZodType>(input: StructuredInput<
       return { ok: true as const, value: res.output as z.infer<S> };
     } catch (e) {
       const error = classifyError(e);
-      if (error.status === 429) coolingUntil.set(coolKey(a), Date.now() + COOLDOWN_MS);
+      const rest = cooldownFor(error);
+      if (rest > 0) coolingUntil.set(coolKey(a), Date.now() + rest);
       console.warn(`[ai] ${a.provider}/${a.modelId} ${a.label} ${error.code}${error.status ? ` ${error.status}` : ''} ${Date.now() - t0}ms`);
       return { ok: false as const, error };
     }

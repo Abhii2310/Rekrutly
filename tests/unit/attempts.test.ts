@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildAttempts, runAttempts, type Attempt, type CallResult } from '@/lib/ai/attempts';
-import { classifyError } from '@/lib/ai/errors';
+import { buildAttempts, cooldownFor, runAttempts, type Attempt, type CallResult } from '@/lib/ai/attempts';
+import { classifyError, parseRetryAfter } from '@/lib/ai/errors';
 
 const cfg = { provider: 'google', smart: 'smart-1', fast: 'fast-1' } as const;
 
@@ -105,5 +105,19 @@ describe('classifyError', () => {
     const r = classifyError(new Error('bad key AQ.abcdefghijklmnop'));
     expect(r.code).toBe('provider_error');
     expect(r.message).not.toMatch(/AQ\.abc/);
+  });
+});
+
+describe('cooldowns', () => {
+  it('parses the provider retry hint', () => {
+    expect(parseRetryAfter('Please retry in 16h20m18.2s.')).toBe(58818);
+    expect(parseRetryAfter('retry in 7s')).toBe(7);
+    expect(parseRetryAfter('nothing here')).toBeUndefined();
+  });
+  it('keeps a used-up quota off for a long time, overload for minutes', () => {
+    expect(cooldownFor({ code: 'provider_error', status: 429, quota: true, retryAfterSec: 58818 })).toBe(6 * 3_600_000);
+    expect(cooldownFor({ code: 'provider_error', status: 503 })).toBe(180_000);
+    expect(cooldownFor({ code: 'timeout' })).toBe(60_000);
+    expect(cooldownFor({ code: 'invalid_output' })).toBe(0);
   });
 });
