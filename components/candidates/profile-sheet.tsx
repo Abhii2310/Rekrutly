@@ -12,6 +12,7 @@ import { DemoTag } from "@/components/ui/tags"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { toast } from "@/components/ui/toaster"
+import { JudgmentPanel } from "@/components/hr/judgment-panel"
 import { AiInterviewPanel } from "@/components/hr/ai-interview-panel"
 import { InterviewPanel } from "@/components/hr/interview-panel"
 import { OfferPanel } from "@/components/hr/offer-panel"
@@ -247,6 +248,12 @@ export function CandidateSheet({ candidate }: { candidate: ProfileData }) {
               </GroupedList>
             )}
           </Block>
+          ) : null}
+
+          {tab === "interview" && candidate.hr ? (
+            <Block title="Judgment with AI">
+              <JudgmentPanel task={candidate.hr.aiTask} />
+            </Block>
           ) : null}
 
           {tab === "interview" && candidate.hr ? (

@@ -2,6 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { QueryError } from "@/components/frame/query-error"
 import { PrintButton } from "@/components/results/submission-tools"
+import { JudgmentPanel } from "@/components/hr/judgment-panel"
 import { AiInterviewPanel } from "@/components/hr/ai-interview-panel"
 import { AIMark } from "@/components/ui/ai-mark"
 import { Button } from "@/components/ui/button"
@@ -85,6 +86,10 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
             {d.proctoring.kinds.length ? <ul className="mt-3 flex flex-wrap gap-2">{d.proctoring.kinds.map((k) => <li key={k.label} className="t-footnote rounded-full bg-fog px-2.5 py-1 text-ink">{k.label}: {k.count}</li>)}</ul> : <p className="t-body mt-2 text-ink">Nothing was flagged.</p>}
             <p className="mt-3"><Link href={`/proctoring/${d.proctoring.invitationId}`} className="focus-ring t-callout rounded text-action hover:text-action-hover">Watch the recording</Link></p>
           </Section>
+        ) : null}
+
+        {d.aiTask ? (
+          <Section title="Judgment with AI"><JudgmentPanel task={d.aiTask} /></Section>
         ) : null}
 
         {d.aiInterview ? (

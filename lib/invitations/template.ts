@@ -1,6 +1,6 @@
 /** The fixed invitation text. Used for the preview in the review step and for real emails. Short on purpose. */
-export function invitationText(input: { firstName: string; role: string; durationMinutes: number; link?: string; proctored?: boolean; aiInterview?: boolean }): { subject: string; body: string } {
-  const { firstName, role, durationMinutes, link, proctored, aiInterview } = input;
+export function invitationText(input: { firstName: string; role: string; durationMinutes: number; link?: string; proctored?: boolean; aiInterview?: boolean; aiTask?: boolean }): { subject: string; body: string } {
+  const { firstName, role, durationMinutes, link, proctored, aiInterview, aiTask } = input;
   const lines = [
     `Hi ${firstName},`,
     '',
@@ -11,6 +11,7 @@ export function invitationText(input: { firstName: string; role: string; duratio
     'What to expect',
     `- The timer starts when you press Start and can't be paused. Your answers save as you go.`,
     "- No account or sign-in. Your link is personal, so please don't share it.",
+    ...(aiTask ? ['- After the test there is a short work task where you can use an AI assistant. Like any tool it can be wrong, so check its work.'] : []),
     ...(aiInterview ? ['- After the test there is a short conversation with an AI interviewer, about 10 minutes. It asks about your own experience. You can speak or type.'] : []),
     ...(proctored
       ? [

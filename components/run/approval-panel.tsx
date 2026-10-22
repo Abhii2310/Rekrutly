@@ -76,17 +76,18 @@ export function ApprovalPanel({
   const [showFull, setShowFull] = React.useState(false)
   const [proctored, setProctored] = React.useState(false)
   const [aiInterview, setAiInterview] = React.useState(false)
+  const [aiTask, setAiTask] = React.useState(false)
 
   const picked = recipients.filter((r) => chosen.has(r.id))
   const withEmail = picked.filter((r) => r.email).length
   const titles = stepTitles(picked.length, withEmail)
-  const preview = invitationText({ firstName: picked[0] ? firstNameOf(picked[0].name) : "there", role: roleTitle, durationMinutes: minutes, proctored, aiInterview })
+  const preview = invitationText({ firstName: picked[0] ? firstNameOf(picked[0].name) : "there", role: roleTitle, durationMinutes: minutes, proctored, aiInterview, aiTask })
 
   async function approve() {
     if (pending || picked.length === 0) return
     setPending(true)
     setError(null)
-    const message = await send(`/api/runs/${runId}/approve`, "POST", { durationMinutes: minutes, proctored, aiInterview, recipientIds: picked.map((r) => r.id) })
+    const message = await send(`/api/runs/${runId}/approve`, "POST", { durationMinutes: minutes, proctored, aiInterview, aiTask, recipientIds: picked.map((r) => r.id) })
     if (message) {
       setPending(false)
       return setError(message)
@@ -154,6 +155,21 @@ export function ApprovalPanel({
               {proctored
                 ? "Candidates see a clear consent screen and a camera check first. You get live alerts and a recording to review. Alerts are signals for you to look at, never proof, and nothing fails automatically."
                 : "Off. Candidates are not recorded."}
+            </span>
+          </span>
+        </label>
+      </section>
+
+      <section>
+        <h3 className="t-headline text-ink">AI work task</h3>
+        <label className="mt-2 flex cursor-pointer items-start gap-3">
+          <input type="checkbox" checked={aiTask} onChange={(e) => setAiTask(e.target.checked)} className="focus-ring mt-1 size-4 shrink-0 accent-[var(--color-action)]" />
+          <span className="min-w-0">
+            <span className="t-body block text-ink">Test how they work with AI</span>
+            <span className="t-callout block text-ink-2">
+              {aiTask
+                ? "After the test, each candidate gets a real work task for this role and an AI assistant that is sometimes wrong. It quietly makes one mistake that contradicts the brief. You see whether they caught it, how they prompted, and what they kept, with exact quotes. No score."
+                : "Off. Nobody gets an AI work task."}
             </span>
           </span>
         </label>

@@ -7,14 +7,16 @@ export type SnapshotInput = {
   roleTitle: string;
   proctored?: boolean;
   aiInterview?: boolean;
+  aiTask?: boolean;
   steps: { id: string; action: string; title: string; requires_approval: boolean }[];
 };
 
 /** Exactly what the recruiter saw when they approved. Stored as the approval's snapshot. */
 export function buildSnapshot(i: SnapshotInput) {
   const first = i.recipients[0];
-  const preview = invitationText({ firstName: first ? firstNameOf(first.name) : 'there', role: i.roleTitle, durationMinutes: i.durationMinutes, proctored: i.proctored, aiInterview: i.aiInterview });
+  const preview = invitationText({ firstName: first ? firstNameOf(first.name) : 'there', role: i.roleTitle, durationMinutes: i.durationMinutes, proctored: i.proctored, aiInterview: i.aiInterview, aiTask: i.aiTask });
   return {
+    ai_task: Boolean(i.aiTask),
     proctored: Boolean(i.proctored),
     ai_interview: Boolean(i.aiInterview),
     question_count: i.questionIds.length,

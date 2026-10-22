@@ -17,6 +17,7 @@ const Body = z.object({
   durationMinutes: z.number({ error: 'Choose a time limit.' }).int().min(10, 'The time limit is 10 to 120 minutes.').max(120, 'The time limit is 10 to 120 minutes.').refine((n) => n % 5 === 0, 'Use 5-minute steps.'),
   proctored: z.boolean().optional(),
   aiInterview: z.boolean().optional(),
+  aiTask: z.boolean().optional(),
   recipientIds: z.array(z.uuid('Some chosen candidates are not valid.'), { error: 'Choose at least one candidate.' }).min(1, 'Choose at least one candidate.').max(50),
 });
 
@@ -35,7 +36,7 @@ async function handlePOST(request: Request, { params }: { params: Promise<{ id: 
 
   const parsed = Body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return apiError('invalid_input', parsed.error.issues[0]?.message ?? 'Check the settings and try again.', 400);
-  const { durationMinutes, recipientIds, proctored = false, aiInterview = false } = parsed.data;
+  const { durationMinutes, recipientIds, proctored = false, aiInterview = false, aiTask = false } = parsed.data;
 
   const runRow = run.data;
   if (run.data.intent !== 'create_assessment_workflow') return apiError('unsupported_intent', "This kind of workflow can't be approved yet.", 400);
@@ -72,6 +73,7 @@ async function handlePOST(request: Request, { params }: { params: Promise<{ id: 
   await updateAssessment(assessment.data.id, { duration_minutes: durationMinutes });
   if (proctored) await db.from('assessments').update({ proctored: true }).eq('id', assessment.data.id);
   if (aiInterview) await db.from('assessments').update({ ai_interview: true }).eq('id', assessment.data.id);
+  if (aiTask) await db.from('assessments').update({ ai_task: true }).eq('id', assessment.data.id);
   const stepRows = steps.data as { id: string; action: string; title: string; requires_approval: boolean; status: string }[];
   for (const s of stepRows) {
     if (s.action === 'create_invitations') await db.from('workflow_steps').update({ params: { candidateIds: candidates.map((c) => c.id) }, title: titles.create_invitations }).eq('id', s.id);
@@ -88,6 +90,7 @@ async function handlePOST(request: Request, { params }: { params: Promise<{ id: 
     durationMinutes,
     proctored,
     aiInterview,
+    aiTask,
     recipients: candidates.map((c) => ({ id: c.id, name: c.full_name, hasEmail: Boolean(c.email) })),
     roleTitle: (job.data?.title as string | undefined) ?? 'open',
     steps: stepRows.map((s) => ({ ...s, title: s.action === 'create_invitations' ? titles.create_invitations : s.action === 'send_invitations' ? titles.send_invitations : s.title })),
@@ -101,7 +104,7 @@ async function handlePOST(request: Request, { params }: { params: Promise<{ id: 
   await logEvent({
     runId: id, jobId: run.data.job_id as string, type: 'approval.granted', actor: 'recruiter', level: 'success',
     message: `Approved the plan for ${candidates.length} ${candidates.length === 1 ? 'candidate' : 'candidates'}`,
-    data: { recipients: candidates.length, durationMinutes, proctored, aiInterview },
+    data: { recipients: candidates.length, durationMinutes, proctored, aiInterview, aiTask },
   });
 
   // Respond now and run the steps after the response, so the screen can show the Progress Rail filling in live.

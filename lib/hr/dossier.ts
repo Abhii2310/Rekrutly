@@ -1,12 +1,12 @@
 import 'server-only';
 import { getDb } from '@/lib/db/server';
-import { toAiInterview } from './queries';
+import { toAiInterview, toAiTask } from './queries';
 import { err, ok, type Result } from '@/lib/result';
 import { ALERT_SIGNALS, signalLabel } from '@/lib/proctor/signals';
 import type { ResumeMatch } from '@/lib/ats/rules';
 import type { CandidateReport } from '@/lib/ai/schemas';
 import type { Stage } from '@/lib/status';
-import type { AiInterviewView, InterviewView, OfferView, Scorecard } from './types';
+import type { AiInterviewView, AiTaskView, InterviewView, OfferView, Scorecard } from './types';
 
 export type Dossier = {
   id: string;
@@ -25,6 +25,7 @@ export type Dossier = {
   interviews: InterviewView[];
   offers: OfferView[];
   aiInterview: AiInterviewView | null;
+  aiTask: AiTaskView | null;
 };
 
 type Skill = { skill: string; score: number; max: number; percent: number };
@@ -32,14 +33,15 @@ type Skill = { skill: string; score: number; max: number; percent: number };
 /** Everything known about one person, gathered in one place for the interview workspace and the portfolio page. Read-only. */
 export async function getDossier(candidateId: string): Promise<Result<Dossier | null>> {
   const db = getDb();
-  const [c, invs, iv, of, ai] = await Promise.all([
+  const [c, invs, iv, of, ai, at] = await Promise.all([
     db.from('candidates').select('id, full_name, email, stage, location, years_experience, skills, current_title, current_company, resume_match, shortlisted, jobs(title)').eq('id', candidateId).maybeSingle(),
     db.from('invitations').select('id, assessments(title, proctored), submissions(id, final_score, final_max, scoring_status, skill_breakdown, report), integrity_signals(type)').eq('candidate_id', candidateId).order('created_at', { ascending: false }),
     db.from('interviews').select('id, scheduled_at, duration_minutes, status, proposed_slots, notes, scorecard, email_status').eq('candidate_id', candidateId).order('scheduled_at', { ascending: false }),
     db.from('offers').select('id, title, compensation, start_date, body, status, sent_at, response').eq('candidate_id', candidateId).order('created_at', { ascending: false }),
     db.from('ai_interviews').select('id, status, turns, summary, completed_at, invitations!inner(candidate_id)').eq('invitations.candidate_id', candidateId).order('created_at', { ascending: false }).limit(1),
+    db.from('ai_tasks').select('id, status, task, chat, deliverable, metrics, review, completed_at, invitations!inner(candidate_id)').eq('invitations.candidate_id', candidateId).order('created_at', { ascending: false }).limit(1),
   ]);
-  const failed = [c, invs, iv, of, ai].find((r) => r.error);
+  const failed = [c, invs, iv, of, ai, at].find((r) => r.error);
   if (failed?.error) return err('db_error', "Couldn't load the profile.", failed.error.message);
   if (!c.data) return ok(null);
 
@@ -75,6 +77,7 @@ export async function getDossier(candidateId: string): Promise<Result<Dossier | 
     proctoring: recorded ? { invitationId: recorded.id, flagged: [...counts.values()].reduce((a, b) => a + b, 0), kinds: [...counts.entries()].map(([t, n]) => ({ label: signalLabel(t), count: n })) } : null,
     interviews: (iv.data as IvRow[]).map((i) => ({ id: i.id, scheduledAt: i.scheduled_at, durationMinutes: i.duration_minutes, status: i.status, proposedSlots: i.proposed_slots, notes: i.notes, scorecard: i.scorecard, emailStatus: i.email_status })),
     aiInterview: toAiInterview(ai.data),
+    aiTask: toAiTask(at.data),
     offers: (of.data as OfRow[]).map((o) => ({ id: o.id, title: o.title, compensation: o.compensation, startDate: o.start_date, body: o.body, status: o.status, sentAt: o.sent_at, response: o.response })),
   });
 }

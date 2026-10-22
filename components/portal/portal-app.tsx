@@ -11,6 +11,7 @@ import { PortalShell, StateMessage } from "./shell"
 import { TimerPill } from "./timer-pill"
 import { useAutosave } from "./use-autosave"
 import { AiInterview } from "./ai-interview/ai-interview"
+import { AiTask } from "./ai-task/ai-task"
 import { openCamera } from "./proctor/camera-check"
 import { ProctorSession, type ProctorHandle } from "./proctor/proctor-session"
 import { useSignals } from "./use-signals"
@@ -191,6 +192,10 @@ export function PortalApp({ token }: { token: string }) {
   const info = load.info
   if (info.state === "expired") return <StateMessage title="This link has expired.">Ask the hiring team for a new one.</StateMessage>
   if (info.state === "revoked") return <StateMessage title="This link is no longer active.">Ask the hiring team if you think this is a mistake.</StateMessage>
+  // After the test: the work task with an AI assistant, then the talking interview, each in the same link if the recruiter added it.
+  if (info.state === "submitted" && info.aiTask && info.aiTask.status !== "completed") {
+    return <AiTask token={token} firstName={info.firstName} initial={info.aiTask.status} onDone={() => { void loadInfo() }} />
+  }
   // After the test, a talking interview in the same link, if the recruiter added one.
   if (info.state === "submitted" && info.aiInterview && info.aiInterview.status !== "completed") {
     return <AiInterview token={token} firstName={info.firstName} initial={info.aiInterview.status} onDone={() => { void loadInfo() }} />

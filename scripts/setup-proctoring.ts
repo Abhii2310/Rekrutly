@@ -85,6 +85,22 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // Migration 0007: the AI-collaboration task.
+  const task: [string, PromiseLike<{ error: { message: string } | null }>][] = [
+    ['assessments.ai_task', db.from('assessments').select('ai_task').limit(1)],
+    ['ai_tasks table', db.from('ai_tasks').select('id, task, chat, deliverable, metrics, review').limit(1)],
+  ];
+  let taskOk = true;
+  for (const [name, q] of task) {
+    const { error } = await q;
+    console.log(`${error ? 'MISSING' : 'ok     '} ${name}${error ? `  (${error.message})` : ''}`);
+    if (error) taskOk = false;
+  }
+  if (!taskOk) {
+    console.error('\nRun supabase/migrations/0007_ai_task.sql in the Supabase SQL Editor, then run this again.');
+    process.exit(1);
+  }
+
   const list = await db.storage.listBuckets();
   if (list.error) throw new Error(list.error.message);
   if (list.data.some((b) => b.name === BUCKET)) {
