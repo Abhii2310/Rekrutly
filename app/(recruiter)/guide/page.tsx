@@ -5,7 +5,7 @@ import { Section } from "@/components/ui/section"
 
 const STEPS = [
   ["Add candidates", "Open Jobs, pick a role, then Add candidate (name, email, role) or Import CSV. Double-check email spelling: a wrong address bounces."],
-  ["Tell Rekrutly what to do", "Open Command and click Create and send an assessment. It writes the questions and shows you a plan. Nothing is sent yet."],
+  ["Create the assessment", "Easiest: open Candidates, tick the people (one role at a time) and press Create assessment. Or open Command and click Create and send an assessment. Either way it writes the questions and shows you a plan. Nothing is sent yet."],
   ["Review and approve", "Edit any question. Choose the time limit and who gets a link. Tick Record the candidate on camera for a proctored exam. Press Approve."],
   ["Candidates take the exam", "Each person gets an email with their personal link and instructions. No account needed. They agree, check their camera, and start."],
   ["Watch it live", "Open the War Room. You see who started, a live camera picture for each person, and alerts with a chime."],

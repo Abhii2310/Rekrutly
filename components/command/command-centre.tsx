@@ -53,7 +53,7 @@ const STEP_DETAIL: Record<string, string> = {
   draft_followups: "Nothing is sent",
 }
 
-export function CommandCentre({ jobs, defaultJobId, demoMode = false, initialText = "", autoPlan = false }: { jobs: { id: string; title: string }[]; defaultJobId: string | null; demoMode?: boolean; initialText?: string; autoPlan?: boolean }) {
+export function CommandCentre({ jobs, defaultJobId, demoMode = false, initialText = "", autoPlan = false, selected = null }: { jobs: { id: string; title: string }[]; defaultJobId: string | null; demoMode?: boolean; initialText?: string; autoPlan?: boolean; selected?: { id: string; name: string; jobId: string }[] | null }) {
   const reduce = useReducedMotion()
   const [text, setText] = React.useState(initialText)
   const [jobId, setJobId] = React.useState<string | null>(defaultJobId)
@@ -74,7 +74,7 @@ export function CommandCentre({ jobs, defaultJobId, demoMode = false, initialTex
         const res = await fetch("/api/agent/plan", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ instruction: instruction.trim(), ...(jobId ? { jobId } : {}), ...(useSavedPlan ? { useSavedPlan: true } : {}) }),
+          body: JSON.stringify({ instruction: instruction.trim(), ...(jobId ? { jobId } : {}), ...(selected ? { candidateIds: selected.map((c) => c.id) } : {}), ...(useSavedPlan ? { useSavedPlan: true } : {}) }),
         })
         const body = (await res.json().catch(() => null)) as { data?: Result; error?: { message?: string } } | null
         if (res.ok && body?.data) setPhase({ name: "done", result: body.data })
@@ -85,7 +85,7 @@ export function CommandCentre({ jobs, defaultJobId, demoMode = false, initialTex
         inFlight.current = false
       }
     },
-    [jobId]
+    [jobId, selected]
   )
 
   // Opened from Spotlight with a sentence: plan it once, as if Enter was pressed.
@@ -153,6 +153,13 @@ export function CommandCentre({ jobs, defaultJobId, demoMode = false, initialTex
             </span>
           </div>
         </div>
+
+        {selected ? (
+          <p className="t-callout mt-3 rounded-control bg-mist px-4 py-2.5 text-ink-2">
+            Only for the {selected.length} {selected.length === 1 ? "person" : "people"} you selected: <span className="text-ink">{selected.slice(0, 4).map((c) => c.name).join(", ")}{selected.length > 4 ? ` and ${selected.length - 4} more` : ""}</span>.{" "}
+            <a href={`/command${jobId ? `?job=${jobId}` : ""}`} className="focus-ring rounded text-action hover:text-action-hover">Use everyone in the role instead</a>
+          </p>
+        ) : null}
 
         {speech.listening ? <p role="status" className="t-callout mt-3 text-ink-2">Listening. Speak now, and pause for a few seconds when you are done.</p> : null}
         {speech.error ? <p role="status" className="t-callout mt-3 text-ink-2">{speech.error}</p> : null}

@@ -17,6 +17,7 @@
 
 - **Landing page** at the root address (the app lives at `/overview`): an aurora hero, a pinned scroll story of the whole product, and almost no text. Nothing on it is a made-up number.
 - **Delivery safety:** bounced invitation emails are detected from the sending Gmail inbox and shown in the War Room, where the admin corrects the address and sends the same link again.
+- **Select, then create:** tick people on the Candidates page and press Create assessment; the plan, approval, links and emails go only to them.
 - **Guided start:** a "Get started" checklist on Overview that ticks itself from real data, quick-start cards on Command, and a short Guide page for new admins.
 - **Command Centre, Spotlight (Ctrl or Cmd + K) and voice** to plan in a sentence from anywhere.
 - **Roles and candidates:** create a role, add a candidate by hand (name, email, role) or import from a CSV (bad rows are listed with the reason, duplicates are skipped), and move people through stages.

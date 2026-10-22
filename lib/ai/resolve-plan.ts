@@ -169,3 +169,22 @@ export function resolvePlan(
 }
 
 export const blockingClarifications = (cs: Clarification[]): Clarification[] => cs.filter((c) => c.blocking);
+
+/**
+ * Pure. When the recruiter ticked people on the Candidates page, those people replace whatever the model picked. Only people
+ * in the plan's job count, and the plan is never allowed to widen beyond the selection. Returns the number used.
+ */
+export function applySelectedCandidates(
+  plan: ResolvedPlan, clarifications: Clarification[], context: PlannerContext, ids: string[],
+): number {
+  if (plan.intent !== 'create_assessment_workflow' || !plan.job) return 0;
+  const jobId = plan.job.id;
+  const byId = new Map(context.candidates.filter((c) => c.job_id === jobId).map((c) => [c.id, c]));
+  const chosen = [...new Set(ids)].map((id) => byId.get(id)).filter((c): c is PlannerCandidate => Boolean(c)).slice(0, 50);
+  if (chosen.length === 0) return 0;
+  plan.candidates = chosen.map((c) => ({ id: c.id, name: c.name, has_email: c.has_email }));
+  plan.assumptions = [`Only the ${chosen.length} ${chosen.length === 1 ? 'person' : 'people'} you selected.`, ...plan.assumptions.filter((a) => !/new candidates? in this job/.test(a))].slice(0, 5);
+  plan.clarifications = plan.clarifications.filter((c) => c.field !== 'candidates');
+  for (let i = clarifications.length - 1; i >= 0; i--) if (clarifications[i]?.field === 'candidates') clarifications.splice(i, 1);
+  return chosen.length;
+}
