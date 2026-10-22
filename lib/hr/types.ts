@@ -7,7 +7,8 @@ export type InterviewView = {
   id: string;
   scheduledAt: string;
   durationMinutes: number;
-  status: 'scheduled' | 'completed' | 'cancelled';
+  status: 'proposed' | 'scheduled' | 'completed' | 'cancelled';
+  proposedSlots: string[] | null;
   notes: string;
   scorecard: Scorecard | null;
   emailStatus: 'not_sent' | 'sent' | 'failed';
@@ -21,6 +22,7 @@ export type OfferView = {
   body: string;
   status: 'draft' | 'sent';
   sentAt: string | null;
+  response: 'accepted' | 'declined' | null;
 };
 
 /** Everything the hiring-flow panels on a candidate need. Null when the database does not have migration 0004 yet. */

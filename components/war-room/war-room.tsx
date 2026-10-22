@@ -57,6 +57,13 @@ export function WarRoom({ runId, initial }: { runId: string; initial: RunLive })
     timer = setTimeout(() => void check(), 4_000)
     return () => { if (timer) clearTimeout(timer) }
   }, [emailsOut])
+  // Reminders that are due go out while someone is watching, even without a scheduler.
+  React.useEffect(() => {
+    const run = () => { if (document.visibilityState === "visible") void fetch("/api/reminders/run", { method: "POST" }).catch(() => {}) }
+    const first = setTimeout(run, 15_000)
+    const timer = setInterval(run, 5 * 60_000)
+    return () => { clearTimeout(first); clearInterval(timer) }
+  }, [])
   const submitted = live.invitations.filter((i) => i.status === "submitted").length
 
   async function control(kind: "pause" | "resume") {

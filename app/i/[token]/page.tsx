@@ -1,7 +1,8 @@
 import { JoinButton } from "@/components/hr/join-button"
+import { PickTime } from "@/components/hr/pick-time"
 import { PortalShell, StateMessage } from "@/components/portal/shell"
 import { getDb } from "@/lib/db/server"
-import { whenLabel } from "@/lib/interviews/rules"
+import { futureSlots, whenLabel } from "@/lib/interviews/rules"
 import { hashToken } from "@/lib/security/tokens"
 
 export const dynamic = "force-dynamic"
@@ -13,11 +14,23 @@ export default async function InterviewJoinPage({ params }: { params: Promise<{ 
   const token = raw.trim().replace(/[^A-Za-z0-9_-]+$/, "")
   if (!SHAPE.test(token)) return <StateMessage title="This link isn't valid.">Open the newest email from the hiring team and tap the button in it.</StateMessage>
   const q = await getDb().from("interviews")
-    .select("scheduled_at, duration_minutes, status, meeting_url, candidates(full_name), jobs(title)").eq("token_hash", hashToken(token)).maybeSingle()
+    .select("scheduled_at, duration_minutes, status, proposed_slots, meeting_url, candidates(full_name), jobs(title)").eq("token_hash", hashToken(token)).maybeSingle()
   if (q.error || !q.data) return <StateMessage title="This link isn't valid.">Open the newest email from the hiring team and tap the button in it.</StateMessage>
-  const iv = q.data as unknown as { scheduled_at: string; duration_minutes: number; status: string; meeting_url: string; candidates: { full_name: string } | null; jobs: { title: string } | null }
+  const iv = q.data as unknown as { scheduled_at: string; duration_minutes: number; status: string; proposed_slots: string[] | null; meeting_url: string; candidates: { full_name: string } | null; jobs: { title: string } | null }
   if (iv.status === "cancelled") return <StateMessage title="This interview was cancelled.">The hiring team will email you if there is a new time.</StateMessage>
   const first = (iv.candidates?.full_name ?? "there").split(/\s+/)[0]
+  if (iv.status === "proposed") {
+    const future = futureSlots(iv.proposed_slots)
+    return (
+      <PortalShell>
+        <h1 className="t-large text-ink">Hi {first}.</h1>
+        <p className="t-body mt-2 text-ink-2">Choose a time for your interview for the {iv.jobs?.title ?? "role"}. It takes about {iv.duration_minutes} minutes.</p>
+        <div className="mt-8">
+          {future.length > 0 ? <PickTime token={token} slots={future} /> : <p className="t-body text-ink-2">These times have passed. Reply to the email from the hiring team and they will offer new ones.</p>}
+        </div>
+      </PortalShell>
+    )
+  }
   return (
     <PortalShell>
       <h1 className="t-large text-ink">Hi {first}.</h1>

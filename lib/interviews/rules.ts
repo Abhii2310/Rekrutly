@@ -55,3 +55,43 @@ export function interviewText(input: { firstName: string; role: string; start: D
   ];
   return { subject: `Interview for the ${input.role} role: ${whenLabel(input.start)}`, body: lines.join('\n') };
 }
+
+/** Asks the candidate to choose one of a few times. The recruiter offers the choices; the candidate picks. */
+export function proposalText(input: { firstName: string; role: string; slots: Date[]; durationMinutes: number; pickUrl: string }): { subject: string; body: string } {
+  const lines = [
+    `Hi ${input.firstName},`,
+    '',
+    `Thank you for your time so far. We would like to speak with you about the ${input.role} role. Please choose the time that suits you best:`,
+    '',
+    ...input.slots.map((s) => `- ${whenLabel(s)}`),
+    '',
+    `How long: about ${input.durationMinutes} minutes`,
+    '',
+    `Pick a time here: ${input.pickUrl}`,
+    '',
+    "Once you choose, you'll get a confirmation with the join link and a calendar link. If none of these work, just reply to this email.",
+    '',
+    'Thanks,',
+    'The hiring team',
+  ];
+  return { subject: `Choose a time for your ${input.role} interview`, body: lines.join('\n') };
+}
+
+/** Offered times that have not passed yet. */
+export const futureSlots = (slots: string[] | null, now: Date = new Date()): string[] => (slots ?? []).filter((s) => new Date(s).getTime() > now.getTime());
+
+/** Sent about an hour before. Short: the time, and the way in. */
+export function interviewReminderText(input: { firstName: string; role: string; start: Date; joinUrl: string }): { subject: string; body: string } {
+  const lines = [
+    `Hi ${input.firstName},`,
+    '',
+    `A reminder that your ${input.role} interview is coming up: ${whenLabel(input.start)}.`,
+    '',
+    `Join here: ${input.joinUrl}`,
+    '',
+    'The link turns on 10 minutes before the start. See you soon.',
+    '',
+    'The hiring team',
+  ];
+  return { subject: `Starting soon: your ${input.role} interview`, body: lines.join('\n') };
+}

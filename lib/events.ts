@@ -19,7 +19,7 @@ export const EVENT_TYPES = [
   'job.created', 'candidate.imported', 'candidate.exported', 'candidate.deleted',
   'candidate.resume_added', 'candidate.resume_scored', 'candidate.shortlisted',
   'interview.scheduled', 'interview.cancelled', 'interview.completed', 'interview.scorecard',
-  'offer.drafted', 'offer.sent',
+  'offer.drafted', 'offer.sent', 'offer.replied', 'interview.proposed', 'interview.picked', 'reminder.sent',
   'system.seeded', 'demo.reset', 'demo.simulated',
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];

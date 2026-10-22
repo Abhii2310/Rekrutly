@@ -5,7 +5,7 @@ import { err, ok, type Result } from '@/lib/result';
 
 export type CompareSkill = { score: number; max: number; percent: number; evidence: Evidence | null; mcq: { correct: number; total: number } | null };
 export type CompareCandidate = {
-  submissionId: string; name: string; isSimulated: boolean; scoring: SubmissionDetail['scoringStatus'];
+  submissionId: string; candidateId: string; name: string; isSimulated: boolean; scoring: SubmissionDetail['scoringStatus'];
   finalPct: number | null; objectivePct: number | null; aiPct: number | null; minutes: number | null; answered: number; total: number;
   skills: Record<string, CompareSkill>;
   probes: { skill: string; question: string; good: string }[];
@@ -29,7 +29,7 @@ export async function getComparison(ids: string[]): Promise<Result<Comparison>> 
 
   const skills = [...new Set(first.questions.map((q) => q.skill))];
   const candidates: CompareCandidate[] = all.map((s) => ({
-    submissionId: s.id, name: s.candidate.name, isSimulated: s.isSimulated, scoring: s.scoringStatus,
+    submissionId: s.id, candidateId: s.candidate.id, name: s.candidate.name, isSimulated: s.isSimulated, scoring: s.scoringStatus,
     finalPct: s.scoringStatus === 'scored' ? pct(s.final.score, s.final.max) : null,
     objectivePct: pct(s.objective.score, s.objective.max),
     aiPct: pct(s.ai.score, s.ai.max),

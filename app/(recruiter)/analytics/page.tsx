@@ -8,6 +8,7 @@ import { Section } from "@/components/ui/section"
 import { Stat } from "@/components/ui/stat"
 import { completionTakeaway, formatMinutes, funnelTakeaway, skillsTakeaway, speedTakeaway } from "@/lib/analytics/stats"
 import { getAnalytics } from "@/lib/db/queries/analytics"
+import { getHiringFunnel } from "@/lib/db/queries/funnel"
 import { formatPercent } from "@/lib/format"
 import { TASK_TYPE_LABELS } from "@/lib/status"
 
@@ -25,6 +26,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
     )
   }
   const { analytics: a, jobs, selectedJobId } = res.data
+  const funnel = await getHiringFunnel(selectedJobId)
   const empty = a.invited === 0 && a.totalCandidates === 0
 
   return (
@@ -50,6 +52,13 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
               <Stat value={<span className="whitespace-nowrap">{formatMinutes(a.medianMinutesToFinish)}</span>} label="Median time to finish" />
             </div>
             {completionTakeaway(a) ? <p className="t-body mt-6 text-ink">{completionTakeaway(a)}</p> : null}
+
+            {funnel.ok && funnel.data.total > 0 ? (
+              <Section title="Hiring funnel" className="mt-14">
+                <p className="t-body mb-5 text-ink-2">How many people reached each step{selectedJobId ? " for this role" : ""}. These are counts of people, not a ranking.</p>
+                <BarList ariaLabel="People at each step of the hiring flow" items={funnel.data.steps.map((s) => ({ label: s.label, value: s.count }))} />
+              </Section>
+            ) : null}
 
             <Section title="Pipeline" className="mt-14">
               {funnelTakeaway(a) ? <p className="t-body mb-5 text-ink-2">{funnelTakeaway(a)}</p> : <p className="t-body text-ink-2">No candidates yet.</p>}

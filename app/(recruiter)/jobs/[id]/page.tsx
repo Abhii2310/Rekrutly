@@ -1,6 +1,8 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { AddCandidateDialog } from "@/components/jobs/add-candidate-dialog"
+import { ResumeUploadDialog } from "@/components/jobs/resume-upload-dialog"
+import { countUnscored } from "@/lib/hr/queries"
 import { ImportCandidatesDialog } from "@/components/jobs/import-candidates-dialog"
 import { QueryError } from "@/components/frame/query-error"
 import { Avatar } from "@/components/ui/avatar"
@@ -19,7 +21,7 @@ export const dynamic = "force-dynamic"
 export default async function JobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound()
-  const [job, candidates, runs] = await Promise.all([getJob(id), listCandidates({ jobId: id }), listRunsForJob(id)])
+  const [job, candidates, runs, unscored] = await Promise.all([getJob(id), listCandidates({ jobId: id }), listRunsForJob(id), countUnscored(id)])
   if (!job.ok || !candidates.ok || !runs.ok) {
     return (
       <>
@@ -45,7 +47,7 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
         </div>
         {j.description ? <p className="t-body mt-6 max-w-[640px] text-ink">{j.description}</p> : null}
 
-        <Section title="Candidates" className="mt-12" action={<span className="flex items-center gap-2"><AddCandidateDialog jobId={j.id} /><ImportCandidatesDialog jobId={j.id} /></span>}>
+        <Section title="Candidates" className="mt-12" action={<span className="flex items-center gap-2"><AddCandidateDialog jobId={j.id} /><ResumeUploadDialog jobId={j.id} unscored={unscored} /><ImportCandidatesDialog jobId={j.id} /></span>}>
           <GroupedList>
             {candidates.data.map((c) => (
               <ListRow

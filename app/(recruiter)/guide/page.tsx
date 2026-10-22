@@ -11,6 +11,8 @@ const STEPS = [
   ["Watch it live", "Open the War Room. You see who started, a live camera picture for each person, and alerts with a chime."],
   ["Shortlist from resumes", "Open a candidate, add their resume (PDF or text) and press Check the match. You see which of the role's skills appear, with quotes. Shortlist is your own decision."],
   ["Interview and offer", "From the same profile, Schedule an interview (they get a join link and calendar link), take notes and fill in the scorecard, then draft an offer letter, edit it and send it. The Portfolio page shows every step in one place."],
+  ["See it all on the Board", "The Board shows everyone by stage. Drag a card to Review, Interview, Offer or Hired, or use its menu. Upload a stack of resumes on a role and press Score all to rank them by match."],
+  ["Reject kindly", "On a profile, Reject opens a kind email you read and edit first. You can also reject without sending anything."],
   ["Review and decide", "Open results for scores with evidence. Open the recording to jump to every flagged moment. You decide; Rekrutly never picks a winner."],
 ] as const
 
@@ -18,6 +20,7 @@ const PAGES = [
   ["Overview", "Your starting point: what to do next, who needs you, and recent activity."],
   ["Command", "Type or speak one sentence. Rekrutly makes a plan you approve."],
   ["Jobs", "Your roles and their candidates. Add or import people here."],
+  ["Board", "Everyone by stage on one screen. Drag cards, or use the menu on each card."],
   ["Candidates", "Everyone in one list. Open a profile to change an email, export their data or delete it."],
   ["War Room", "The live view of a running assessment: steps, candidates, cameras and alerts."],
   ["Analytics", "How your hiring is going: completion, scores and time."],

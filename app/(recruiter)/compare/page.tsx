@@ -7,6 +7,8 @@ import { SimulatedTag } from "@/components/ui/tags"
 import { parseCompareIds, truncate } from "@/lib/analytics/compare"
 import { formatMinutes } from "@/lib/analytics/stats"
 import { getComparison, type CompareCandidate } from "@/lib/db/queries/compare"
+import { getDossier } from "@/lib/hr/dossier"
+import { SCORECARD_AREAS } from "@/lib/hr/types"
 
 export const dynamic = "force-dynamic"
 
@@ -64,6 +66,10 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
   }
 
   const { assessment, candidates, skills, jobTitle } = res.data
+  // The rest of the hiring flow, if it is available: resume match, shortlist, interview ratings and camera flags.
+  const dossiers = await Promise.all(candidates.map((c) => getDossier(c.candidateId)))
+  const extra = dossiers.map((d) => (d.ok ? d.data : null))
+  const hasExtra = extra.some((d) => d && (d.match || d.interviews.some((i) => i.scorecard) || d.proctoring || d.shortlisted))
   return (
     <>
       <PageHeader
@@ -106,6 +112,31 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
                 <th scope="row" className={rowLabel}>Questions answered</th>
                 {candidates.map((c) => <td key={c.submissionId} className={`${cell} t-body tabular text-ink`}>{c.answered} of {c.total}</td>)}
               </tr>
+              {hasExtra ? (
+                <>
+                  <tr className={rule}>
+                    <th scope="row" className={rowLabel}><span className="flex flex-col items-start gap-1">Resume match<AIMark /></span></th>
+                    {extra.map((d, i) => <td key={candidates[i]?.submissionId} className={`${cell} t-body tabular text-ink`}>{d?.match ? `${d.match.score}%` : "–"}{d?.shortlisted ? <span className="t-callout block text-ink-2">Shortlisted</span> : null}</td>)}
+                  </tr>
+                  <tr className={rule}>
+                    <th scope="row" className={rowLabel}>Interview ratings</th>
+                    {extra.map((d, i) => {
+                      const card = d?.interviews.find((x) => x.scorecard)?.scorecard
+                      return (
+                        <td key={candidates[i]?.submissionId} className={cell}>
+                          {card ? (
+                            <ul className="t-callout flex flex-col gap-1 text-ink-2">{SCORECARD_AREAS.map((a) => card.ratings[a] ? <li key={a} className="flex justify-between gap-4"><span>{a}</span><span className="tabular text-ink">{card.ratings[a]} of 5</span></li> : null)}</ul>
+                          ) : <span className="t-callout text-ink-2">No interview ratings yet.</span>}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                  <tr className={rule}>
+                    <th scope="row" className={rowLabel}>Camera exam</th>
+                    {extra.map((d, i) => <td key={candidates[i]?.submissionId} className={`${cell} t-callout text-ink`}>{d?.proctoring ? (d.proctoring.flagged === 0 ? "Nothing flagged" : `${d.proctoring.flagged} to review`) : <span className="text-ink-2">Not recorded</span>}</td>)}
+                  </tr>
+                </>
+              ) : null}
               {skills.map((skill) => (
                 <tr key={skill} className={rule}>
                   <th scope="row" className={rowLabel}>{skill}</th>
