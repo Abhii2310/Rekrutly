@@ -12,6 +12,8 @@ async function handleGET(): Promise<NextResponse> {
   return NextResponse.json({
     data: {
       db: error ? 'error' : 'ok',
+      // Names what is wrong (for example "Invalid API key") without ever including a key or a value.
+      dbDetail: error ? (error.message ?? 'unknown').replace(/[A-Za-z0-9_\-.+/=]{30,}/g, '[hidden]').slice(0, 140) : null,
       ai: {
         provider: env.AI_PROVIDER,
         fallback: env.AI_FALLBACK_PROVIDER ?? null,
