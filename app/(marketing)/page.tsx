@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import { Bento } from "@/components/landing/bento"
 import { Glow, GridBg, Spotlight } from "@/components/landing/fx"
+import { Film } from "@/components/landing/film"
 import { Hero } from "@/components/landing/hero"
 import { LandingNav } from "@/components/landing/landing-nav"
 import { Marquee } from "@/components/landing/marquee"
@@ -43,6 +44,13 @@ export default async function LandingPage() {
       <main>
         <Hero signedIn={signedIn} />
         <Story />
+
+        <section id="film" className="relative scroll-mt-20 px-5 py-24 md:px-8 md:py-36">
+          <Reveal className="mx-auto mb-10 max-w-[1200px] md:mb-14">
+            <h2 className={H2}>Meet Ravi. Watch his day change.</h2>
+          </Reveal>
+          <Film enter={enter} enterLabel={signedIn ? "Open the app" : "Try the demo"} />
+        </section>
 
         <section id="more" className="relative scroll-mt-20 px-5 py-28 md:px-8 md:py-40">
           <Reveal className="mx-auto mb-14 max-w-[1200px] md:mb-20">
