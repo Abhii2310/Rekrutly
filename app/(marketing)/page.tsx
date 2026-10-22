@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { passcodeRequired } from "@/lib/security/access"
 import { cookies } from "next/headers"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
@@ -33,7 +34,7 @@ const H2 = "text-balance text-[48px] font-semibold leading-[0.98] tracking-[-0.0
 
 export default async function LandingPage() {
   const jar = await cookies()
-  const signedIn = verifySessionValue(jar.get(SESSION_COOKIE)?.value)
+  const signedIn = !passcodeRequired() || verifySessionValue(jar.get(SESSION_COOKIE)?.value)
   const enter = signedIn ? "/overview" : "/login"
 
   return (

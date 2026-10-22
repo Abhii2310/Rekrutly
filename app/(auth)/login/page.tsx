@@ -1,7 +1,10 @@
+import { redirect } from "next/navigation"
+import { passcodeRequired } from "@/lib/security/access"
 import { LoginForm } from "./login-form"
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const { next } = await searchParams
+  if (!passcodeRequired()) redirect("/overview")
   const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/overview"
   return (
     <main className="flex min-h-screen items-center justify-center px-6">

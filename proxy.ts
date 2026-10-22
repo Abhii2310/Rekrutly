@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { passcodeRequired } from '@/lib/security/access';
 import { SESSION_COOKIE, verifySessionValue } from '@/lib/security/session';
 
 const PUBLIC_PREFIXES = ['/login', '/api/auth/', '/a/', '/i/', '/o/', '/api/c/', '/api/i/', '/api/o/', '/api/cron/', '/api/health', '/_next/'];
@@ -13,7 +14,8 @@ export function proxy(request: NextRequest): NextResponse {
   if ((pathname === '/demo' || pathname.startsWith('/demo/')) && process.env.DEMO_MODE !== 'true') {
     return NextResponse.rewrite(new URL('/not-found-demo', request.url), { status: 404 });
   }
-  const signedIn = verifySessionValue(request.cookies.get(SESSION_COOKIE)?.value);
+  // Open access (the default): everyone counts as signed in. With REQUIRE_PASSCODE=true only a valid session does.
+  const signedIn = !passcodeRequired() || verifySessionValue(request.cookies.get(SESSION_COOKIE)?.value);
 
   if (pathname === '/login' && signedIn) {
     const next = request.nextUrl.searchParams.get('next');

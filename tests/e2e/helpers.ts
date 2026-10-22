@@ -7,6 +7,8 @@ export const DEMO_SENTENCE =
 export const USE_FALLBACK = process.env.E2E_USE_FALLBACK === 'true';
 
 export async function signIn(page: Page): Promise<void> {
+  // The app is open unless REQUIRE_PASSCODE=true.
+  if (process.env.REQUIRE_PASSCODE !== 'true') { await page.goto('/overview'); await expect(page).toHaveURL(/\/overview$/); return; }
   const passcode = process.env.RECRUITER_PASSCODE;
   if (!passcode) throw new Error('RECRUITER_PASSCODE is not set. Add it to .env.local.');
   await page.goto('/login');
