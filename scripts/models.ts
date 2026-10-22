@@ -3,7 +3,7 @@ import type { AiProvider, Env } from '../lib/env-schema';
 export type LiveModels = { provider: AiProvider; ids: string[] };
 
 function keyFor(env: Env, p: AiProvider): string {
-  const key = { gateway: env.AI_GATEWAY_API_KEY, google: env.GOOGLE_GENERATIVE_AI_API_KEY, anthropic: env.ANTHROPIC_API_KEY, groq: env.GROQ_API_KEY }[p];
+  const key = { gateway: env.AI_GATEWAY_API_KEY, google: env.GOOGLE_GENERATIVE_AI_API_KEY, anthropic: env.ANTHROPIC_API_KEY, groq: env.GROQ_API_KEY, openrouter: env.OPENROUTER_API_KEY }[p];
   return key ?? '';
 }
 

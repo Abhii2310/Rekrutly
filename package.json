@@ -25,6 +25,7 @@
     "@ai-sdk/anthropic": "4.0.85",
     "@ai-sdk/google": "4.0.102",
     "@ai-sdk/groq": "4.0.67",
+    "@ai-sdk/openai-compatible": "^3.0.75",
     "@mediapipe/tasks-vision": "0.10.14",
     "@supabase/supabase-js": "2.118.0",
     "ai": "7.0.148",

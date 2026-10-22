@@ -3,6 +3,7 @@ import { createGateway, generateText, Output, type LanguageModel } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGroq } from '@ai-sdk/groq';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import type { z } from 'zod';
 import { env } from '@/lib/env';
 import type { AiProvider } from '@/lib/env-schema';
@@ -25,6 +26,7 @@ function build(provider: AiProvider, id: string): LanguageModel {
   if (provider === 'google') return createGoogleGenerativeAI({ apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY })(id);
   if (provider === 'anthropic') return createAnthropic({ apiKey: env.ANTHROPIC_API_KEY })(id);
   if (provider === 'groq') return createGroq({ apiKey: env.GROQ_API_KEY })(id);
+  if (provider === 'openrouter') return createOpenAICompatible({ name: 'openrouter', supportsStructuredOutputs: true, baseURL: 'https://openrouter.ai/api/v1', apiKey: env.OPENROUTER_API_KEY })(id);
   return createGateway({ apiKey: env.AI_GATEWAY_API_KEY })(id);
 }
 
