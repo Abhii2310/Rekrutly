@@ -46,6 +46,24 @@ export function submissionText(input: { firstName: string; role: string; autoSub
   return { subject: `We've received your ${role} assessment`, body: lines.join('\n') };
 }
 
+/** A gentle once-only nudge for someone who has not started their assessment. */
+export function examReminderText(input: { firstName: string; role: string; durationMinutes: number; link: string; expires: Date }): { subject: string; body: string } {
+  const until = input.expires.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', timeZone: 'Asia/Kolkata' });
+  const lines = [
+    `Hi ${input.firstName},`,
+    '',
+    `A quick reminder that your ${input.role} assessment is still waiting for you. It takes about ${input.durationMinutes} minutes, and your link works until ${until}.`,
+    '',
+    `Start here: ${input.link}`,
+    '',
+    'If now is not a good time, pick a quiet moment before then. If something is in the way, just reply to this email.',
+    '',
+    'Thanks,',
+    'The hiring team',
+  ];
+  return { subject: `Reminder: your ${input.role} assessment`, body: lines.join('\n') };
+}
+
 export const firstNameOf = (fullName: string): string => fullName.trim().split(/\s+/)[0] ?? fullName;
 
 const esc = (t: string): string => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -56,7 +74,7 @@ const esc = (t: string): string => t.replace(/&/g, '&amp;').replace(/</g, '&lt;'
  */
 export function invitationHtml(body: string, link: string | undefined): string {
   const blocks = body.split('\n\n').map((block) => {
-    const action = block.startsWith('Start here:') ? 'Start your assessment' : block.startsWith('Join here:') ? 'Join the interview' : null;
+    const action = block.startsWith('Start here:') ? 'Start your assessment' : block.startsWith('Join here:') ? 'Join the interview' : block.startsWith('Pick a time here:') ? 'Choose a time' : null;
     if (link && action) {
       return `<p style="margin:24px 0"><a href="${esc(link)}" style="display:inline-block;background:#0071E3;color:#ffffff;text-decoration:none;font-weight:600;padding:14px 28px;border-radius:999px">${action}</a></p>`
         + `<p style="margin:0 0 16px;color:#6e6e73;font-size:13px">If the button does not work, copy this link into your browser:<br><a href="${esc(link)}" style="color:#0071E3;word-break:break-all">${esc(link)}</a></p>`;

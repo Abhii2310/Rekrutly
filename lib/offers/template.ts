@@ -45,7 +45,7 @@ export function offerLetter(i: OfferInput): { subject: string; body: string } {
 const esc = (t: string): string => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 /** The letter as a simple HTML email. Bullet lines become a list. */
-export function offerHtml(body: string): string {
+export function offerHtml(body: string, replyUrl?: string): string {
   const blocks = body.split('\n\n').map((block) => {
     const lines = block.split('\n');
     const first = lines.findIndex((l) => l.startsWith('- '));
@@ -55,5 +55,9 @@ export function offerHtml(body: string): string {
     }
     return `<p style="margin:0 0 16px">${lines.map(esc).join('<br>')}</p>`;
   });
-  return `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#1d1d1f;max-width:600px">${blocks.join('')}</div>`;
+  const reply = replyUrl
+    ? `<p style="margin:24px 0"><a href="${esc(replyUrl)}" style="display:inline-block;background:#0071E3;color:#ffffff;text-decoration:none;font-weight:600;padding:14px 28px;border-radius:999px">Review and reply to this offer</a></p>`
+      + `<p style="margin:0 0 16px;color:#6e6e73;font-size:13px">You can accept or decline on that page. If the button does not work, copy this link: <a href="${esc(replyUrl)}" style="color:#0071E3;word-break:break-all">${esc(replyUrl)}</a></p>`
+    : '';
+  return `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#1d1d1f;max-width:600px">${blocks.join('')}${reply}</div>`;
 }

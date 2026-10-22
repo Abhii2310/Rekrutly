@@ -18,10 +18,10 @@ export const dynamic = "force-dynamic"
 export default async function InterviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound()
-  const q = await getDb().from("interviews").select("id, candidate_id, scheduled_at, duration_minutes, status, notes, scorecard, meeting_url, token_encrypted, email_status").eq("id", id).maybeSingle()
+  const q = await getDb().from("interviews").select("id, candidate_id, scheduled_at, duration_minutes, status, proposed_slots, notes, scorecard, meeting_url, token_encrypted, email_status").eq("id", id).maybeSingle()
   if (q.error) return <><PageHeader title="Interview" /><PageBody><QueryError message="Couldn't load this interview." /></PageBody></>
   if (!q.data) notFound()
-  const iv = q.data as unknown as { candidate_id: string; scheduled_at: string; duration_minutes: number; status: "scheduled" | "completed" | "cancelled"; notes: string; scorecard: Scorecard | null; meeting_url: string; token_encrypted: string; email_status: string }
+  const iv = q.data as unknown as { candidate_id: string; scheduled_at: string; duration_minutes: number; status: "proposed" | "scheduled" | "completed" | "cancelled"; proposed_slots: string[] | null; notes: string; scorecard: Scorecard | null; meeting_url: string; token_encrypted: string; email_status: string }
   const dossier = await getDossier(iv.candidate_id)
   if (!dossier.ok || !dossier.data) return <><PageHeader title="Interview" /><PageBody><QueryError message="Couldn't load the candidate." /></PageBody></>
   const d = dossier.data
@@ -31,12 +31,12 @@ export default async function InterviewPage({ params }: { params: Promise<{ id: 
     <>
       <PageHeader
         title={d.name}
-        description={`${d.jobTitle ?? "Interview"}. ${whenLabel(new Date(iv.scheduled_at))}, ${iv.duration_minutes} minutes.`}
+        description={iv.status === "proposed" ? `${d.jobTitle ?? "Interview"}. Waiting for them to choose one of ${(iv.proposed_slots ?? []).length} times.` : `${d.jobTitle ?? "Interview"}. ${whenLabel(new Date(iv.scheduled_at))}, ${iv.duration_minutes} minutes.`}
         actions={<><Button asChild variant="secondary" size="sm"><Link href={`/candidates/${d.id}/portfolio`}>Full portfolio</Link></Button><Button asChild size="sm"><a href={iv.meeting_url} target="_blank" rel="noreferrer">Open the video call</a></Button></>}
       />
       <PageBody>
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <InterviewWorkspace id={id} status={iv.status} initialNotes={iv.notes} initialScorecard={iv.scorecard} />
+          <InterviewWorkspace id={id} status={iv.status === "proposed" ? "scheduled" : iv.status} initialNotes={iv.notes} initialScorecard={iv.scorecard} />
           <aside aria-label="About the candidate" className="flex flex-col gap-6">
             <section className="rounded-group bg-mist p-5">
               <h2 className="t-headline text-ink">At a glance</h2>

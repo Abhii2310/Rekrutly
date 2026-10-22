@@ -1,25 +1,13 @@
 import 'server-only';
 import { z } from 'zod';
 import { apiError, apiOk, withErrors } from '@/lib/api';
+import { extractResumeText, MAX_FILE_BYTES } from '@/lib/ats/extract';
 import { MAX_RESUME_CHARS } from '@/lib/ats/rules';
 import { getDb } from '@/lib/db/server';
 import { logEvent } from '@/lib/events';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
 
 export const maxDuration = 30;
-const MAX_FILE_BYTES = 4 * 1024 * 1024;
-
-async function extractText(file: File): Promise<string> {
-  const name = file.name.toLowerCase();
-  if (name.endsWith('.pdf') || file.type === 'application/pdf') {
-    const { extractText: pdfText, getDocumentProxy } = await import('unpdf');
-    const pdf = await getDocumentProxy(new Uint8Array(await file.arrayBuffer()));
-    const { text } = await pdfText(pdf, { mergePages: true });
-    return text;
-  }
-  return await file.text();
-}
-
 /** Saves the resume text for a candidate, from pasted text or an uploaded PDF or text file. Only the text is kept, not the file. */
 async function handlePOST(request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   const denied = await requireRecruiter();
@@ -34,7 +22,7 @@ async function handlePOST(request: Request, { params }: { params: Promise<{ id: 
       const file = (await request.formData()).get('file');
       if (!(file instanceof File)) return apiError('invalid_input', 'Choose a file first.', 400);
       if (file.size > MAX_FILE_BYTES) return apiError('invalid_input', 'That file is too large. Use one under 4 MB.', 413);
-      text = await extractText(file);
+      text = await extractResumeText(file);
     } else {
       const body = z.object({ text: z.string() }).safeParse(await request.json().catch(() => null));
       if (!body.success) return apiError('invalid_input', 'Paste the resume text first.', 400);

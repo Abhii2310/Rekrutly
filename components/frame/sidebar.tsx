@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Activity, BookOpen, Briefcase, ChartColumn, Clapperboard, Command, LayoutGrid, LogOut, ScrollText, Search, Settings, Users } from "lucide-react"
+import { Activity, BookOpen, Columns3, Briefcase, ChartColumn, Clapperboard, Command, LayoutGrid, LogOut, ScrollText, Search, Settings, Users } from "lucide-react"
 import { cn } from "cn"
 import { DemoTag } from "@/components/ui/tags"
 
@@ -11,6 +11,7 @@ const NAV = [
   { href: "/overview", label: "Overview", icon: LayoutGrid },
   { href: "/command", label: "Command", icon: Command },
   { href: "/jobs", label: "Jobs", icon: Briefcase },
+  { href: "/board", label: "Board", icon: Columns3 },
   { href: "/candidates", label: "Candidates", icon: Users },
   { href: "/war-room", label: "War Room", icon: Activity },
   { href: "/analytics", label: "Analytics", icon: ChartColumn },

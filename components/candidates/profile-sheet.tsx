@@ -14,8 +14,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { toast } from "@/components/ui/toaster"
 import { InterviewPanel } from "@/components/hr/interview-panel"
 import { OfferPanel } from "@/components/hr/offer-panel"
+import { RejectDialog } from "@/components/hr/reject-dialog"
 import { ResumePanel } from "@/components/hr/resume-panel"
 import type { HrData } from "@/lib/hr/types"
+import { cn } from "cn"
 import { statusLabel, type Stage } from "@/lib/status"
 
 export type ProfileData = {
@@ -49,6 +51,8 @@ async function patch(id: string, body: { email?: string | null; stage?: Stage })
   return json?.error?.message ?? "Couldn't save the change."
 }
 
+type Tab = "overview" | "resume" | "assessment" | "interview" | "offer" | "activity"
+
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-8">
@@ -66,6 +70,7 @@ export function CandidateSheet({ candidate }: { candidate: ProfileData }) {
   const [email, setEmail] = React.useState("")
   const [pending, setPending] = React.useState<"email" | "stage" | null>(null)
   const [emailError, setEmailError] = React.useState<string | null>(null)
+  const [tab, setTab] = React.useState<Tab>("overview")
   const [deleteOpen, setDeleteOpen] = React.useState(false)
   const [deleting, setDeleting] = React.useState(false)
 
@@ -126,7 +131,16 @@ export function CandidateSheet({ candidate }: { candidate: ProfileData }) {
         </SheetHeader>
 
         <div className="px-8 pb-10">
-          <div className="t-callout flex flex-col gap-0.5 text-ink-2">
+          <div role="tablist" aria-label="Candidate sections" className="-mx-1 mb-2 flex gap-1 overflow-x-auto pb-1">
+            {([["overview", "Overview"], ...(candidate.hr ? [["resume", "Resume"]] : []), ["assessment", "Assessment"], ...(candidate.hr ? [["interview", "Interview"], ["offer", "Offer"]] : []), ["activity", "Activity"]] as [Tab, string][]).map(([key, label]) => (
+              <button
+                key={key} type="button" role="tab" aria-selected={tab === key} onClick={() => setTab(key)}
+                className={cn("focus-ring t-callout shrink-0 rounded-full px-3.5 py-1.5 transition-colors", tab === key ? "bg-ink text-canvas" : "text-ink-2 hover:bg-fog")}
+              >{label}</button>
+            ))}
+          </div>
+          {tab === "overview" ? (<>
+          <div className="t-callout mt-4 flex flex-col gap-0.5 text-ink-2">
             {candidate.location ? <span>{candidate.location}</span> : null}
             {candidate.yearsExperience !== null ? <span>{candidate.yearsExperience} years of experience</span> : null}
             {candidate.jobTitle ? <span>Applying for {candidate.jobTitle}</span> : null}
@@ -168,12 +182,6 @@ export function CandidateSheet({ candidate }: { candidate: ProfileData }) {
             {candidate.phone ? <p className="t-callout mt-3 text-ink-2">WhatsApp {candidate.phone}</p> : null}
           </Block>
 
-          {candidate.hr ? (
-            <Block title="Resume match">
-              <ResumePanel candidateId={candidate.id} roleTitle={candidate.jobTitle} hr={candidate.hr} />
-            </Block>
-          ) : null}
-
           <Block title="Stage">
             <div className="flex items-center gap-3">
               <StatusPill kind="candidate" value={candidate.stage} />
@@ -195,8 +203,32 @@ export function CandidateSheet({ candidate }: { candidate: ProfileData }) {
                 <span className="t-callout text-ink-2">No further stages.</span>
               )}
             </div>
+            {["rejected", "withdrawn", "hired"].includes(candidate.stage) ? null : (
+              <div className="mt-4">
+                <RejectDialog candidateId={candidate.id} firstName={candidate.fullName.split(/\s+/)[0] ?? candidate.fullName} name={candidate.fullName} role={candidate.jobTitle ?? "open"} email={candidate.email} />
+              </div>
+            )}
           </Block>
+          {candidate.hr ? (
+            <div className="mt-8"><Button asChild variant="secondary" size="sm"><a href={`/candidates/${candidate.id}/portfolio`}>Open the full portfolio</a></Button></div>
+          ) : null}
 
+          <Block title="Data and privacy">
+            <p className="t-callout text-ink-2">If this person asks for a copy of their data, or asks you to delete it, you can do both here.</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <Button asChild variant="secondary" size="sm"><a href={`/api/candidates/${candidate.id}/export`} download>Export data</a></Button>
+              <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>Delete data</Button>
+            </div>
+          </Block>
+          </>) : null}
+
+          {tab === "resume" && candidate.hr ? (
+            <Block title="Resume match">
+              <ResumePanel candidateId={candidate.id} roleTitle={candidate.jobTitle} hr={candidate.hr} />
+            </Block>
+          ) : null}
+
+          {tab === "assessment" ? (
           <Block title="Assessments">
             {candidate.assessments.length === 0 ? (
               <p className="t-body text-ink-2">No assessments yet.</p>
@@ -214,31 +246,21 @@ export function CandidateSheet({ candidate }: { candidate: ProfileData }) {
               </GroupedList>
             )}
           </Block>
+          ) : null}
 
-          {candidate.hr ? (
+          {tab === "interview" && candidate.hr ? (
             <Block title="Interview">
               <InterviewPanel candidateId={candidate.id} candidateName={candidate.fullName} email={candidate.email} interviews={candidate.hr.interviews} />
             </Block>
           ) : null}
 
-          {candidate.hr ? (
+          {tab === "offer" && candidate.hr ? (
             <Block title="Offer letter">
               <OfferPanel candidateId={candidate.id} candidateName={candidate.fullName} email={candidate.email} offers={candidate.hr.offers} />
             </Block>
           ) : null}
 
-          {candidate.hr ? (
-            <div className="mt-8"><Button asChild variant="secondary" size="sm"><a href={`/candidates/${candidate.id}/portfolio`}>Open the full portfolio</a></Button></div>
-          ) : null}
-
-          <Block title="Data and privacy">
-            <p className="t-callout text-ink-2">If this person asks for a copy of their data, or asks you to delete it, you can do both here.</p>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <Button asChild variant="secondary" size="sm"><a href={`/api/candidates/${candidate.id}/export`} download>Export data</a></Button>
-              <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>Delete data</Button>
-            </div>
-          </Block>
-
+          {tab === "activity" ? (
           <Block title="Activity">
             {candidate.events.length === 0 ? (
               <p className="t-body text-ink-2">No activity yet.</p>
@@ -250,6 +272,7 @@ export function CandidateSheet({ candidate }: { candidate: ProfileData }) {
               </GroupedList>
             )}
           </Block>
+          ) : null}
         </div>
       </SheetContent>
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>

@@ -51,6 +51,24 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // Migration 0005: rejection emails, reminders, interview slots, offer replies.
+  const pipe: [string, PromiseLike<{ error: { message: string } | null }>][] = [
+    ['candidates.rejection_emailed_at', db.from('candidates').select('rejection_emailed_at').limit(1)],
+    ['invitations.reminder_sent_at', db.from('invitations').select('reminder_sent_at').limit(1)],
+    ['interviews.reminder_sent_at, proposed_slots', db.from('interviews').select('reminder_sent_at, proposed_slots').limit(1)],
+    ['offers.token_hash, token_encrypted, response, responded_at', db.from('offers').select('token_hash, token_encrypted, response, responded_at').limit(1)],
+  ];
+  let pipeOk = true;
+  for (const [name, q] of pipe) {
+    const { error } = await q;
+    console.log(`${error ? 'MISSING' : 'ok     '} ${name}${error ? `  (${error.message})` : ''}`);
+    if (error) pipeOk = false;
+  }
+  if (!pipeOk) {
+    console.error('\nRun supabase/migrations/0005_pipeline.sql in the Supabase SQL Editor, then run this again.');
+    process.exit(1);
+  }
+
   const list = await db.storage.listBuckets();
   if (list.error) throw new Error(list.error.message);
   if (list.data.some((b) => b.name === BUCKET)) {

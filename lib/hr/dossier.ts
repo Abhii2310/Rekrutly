@@ -33,8 +33,8 @@ export async function getDossier(candidateId: string): Promise<Result<Dossier | 
   const [c, invs, iv, of] = await Promise.all([
     db.from('candidates').select('id, full_name, email, stage, location, years_experience, skills, current_title, current_company, resume_match, shortlisted, jobs(title)').eq('id', candidateId).maybeSingle(),
     db.from('invitations').select('id, assessments(title, proctored), submissions(id, final_score, final_max, scoring_status, skill_breakdown, report), integrity_signals(type)').eq('candidate_id', candidateId).order('created_at', { ascending: false }),
-    db.from('interviews').select('id, scheduled_at, duration_minutes, status, notes, scorecard, email_status').eq('candidate_id', candidateId).order('scheduled_at', { ascending: false }),
-    db.from('offers').select('id, title, compensation, start_date, body, status, sent_at').eq('candidate_id', candidateId).order('created_at', { ascending: false }),
+    db.from('interviews').select('id, scheduled_at, duration_minutes, status, proposed_slots, notes, scorecard, email_status').eq('candidate_id', candidateId).order('scheduled_at', { ascending: false }),
+    db.from('offers').select('id, title, compensation, start_date, body, status, sent_at, response').eq('candidate_id', candidateId).order('created_at', { ascending: false }),
   ]);
   const failed = [c, invs, iv, of].find((r) => r.error);
   if (failed?.error) return err('db_error', "Couldn't load the profile.", failed.error.message);
@@ -63,14 +63,14 @@ export async function getDossier(candidateId: string): Promise<Result<Dossier | 
   const counts = new Map<string, number>();
   for (const s of recorded?.integrity_signals ?? []) if (ALERT_SIGNALS.has(s.type)) counts.set(s.type, (counts.get(s.type) ?? 0) + 1);
 
-  type IvRow = { id: string; scheduled_at: string; duration_minutes: number; status: InterviewView['status']; notes: string; scorecard: Scorecard | null; email_status: InterviewView['emailStatus'] };
-  type OfRow = { id: string; title: string; compensation: string; start_date: string | null; body: string; status: OfferView['status']; sent_at: string | null };
+  type IvRow = { id: string; scheduled_at: string; duration_minutes: number; status: InterviewView['status']; proposed_slots: string[] | null; notes: string; scorecard: Scorecard | null; email_status: InterviewView['emailStatus'] };
+  type OfRow = { id: string; title: string; compensation: string; start_date: string | null; body: string; status: OfferView['status']; sent_at: string | null; response: OfferView['response'] };
   return ok({
     id: cand.id, name: cand.full_name, email: cand.email, stage: cand.stage, location: cand.location, yearsExperience: cand.years_experience, skills: cand.skills,
     role: cand.current_title && cand.current_company ? `${cand.current_title} at ${cand.current_company}` : cand.current_title, jobTitle: cand.jobs?.title ?? null,
     shortlisted: Boolean(cand.shortlisted), match: cand.resume_match, assessments,
     proctoring: recorded ? { invitationId: recorded.id, flagged: [...counts.values()].reduce((a, b) => a + b, 0), kinds: [...counts.entries()].map(([t, n]) => ({ label: signalLabel(t), count: n })) } : null,
-    interviews: (iv.data as IvRow[]).map((i) => ({ id: i.id, scheduledAt: i.scheduled_at, durationMinutes: i.duration_minutes, status: i.status, notes: i.notes, scorecard: i.scorecard, emailStatus: i.email_status })),
-    offers: (of.data as OfRow[]).map((o) => ({ id: o.id, title: o.title, compensation: o.compensation, startDate: o.start_date, body: o.body, status: o.status, sentAt: o.sent_at })),
+    interviews: (iv.data as IvRow[]).map((i) => ({ id: i.id, scheduledAt: i.scheduled_at, durationMinutes: i.duration_minutes, status: i.status, proposedSlots: i.proposed_slots, notes: i.notes, scorecard: i.scorecard, emailStatus: i.email_status })),
+    offers: (of.data as OfRow[]).map((o) => ({ id: o.id, title: o.title, compensation: o.compensation, startDate: o.start_date, body: o.body, status: o.status, sentAt: o.sent_at, response: o.response })),
   });
 }

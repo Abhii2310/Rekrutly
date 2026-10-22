@@ -41,6 +41,8 @@ const schema = z
     RESEND_API_KEY: z.string().optional(),
     EMAIL_FROM: z.string().default('Rekrutly <onboarding@resend.dev>'),
     // Send from a Gmail account (any recipient). Needs a Google app password, not the normal password.
+    // Lets a scheduler call /api/cron/reminders. Without it that route is off.
+    CRON_SECRET: z.string().min(16).optional(),
     GMAIL_USER: z.string().optional(),
     GMAIL_APP_PASSWORD: z.string().optional(),
   })

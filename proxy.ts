@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { SESSION_COOKIE, verifySessionValue } from '@/lib/security/session';
 
-const PUBLIC_PREFIXES = ['/login', '/api/auth/', '/a/', '/i/', '/api/c/', '/api/health', '/_next/'];
+const PUBLIC_PREFIXES = ['/login', '/api/auth/', '/a/', '/i/', '/o/', '/api/c/', '/api/i/', '/api/o/', '/api/cron/', '/api/health', '/_next/'];
 
 function isPublic(pathname: string): boolean {
   return pathname === '/' || pathname === '/favicon.ico' || PUBLIC_PREFIXES.some((p) => pathname === p.replace(/\/$/, '') || pathname.startsWith(p));

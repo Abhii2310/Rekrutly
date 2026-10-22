@@ -8,6 +8,7 @@ import { planDelivery } from '@/lib/executor/email-plan';
 import { logEvent } from '@/lib/events';
 import { offerHtml } from '@/lib/offers/template';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
+import { decryptToken } from '@/lib/security/tokens';
 import { canTransition, type Stage } from '@/lib/status';
 
 export const maxDuration = 30;
@@ -20,10 +21,10 @@ async function handlePOST(_request: Request, { params }: { params: Promise<{ id:
   if (!z.uuid().safeParse(id).success) return apiError('not_found', 'Offer not found.', 404);
 
   const db = getDb();
-  const o = await db.from('offers').select('id, candidate_id, job_id, title, body, status, candidates(full_name, email, stage)').eq('id', id).maybeSingle();
+  const o = await db.from('offers').select('id, candidate_id, job_id, title, body, status, token_encrypted, candidates(full_name, email, stage)').eq('id', id).maybeSingle();
   if (o.error) return apiError('db_error', "Couldn't load the offer.", 500);
   if (!o.data) return apiError('not_found', 'Offer not found.', 404);
-  const offer = o.data as unknown as { id: string; candidate_id: string; job_id: string; title: string; body: string; status: string; candidates: { full_name: string; email: string | null; stage: Stage } | null };
+  const offer = o.data as unknown as { id: string; candidate_id: string; job_id: string; title: string; body: string; status: string; token_encrypted: string | null; candidates: { full_name: string; email: string | null; stage: Stage } | null };
   if (offer.status === 'sent') return apiError('already_sent', 'This offer was already sent.', 409);
   const email = offer.candidates?.email;
   if (!email) return apiError('no_email', 'Add the candidate’s email first.', 409);
@@ -32,7 +33,8 @@ async function handlePOST(_request: Request, { params }: { params: Promise<{ id:
   if (plan.mode === 'skip') return apiError('email_unavailable', plan.message, 409);
 
   const subject = `Your offer for the ${offer.title} role`;
-  const sent = await sendEmail({ to: email, subject, text: offer.body, html: offerHtml(offer.body), idempotencyKey: `offer-${offer.id}` });
+  const replyUrl = offer.token_encrypted ? `${env.APP_URL}/o/${decryptToken(offer.token_encrypted)}` : undefined;
+  const sent = await sendEmail({ to: email, subject, text: replyUrl ? `${offer.body}\n\nAccept or decline here: ${replyUrl}` : offer.body, html: offerHtml(offer.body, replyUrl), idempotencyKey: `offer-${offer.id}` });
   if (!sent.ok) {
     await logEvent({ jobId: offer.job_id, candidateId: offer.candidate_id, type: 'email.failed', actor: 'recruiter', level: 'error', message: `Couldn't email the offer to ${offer.candidates?.full_name ?? 'the candidate'}: ${sent.error.message}` });
     return apiError('email_failed', sent.error.message, 502);

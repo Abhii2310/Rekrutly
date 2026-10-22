@@ -5,6 +5,7 @@ import { getDb } from '@/lib/db/server';
 import { logEvent } from '@/lib/events';
 import { offerLetter } from '@/lib/offers/template';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
+import { createInvitationToken } from '@/lib/security/tokens';
 
 const Body = z.object({
   company: z.string().trim().min(1, 'Enter the company name.').max(120),
@@ -35,7 +36,8 @@ async function handlePOST(request: Request, { params }: { params: Promise<{ id: 
   const title = row.jobs?.title ?? 'the role';
   const letter = offerLetter({ candidateName: row.full_name, title, company: b.company, compensation: b.compensation, startDate: b.startDate, signerName: b.signerName, signerTitle: b.signerTitle, deadlineDays: b.deadlineDays, today: new Date() });
 
-  const ins = await db.from('offers').insert({ candidate_id: id, job_id: row.job_id, title, compensation: b.compensation, start_date: b.startDate, body: letter.body }).select('id').single();
+  const t = createInvitationToken();
+  const ins = await db.from('offers').insert({ candidate_id: id, job_id: row.job_id, title, compensation: b.compensation, start_date: b.startDate, body: letter.body, token_hash: t.hash, token_encrypted: t.encrypted }).select('id').single();
   if (ins.error) return apiError('db_error', "Couldn't save the draft.", 500);
   await logEvent({ jobId: row.job_id, candidateId: id, type: 'offer.drafted', actor: 'recruiter', level: 'info', message: `Drafted an offer letter for ${row.full_name}` });
   return apiOk({ id: ins.data.id as string });
