@@ -26,7 +26,7 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 /** 240px mist sidebar; collapses to a 72px icon rail under 1024px. */
-export function Sidebar({ demoMode }: { demoMode: boolean }) {
+export function Sidebar({ demoMode, showSignOut = true }: { demoMode: boolean; showSignOut?: boolean }) {
   const pathname = usePathname()
   const router = useRouter()
   const [signingOut, setSigningOut] = React.useState(false)
@@ -80,16 +80,18 @@ export function Sidebar({ demoMode }: { demoMode: boolean }) {
 
       <div className="mt-auto flex flex-col items-start gap-3">
         {demoMode ? <span className="hidden lg:inline-flex"><DemoTag /></span> : null}
-        <button
-          type="button"
-          onClick={signOut}
-          disabled={signingOut}
-          className="focus-ring t-body flex h-9 items-center gap-3 rounded-[8px] px-2.5 text-action transition-colors hover:text-action-hover disabled:opacity-50"
-        >
-          <LogOut aria-hidden className="size-[18px] lg:hidden" strokeWidth={1.75} />
-          <span className="hidden lg:inline">Sign out</span>
-          <span className="sr-only lg:hidden">Sign out</span>
-        </button>
+        {showSignOut ? (
+          <button
+            type="button"
+            onClick={signOut}
+            disabled={signingOut}
+            className="focus-ring t-body flex h-9 items-center gap-3 rounded-[8px] px-2.5 text-action transition-colors hover:text-action-hover disabled:opacity-50"
+          >
+            <LogOut aria-hidden className="size-[18px] lg:hidden" strokeWidth={1.75} />
+            <span className="hidden lg:inline">Sign out</span>
+            <span className="sr-only lg:hidden">Sign out</span>
+          </button>
+        ) : null}
       </div>
     </aside>
   )

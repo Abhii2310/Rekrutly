@@ -3,7 +3,8 @@ import { DEMO_SENTENCE, resetDemo, signIn, waitForLinks } from './helpers';
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000';
 
-test.describe('signed out', () => {
+test.describe('signed out (only when REQUIRE_PASSCODE=true)', () => {
+  test.skip(process.env.REQUIRE_PASSCODE !== 'true', 'The app is open by default, so there is nothing to sign in to.');
   test('recruiter pages send you to sign in and keep where you were going', async ({ page }) => {
     for (const path of ['/jobs', '/candidates', '/command', '/analytics', '/war-room', '/demo']) {
       await page.goto(path);

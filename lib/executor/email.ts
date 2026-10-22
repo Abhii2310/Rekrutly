@@ -3,9 +3,12 @@ import nodemailer from 'nodemailer';
 import { env, fromAddress } from '@/lib/env';
 import { gmailConfigured } from '@/lib/env-schema';
 import { err, ok, type Result } from '@/lib/result';
+import { checkEmailBudget } from './email-budget';
 
 /** Sends one email through Resend. "Sent" means the provider said yes; anything else is an error. */
 export async function sendEmail(input: { to: string; subject: string; text: string; html?: string; idempotencyKey: string }): Promise<Result<{ id: string }>> {
+  const budget = await checkEmailBudget();
+  if (!budget.ok) return err(budget.error.code, budget.error.message);
   if (gmailConfigured(env)) return sendWithGmail(input);
   if (!env.RESEND_API_KEY) return err('email_not_configured', 'Email is not configured.');
   try {
