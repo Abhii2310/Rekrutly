@@ -10,6 +10,8 @@ import { Section } from "@/components/ui/section"
 import { StatusPill } from "@/components/ui/status-pill"
 import { SimulatedTag } from "@/components/ui/tags"
 import { toast } from "@/components/ui/toaster"
+import { FixEmail, ResendButton } from "@/components/war-room/fix-email"
+import { useDeliveryWatch } from "@/hooks/use-delivery-watch"
 import { usePoll } from "@/hooks/use-poll"
 import { copyText } from "@/lib/copy-text"
 import { formatRelative, formatTime } from "@/lib/format"
@@ -40,7 +42,7 @@ async function fetchLink(id: string): Promise<string | null> {
 }
 
 /** After approval: the rail fills in from real events, with candidate links and the activity list beside it. */
-export function RunLive({ runId, initial }: { runId: string; initial: RunLiveData }) {
+export function RunLive({ runId, initial, sender = null }: { runId: string; initial: RunLiveData; sender?: string | null }) {
   const router = useRouter()
   const { data: live = initial, reconnecting } = usePoll<RunLiveData>(`/api/runs/${runId}/live`, { initial })
   const [busy, setBusy] = React.useState(false)
@@ -52,6 +54,7 @@ export function RunLive({ runId, initial }: { runId: string; initial: RunLiveDat
       router.refresh()
     }
   }, [live.run.status, router])
+  useDeliveryWatch(live.invitations.some((i) => i.delivery_status === "sent" && i.status !== "started" && i.status !== "submitted"))
   const paused = live.run.status === "paused"
   const canPause = live.run.status === "executing" || live.run.status === "waiting"
 
@@ -120,17 +123,18 @@ export function RunLive({ runId, initial }: { runId: string; initial: RunLiveDat
           {live.invitations.length === 0 ? (
             <p className="t-body py-2 text-ink-2">Links appear here once they are created.</p>
           ) : (
+            <>
             <GroupedList>
               {live.invitations.map((i) => (
+                <React.Fragment key={i.id}>
                 <ListRow
-                  key={i.id}
                   title={i.name}
                   subtitle={
                     i.status === "started" && i.current_question
                       ? `Question ${i.current_question} of ${live.assessment?.question_count ?? ""}`
                       : i.status === "submitted"
                         ? "Submitted"
-                        : i.has_email ? (DELIVERY[i.delivery_status] ?? "Email not sent") : "No email, share the link"
+                        : i.has_email ? `${DELIVERY[i.delivery_status] ?? "Email not sent"}${i.delivery_status === "sent" && i.email ? ` to ${i.email}` : ""}` : "No email, share the link"
                   }
                   pill={<StatusPill kind="invitation" value={i.status} />}
                   actions={
@@ -140,8 +144,15 @@ export function RunLive({ runId, initial }: { runId: string; initial: RunLiveDat
                     </>
                   }
                 />
+                {i.delivery_status === "failed" && i.status !== "started" && i.status !== "submitted" ? <li className="list-none px-4 pb-3"><FixEmail invitation={i} /></li> : null}
+                {i.delivery_status === "sent" && i.status !== "started" && i.status !== "submitted" ? <li className="list-none px-4 pb-2 pl-4"><ResendButton invitation={i} /></li> : null}
+                </React.Fragment>
               ))}
             </GroupedList>
+            <p className="t-callout mt-3 text-ink-2">
+              {sender ? `Emails come from ${sender}. ` : ""}If someone can&apos;t find theirs, ask them to check Spam or Promotions, or press Copy link and send it on WhatsApp. A wrong address turns red here within a minute.
+            </p>
+            </>
           )}
         </Section>
 

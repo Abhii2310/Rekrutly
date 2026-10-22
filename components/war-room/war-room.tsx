@@ -9,6 +9,7 @@ import { Section } from "@/components/ui/section"
 import { StatusPill } from "@/components/ui/status-pill"
 import { SimulatedTag } from "@/components/ui/tags"
 import { toast } from "@/components/ui/toaster"
+import { useDeliveryWatch } from "@/hooks/use-delivery-watch"
 import { usePoll } from "@/hooks/use-poll"
 import { formatRelative, formatTime } from "@/lib/format"
 import type { RunLive } from "@/lib/db/queries/live"
@@ -37,26 +38,8 @@ export function WarRoom({ runId, initial }: { runId: string; initial: RunLive })
   const status = live.run.status
   const paused = status === "paused"
   const canPause = status === "executing" || status === "waiting"
-  // Wrong addresses only show up as a bounce a little later, so look for bounces while invitations are out.
   const emailsOut = live.invitations.some((i) => i.delivery_status === "sent" && i.status !== "started" && i.status !== "submitted")
-  React.useEffect(() => {
-    if (!emailsOut) return
-    let busy = false
-    let runs = 0
-    let timer: ReturnType<typeof setTimeout> | undefined
-    const check = async () => {
-      if (busy || document.visibilityState !== "visible") return schedule()
-      busy = true
-      try { await fetch("/api/delivery/check", { method: "POST" }) } catch { /* try again later */ }
-      busy = false
-      runs++
-      schedule()
-    }
-    // Quick at first, when a bounce is most likely, then every minute. Never two at once.
-    const schedule = () => { timer = setTimeout(() => void check(), runs < 3 ? 20_000 : 60_000) }
-    timer = setTimeout(() => void check(), 4_000)
-    return () => { if (timer) clearTimeout(timer) }
-  }, [emailsOut])
+  useDeliveryWatch(emailsOut)
   // Reminders that are due go out while someone is watching, even without a scheduler.
   React.useEffect(() => {
     const run = () => { if (document.visibilityState === "visible") void fetch("/api/reminders/run", { method: "POST" }).catch(() => {}) }

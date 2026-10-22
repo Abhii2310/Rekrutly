@@ -28,15 +28,20 @@ export async function checkBounces(): Promise<Result<{ marked: number }>> {
   });
   const bounces = new Map<string, Bounce>();
 
+  // Ask Gmail only for notices about the addresses we are waiting on, so old bounces about other people are never read.
+  const waitingEmails = [...new Set(rows.map((r) => (r.candidates?.email ?? '').toLowerCase()).filter((e) => /^[^\s"()]+@[^\s"()]+$/.test(e)))].slice(0, 20);
+  const query = `from:(mailer-daemon OR postmaster) newer_than:3d (${waitingEmails.map((e) => `"${e}"`).join(' OR ')})`;
+
   const read = async (): Promise<void> => {
     await client.connect();
     const lock = await client.getMailboxLock('INBOX');
     try {
-      const uids = (await client.search({ since: new Date(Date.now() - 2 * 86_400_000), from: 'mailer-daemon' })) || [];
+      const uids = (await client.search({ gmraw: query })) || [];
       if (uids.length === 0) return;
-      // One request for all notices. Only the head of each is needed: the failed address and status are near the top.
-      for await (const msg of client.fetch(uids.slice(-20), { source: { start: 0, maxLength: 12_000 } }, { uid: true })) {
-        const b = msg.source ? parseBounce(msg.source.toString('utf8')) : null;
+      // Only the head of each notice is needed: the failed address and status are near the top.
+      for (const uid of uids.slice(-15)) {
+        const msg = await client.fetchOne(String(uid), { source: { start: 0, maxLength: 12_000 } });
+        const b = msg && msg.source ? parseBounce(msg.source.toString('utf8')) : null;
         if (b) bounces.set(b.email, b);
       }
     } finally {

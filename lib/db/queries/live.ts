@@ -103,7 +103,7 @@ export async function getRunLive(runId: string): Promise<Result<RunLive | null>>
       id: i.id, candidate_id: i.candidateId, name: i.name, has_email: Boolean(i.email), status: i.status, delivery_status: i.deliveryStatus,
       current_question: i.currentQuestion, deadline_at: i.deadlineAt, submitted_at: i.submittedAt, last_activity_at: i.lastActivityAt,
       signals: signalsOf.get(i.id) ?? { tab_hidden: 0, paste: 0 },
-      email: i.deliveryStatus === 'failed' ? i.email : null, delivery_error: errorOf.get(i.id) ?? null,
+      email: i.email ?? null, delivery_error: errorOf.get(i.id) ?? null,
       proctored: emb.proctored, snapshot_at: snapshotOf.get(i.id) ?? null, alerts: camera.get(i.id) ?? 0,
       seconds_left: i.status === 'started' && i.deadlineAt ? Math.max(0, Math.round((new Date(i.deadlineAt).getTime() - now) / 1000)) : null,
     }));
