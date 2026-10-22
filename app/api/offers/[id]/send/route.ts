@@ -32,14 +32,18 @@ async function handlePOST(_request: Request, { params }: { params: Promise<{ id:
   const plan = planDelivery({ status: emailStatus(env), from: fromAddress(env), demoEmail: env.DEMO_CANDIDATE_EMAIL }, [{ id: offer.id, email }]);
   if (plan.mode === 'skip') return apiError('email_unavailable', plan.message, 409);
 
+  // Claim it first: a double click or two tabs must not email the offer twice.
+  const claim = await db.from('offers').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', id).eq('status', 'draft').select('id');
+  if (claim.error) return apiError('db_error', "Couldn't send the offer.", 500);
+  if (!claim.data || claim.data.length === 0) return apiError('already_sent', 'This offer was already sent.', 409);
   const subject = `Your offer for the ${offer.title} role`;
   const replyUrl = offer.token_encrypted ? `${env.APP_URL}/o/${decryptToken(offer.token_encrypted)}` : undefined;
   const sent = await sendEmail({ to: email, subject, text: replyUrl ? `${offer.body}\n\nAccept or decline here: ${replyUrl}` : offer.body, html: offerHtml(offer.body, replyUrl), idempotencyKey: `offer-${offer.id}` });
   if (!sent.ok) {
+    await db.from('offers').update({ status: 'draft', sent_at: null }).eq('id', id);
     await logEvent({ jobId: offer.job_id, candidateId: offer.candidate_id, type: 'email.failed', actor: 'recruiter', level: 'error', message: `Couldn't email the offer to ${offer.candidates?.full_name ?? 'the candidate'}: ${sent.error.message}` });
     return apiError('email_failed', sent.error.message, 502);
   }
-  await db.from('offers').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', id);
   const stage = offer.candidates?.stage;
   if (stage && canTransition('candidate', stage, 'offer')) await db.from('candidates').update({ stage: 'offer' }).eq('id', offer.candidate_id).eq('stage', stage);
   await logEvent({ jobId: offer.job_id, candidateId: offer.candidate_id, type: 'offer.sent', actor: 'recruiter', level: 'success', message: `Sent the offer letter to ${offer.candidates?.full_name ?? 'the candidate'}` });

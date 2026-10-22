@@ -31,11 +31,13 @@ export async function runReminders(now: Date = new Date()): Promise<ReminderResu
   for (const r of (inv.data ?? []) as unknown as InvRow[]) {
     const email = r.candidates?.email;
     if (!email || !r.assessments || r.assessments.status === 'closed' || !canEmail(r.id, email)) continue;
+    // Claim it first, so two tabs running this at once cannot both send.
+    const claim = await db.from('invitations').update({ reminder_sent_at: now.toISOString() }).eq('id', r.id).is('reminder_sent_at', null).select('id');
+    if (!claim.data || claim.data.length === 0) continue;
     const link = `${env.APP_URL}/a/${decryptToken(r.token_encrypted)}`;
     const text = examReminderText({ firstName: firstNameOf(r.candidates?.full_name ?? 'there'), role: r.assessments.jobs?.title ?? 'open', durationMinutes: r.assessments.duration_minutes, link, expires: new Date(r.expires_at) });
     const sent = await sendEmail({ to: email, subject: text.subject, text: text.body, html: invitationHtml(text.body, link), idempotencyKey: `reminder-${r.id}` });
-    if (!sent.ok) continue;
-    await db.from('invitations').update({ reminder_sent_at: now.toISOString() }).eq('id', r.id);
+    if (!sent.ok) { await db.from('invitations').update({ reminder_sent_at: null }).eq('id', r.id); continue; }
     out.exams++;
     await logEvent({ runId: r.assessments.run_id, jobId: r.assessments.job_id, candidateId: r.candidate_id, type: 'reminder.sent', actor: 'agent', level: 'info', message: `Reminded ${r.candidates?.full_name ?? 'a candidate'} to start their assessment` });
   }
@@ -48,11 +50,12 @@ export async function runReminders(now: Date = new Date()): Promise<ReminderResu
   for (const r of (iv.data ?? []) as unknown as IvRow[]) {
     const email = r.candidates?.email;
     if (!email || !canEmail(r.id, email)) continue;
+    const claim = await db.from('interviews').update({ reminder_sent_at: now.toISOString() }).eq('id', r.id).is('reminder_sent_at', null).select('id');
+    if (!claim.data || claim.data.length === 0) continue;
     const joinUrl = `${env.APP_URL}/i/${decryptToken(r.token_encrypted)}`;
     const text = interviewReminderText({ firstName: firstNameOf(r.candidates?.full_name ?? 'there'), role: r.jobs?.title ?? 'open', start: new Date(r.scheduled_at), joinUrl });
     const sent = await sendEmail({ to: email, subject: text.subject, text: text.body, html: invitationHtml(text.body, joinUrl), idempotencyKey: `interview-reminder-${r.id}` });
-    if (!sent.ok) continue;
-    await db.from('interviews').update({ reminder_sent_at: now.toISOString() }).eq('id', r.id);
+    if (!sent.ok) { await db.from('interviews').update({ reminder_sent_at: null }).eq('id', r.id); continue; }
     out.interviews++;
     await logEvent({ jobId: r.job_id, candidateId: r.candidate_id, type: 'reminder.sent', actor: 'agent', level: 'info', message: `Reminded ${r.candidates?.full_name ?? 'a candidate'} about their interview` });
   }
