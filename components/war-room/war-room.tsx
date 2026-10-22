@@ -41,10 +41,21 @@ export function WarRoom({ runId, initial }: { runId: string; initial: RunLive })
   const emailsOut = live.invitations.some((i) => i.delivery_status === "sent" && i.status !== "started" && i.status !== "submitted")
   React.useEffect(() => {
     if (!emailsOut) return
-    const check = () => { if (document.visibilityState === "visible") void fetch("/api/delivery/check", { method: "POST" }).catch(() => {}) }
-    const first = setTimeout(check, 4000)
-    const timer = setInterval(check, 30_000)
-    return () => { clearTimeout(first); clearInterval(timer) }
+    let busy = false
+    let runs = 0
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const check = async () => {
+      if (busy || document.visibilityState !== "visible") return schedule()
+      busy = true
+      try { await fetch("/api/delivery/check", { method: "POST" }) } catch { /* try again later */ }
+      busy = false
+      runs++
+      schedule()
+    }
+    // Quick at first, when a bounce is most likely, then every minute. Never two at once.
+    const schedule = () => { timer = setTimeout(() => void check(), runs < 3 ? 20_000 : 60_000) }
+    timer = setTimeout(() => void check(), 4_000)
+    return () => { if (timer) clearTimeout(timer) }
   }, [emailsOut])
   const submitted = live.invitations.filter((i) => i.status === "submitted").length
 

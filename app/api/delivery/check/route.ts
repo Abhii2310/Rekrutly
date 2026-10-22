@@ -3,7 +3,7 @@ import { apiError, apiOk, withErrors } from '@/lib/api';
 import { checkBounces } from '@/lib/executor/bounces';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
 
-export const maxDuration = 30;
+export const maxDuration = 25;
 
 /** Looks for bounced invitation emails and marks them failed. Safe to call often; it only reads the inbox. */
 async function handlePOST(): Promise<Response> {
