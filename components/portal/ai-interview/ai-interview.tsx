@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { portalFetch } from "../api"
 import { PortalShell } from "../shell"
-import { canListen, canSpeak, createListener, speak, stopSpeaking, type Listener } from "./voice"
+import { cleanQuestion, splitSentences } from "@/lib/ai-interview/speech"
+import { InterviewerAvatar, ListeningBars, type AvatarState } from "./avatar"
+import { canListen, canSpeak, createListener, listVoices, saveVoiceName, savedVoiceName, speak, stopSpeaking, type Listener } from "./voice"
 
 type State = { status: "none" | "in_progress" | "completed"; total: number; index: number; prompt: { text: string; kind: "question" | "followup" } | null; promptId: number }
 type Phase = "intro" | "starting" | "speaking" | "listening" | "typing" | "thinking" | "done"
@@ -25,6 +27,10 @@ export function AiInterview({ token, firstName, initial, onDone }: { token: stri
   const [useVoice, setUseVoice] = React.useState(true)
   const [note, setNote] = React.useState<string | null>(null)
   const [error, setError] = React.useState<string | null>(null)
+  const [sentence, setSentence] = React.useState(-1)
+  const [pulse, setPulse] = React.useState(0)
+  const [voices, setVoices] = React.useState<{ name: string; lang: string }[]>([])
+  const [voiceName, setVoiceName] = React.useState<string>("")
   const listener = React.useRef<Listener | null>(null)
   const listening = canListen()
   const talks = canSpeak()
@@ -34,13 +40,35 @@ export function AiInterview({ token, firstName, initial, onDone }: { token: stri
   // Mounted again after React's development double-run, so the flag is set on every mount, not only cleared on unmount.
   React.useEffect(() => { alive.current = true; return () => { alive.current = false; stopSpeaking(); listener.current?.stop() } }, [])
 
+  // The list of voices arrives a moment after the page loads on some browsers.
+  React.useEffect(() => {
+    if (!talks) return
+    const load = () => {
+      const list = listVoices().map((v) => ({ name: v.name, lang: v.lang }))
+      setVoices(list)
+      setVoiceName((cur) => cur || savedVoiceName() || list[0]?.name || "")
+    }
+    load()
+    window.speechSynthesis.addEventListener("voiceschanged", load)
+    return () => window.speechSynthesis.removeEventListener("voiceschanged", load)
+  }, [talks])
+
+  function chooseVoice(name: string) {
+    setVoiceName(name)
+    saveVoiceName(name)
+    void speak("Hello, I will be your interviewer today. Can you hear me clearly?", { onWord: () => setPulse((p) => p + 1) })
+    setPhase((p) => p)
+  }
+
   const ask = React.useCallback(async (prompt: { text: string }) => {
     if (!alive.current) return
     setHeard("")
     setTyped("")
     setNote(null)
     setPhase("speaking")
-    await speak(prompt.text)
+    setSentence(0)
+    await speak(prompt.text, { onSentence: setSentence, onWord: () => setPulse((p) => p + 1) })
+    setSentence(-1)
     if (!alive.current) return
     if (voiceIn) listen()
     else setPhase("typing")
@@ -111,6 +139,20 @@ export function AiInterview({ token, firstName, initial, onDone }: { token: stri
             </label>
           ) : <p className="t-callout mt-4 text-ink-2">This browser can&apos;t listen, so you will type your answers. Chrome on a laptop or an Android phone lets you speak.</p>}
           {!talks ? <p className="t-callout mt-2 text-ink-2">This browser can&apos;t speak the questions aloud, so you will read them on screen.</p> : null}
+          {talks && voices.length > 0 ? (
+            <div className="mt-4">
+              <label className="t-callout flex flex-col gap-1.5 text-ink">
+                Interviewer&apos;s voice
+                <select
+                  value={voiceName} onChange={(e) => chooseVoice(e.target.value)}
+                  className="focus-ring t-body h-11 w-full rounded-control bg-canvas px-3 text-ink"
+                >
+                  {voices.map((v) => <option key={v.name} value={v.name}>{v.name}</option>)}
+                </select>
+              </label>
+              <p className="t-footnote mt-1.5 text-ink-2">Pick the voice that sounds clearest to you. Choosing one plays a short hello. Everything is also shown as text.</p>
+            </div>
+          ) : null}
           <label className="mt-3 flex min-h-11 cursor-pointer items-center gap-3">
             <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="focus-ring size-5 shrink-0 accent-[var(--color-action)]" />
             <span className="t-body text-ink">I understand this is an AI interview</span>
@@ -134,7 +176,9 @@ export function AiInterview({ token, firstName, initial, onDone }: { token: stri
     )
   }
 
-  const orb = phase === "speaking" ? "animate-pulse bg-action" : phase === "listening" ? "bg-success shadow-[0_0_0_14px_rgba(48,209,88,0.15)]" : phase === "thinking" ? "animate-pulse bg-ink-3" : "bg-fog"
+  const avatarState: AvatarState = phase === "speaking" ? "speaking" : phase === "listening" ? "listening" : phase === "thinking" ? "thinking" : "idle"
+  const shown = cleanQuestion(prompt)
+  const lines = splitSentences(shown)
   return (
     <PortalShell progress={state && state.total > 0 ? Math.min(state.index, state.total) / state.total : 0}>
       <p className="t-callout text-ink-2" aria-live="polite">
@@ -142,12 +186,17 @@ export function AiInterview({ token, firstName, initial, onDone }: { token: stri
         {state?.prompt?.kind === "followup" ? ", a follow-up" : ""}
       </p>
 
-      <div className="mt-8 flex flex-col items-center text-center">
-        <div aria-hidden className={cn("size-20 rounded-full transition-all duration-300", orb)} />
-        <p className="t-footnote mt-4 text-ink-2" role="status">
-          {phase === "speaking" ? "The interviewer is speaking" : phase === "listening" ? "Listening. Speak your answer." : phase === "thinking" ? "Thinking…" : "Your turn to answer"}
+      <div className="mt-6 flex flex-col items-center text-center">
+        <InterviewerAvatar state={avatarState} pulse={pulse} />
+        <p className="t-footnote mt-3 text-ink-2" role="status">
+          {phase === "speaking" ? "Your interviewer is speaking. Read along below." : phase === "listening" ? "Listening. Speak your answer." : phase === "thinking" ? "Thinking…" : "Your turn to answer"}
         </p>
-        <p className="t-title mt-6 max-w-[520px] text-ink">{prompt}</p>
+        <ListeningBars active={phase === "listening"} />
+        <p className="t-title mt-4 max-w-[520px] text-ink" aria-live="polite">
+          {lines.map((line, i) => (
+            <span key={i} className={cn("transition-colors duration-200", phase === "speaking" && sentence >= 0 && i !== sentence ? "text-ink-3" : "text-ink")}>{line}{i < lines.length - 1 ? " " : ""}</span>
+          ))}
+        </p>
       </div>
 
       {phase === "listening" || (phase === "typing" && voiceIn && heard) ? (
@@ -175,6 +224,15 @@ export function AiInterview({ token, firstName, initial, onDone }: { token: stri
         {(phase === "listening" || phase === "typing") && talks ? <Button variant="plain" onClick={() => { listener.current?.stop(); void ask({ text: prompt }) }}><Volume2 aria-hidden className="size-4" strokeWidth={1.75} />Repeat the question</Button> : null}
         {phase === "listening" || phase === "typing" ? <Button variant="plain" onClick={() => void send("", true)}>Skip this question</Button> : null}
       </div>
+
+      {talks && voices.length > 1 ? (
+        <label className="t-footnote mt-8 flex items-center gap-2 text-ink-2">
+          Voice
+          <select value={voiceName} onChange={(e) => chooseVoice(e.target.value)} className="focus-ring t-callout h-9 max-w-[260px] rounded-control bg-mist px-2 text-ink">
+            {voices.map((v) => <option key={v.name} value={v.name}>{v.name}</option>)}
+          </select>
+        </label>
+      ) : null}
     </PortalShell>
   )
 }
