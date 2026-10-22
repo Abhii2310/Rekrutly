@@ -15,14 +15,15 @@ const Tag = ({ children, tone = "ai" }: { children: ReactNode; tone?: "ai" | "ok
 )
 
 export const SCENES = [
-  { len: 7, say: "Five tools. One hiring day.", caption: "Hiring today is five tabs." },
-  { len: 8, say: "Watch. I just say it.", caption: "One sentence. AI proposes the plan." },
-  { len: 7, say: "I approve. Nothing runs before.", caption: "You approve. Code executes. Every step leaves a receipt." },
-  { len: 8, say: "The exam watches, fairly.", caption: "Camera-proctored exams, built in. Signals, not proof." },
-  { len: 9, say: "Now: how do they use AI?", caption: "We test how people work with AI, not just what they know." },
-  { len: 6, say: "Everyone on one board.", caption: "From resume match to offer, in one place." },
-  { len: 6, say: "Even a no gives something.", caption: "Rejected candidates get a private report of their own skills." },
-  { len: 6, say: "Hire with the lights on.", caption: "Rekrutly. The hiring agent that shows its work." },
+  { len: 4.5, tag: "Meet Ravi", say: "Hi. I run hiring here.", caption: "Ravi runs hiring at a 40-person startup." },
+  { len: 7, tag: "The problem", say: "Five tools. One hiring day.", caption: "Hiring today is five tabs." },
+  { len: 8, tag: "One sentence", say: "Watch. I just say it.", caption: "One sentence. AI proposes the plan." },
+  { len: 7, tag: "Approve", say: "I approve. Nothing runs before.", caption: "You approve. Code executes. Every step leaves a receipt." },
+  { len: 8, tag: "The exam", say: "The exam watches, fairly.", caption: "Camera-proctored exams, built in. Signals, not proof." },
+  { len: 9, tag: "The twist", say: "Now: how do they use AI?", caption: "We test how people work with AI, not just what they know." },
+  { len: 6, tag: "The pipeline", say: "Everyone on one board.", caption: "From resume match to offer, in one place." },
+  { len: 6, tag: "The kindness", say: "Even a no gives something.", caption: "Rejected candidates get a private report of their own skills." },
+  { len: 6, tag: "Lights on", say: "Hire with the lights on.", caption: "Rekrutly. The hiring agent that shows its work." },
 ] as const
 
 export const TOTAL = SCENES.reduce((n, s) => n + s.len, 0)
@@ -34,6 +35,13 @@ const STAGES = ["Resume match", "Test", "AI interview", "Interview", "Offer"]
 
 export function Scene({ i, l, t, enter }: { i: number; l: number; t: number; enter: ReactNode }): ReactNode {
   if (i === 0) return (
+    <div className="flex h-full flex-col items-start justify-center gap-3">
+      <p style={pop(l, 1.6)} className="text-[13px] uppercase tracking-[0.2em] text-white/45">A day in hiring</p>
+      <p style={pop(l, 2)} className="text-balance text-[34px] font-semibold leading-[0.98] tracking-[-0.04em] sm:text-[64px]">Meet <span className="text-[#7DB5FF]">Ravi.</span></p>
+      <p style={pop(l, 2.8)} className="max-w-sm text-[15px] text-white/60 sm:text-[18px]">Forty people, nine open roles, and a lot of tabs.</p>
+    </div>
+  )
+  if (i === 1) return (
     <div className="relative h-full">
       {TABS.map((n, k) => (
         <div key={n} style={{ ...pop(l, 0.3 + k * 0.45), left: `${6 + (k % 3) * 31}%`, top: `${8 + Math.floor(k / 3) * 38 + Math.sin(t * 1.6 + k) * 2}%` }} className="absolute">
@@ -43,7 +51,7 @@ export function Scene({ i, l, t, enter }: { i: number; l: number; t: number; ent
       <div style={pop(l, 3.2)} className="absolute bottom-3 right-3"><Tag tone="warn">Copy, paste, repeat</Tag></div>
     </div>
   )
-  if (i === 1) {
+  if (i === 2) {
     const typed = SENTENCE.slice(0, Math.floor(SENTENCE.length * ramp(l, 0.4, 3.2)))
     const lit = Math.floor(ramp(l, 3.8, 7.2) * PLAN.length + 0.001)
     return (
@@ -56,7 +64,7 @@ export function Scene({ i, l, t, enter }: { i: number; l: number; t: number; ent
       </div>
     )
   }
-  if (i === 2) {
+  if (i === 3) {
     const pressed = l > 2
     const links = Math.floor(ramp(l, 2.6, 5.4) * 5 + 0.001)
     return (
@@ -72,7 +80,7 @@ export function Scene({ i, l, t, enter }: { i: number; l: number; t: number; ent
       </div>
     )
   }
-  if (i === 3) {
+  if (i === 4) {
     const secs = Math.max(0, 1800 - Math.floor(l * 95))
     const box = Math.sin(t * 1.4) * 3
     return (
@@ -92,7 +100,7 @@ export function Scene({ i, l, t, enter }: { i: number; l: number; t: number; ent
       </div>
     )
   }
-  if (i === 4) {
+  if (i === 5) {
     const fixed = l > 6.2
     return (
       <div className="flex h-full flex-col gap-2.5">
@@ -103,7 +111,7 @@ export function Scene({ i, l, t, enter }: { i: number; l: number; t: number; ent
       </div>
     )
   }
-  if (i === 5) {
+  if (i === 6) {
     const at = Math.min(4, Math.floor(ramp(l, 0.8, 4.6) * 4.999))
     return (
       <div className="grid h-full grid-cols-5 gap-1.5 sm:gap-2">
@@ -116,7 +124,7 @@ export function Scene({ i, l, t, enter }: { i: number; l: number; t: number; ent
       </div>
     )
   }
-  if (i === 6) return (
+  if (i === 7) return (
     <Card className="h-full">
       <p className="font-medium">Your report, Chahat</p>
       <p className="mb-3 text-white/45">Only you can see this. No ranking, no answers.</p>
