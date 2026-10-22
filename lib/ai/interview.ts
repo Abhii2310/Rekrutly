@@ -2,6 +2,7 @@ import 'server-only';
 import { z } from 'zod';
 import { verifiedQuotes } from '@/lib/ats/rules';
 import { MAIN_QUESTIONS, type InterviewSummary, type PlanQuestion } from '@/lib/ai-interview/rules';
+import { cleanQuestion } from '@/lib/ai-interview/speech';
 import { err, ok, type Result } from '@/lib/result';
 import { runStructured, type AiMeta } from './client';
 
@@ -34,7 +35,7 @@ export async function planInterview(input: PlanInput): Promise<Result<{ plan: Pl
   ].join('\n\n');
   const res = await runStructured({ tier: 'fast', system: PLAN_SYSTEM, prompt, schema: PlanOut, temperature: 0.5, thinking: 'low', timeoutMs: 25_000 });
   if (!res.ok) return err(res.error.code, res.error.message);
-  const questions = res.data.output.questions.map((q) => ({ question: q.question.trim().slice(0, 300), topic: q.topic.trim().slice(0, 40) || 'Experience', basis: q.basis })).filter((q) => q.question.length >= 12);
+  const questions = res.data.output.questions.map((q) => ({ question: cleanQuestion(q.question).slice(0, 300), topic: q.topic.trim().slice(0, 40) || 'Experience', basis: q.basis })).filter((q) => q.question.length >= 12);
   if (questions.length < 3) return err('invalid_output', 'The AI wrote too few questions.');
   return ok({ plan: questions.slice(0, MAIN_QUESTIONS), meta: res.data.meta });
 }
@@ -52,7 +53,7 @@ export async function followUp(question: string, answer: string): Promise<string
   const ask = runStructured({ tier: 'fast', system: FOLLOW_SYSTEM, prompt: `Question: ${question}\n\nAnswer: ${answer.slice(0, 1500)}`, schema: FollowOut, temperature: 0.4, thinking: 'minimal', timeoutMs: 9_000 });
   const res = await Promise.race([ask, new Promise<null>((resolve) => setTimeout(() => resolve(null), FOLLOWUP_BUDGET_MS))]);
   if (!res || !res.ok) return null;
-  const t = res.data.output.followup?.trim() ?? '';
+  const t = cleanQuestion(res.data.output.followup ?? '');
   return t.length >= 8 && t.length <= 300 ? t : null;
 }
 

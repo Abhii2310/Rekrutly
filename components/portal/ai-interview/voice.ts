@@ -1,3 +1,5 @@
+import { rankVoice, spokenText, splitSentences } from "@/lib/ai-interview/speech"
+
 /** The browser's own speech: it reads questions aloud and turns the candidate's speech into text. No audio leaves the device. */
 
 type Recognition = {
@@ -18,39 +20,58 @@ const recognitionCtor = (): RecognitionCtor | null => {
 export const canListen = (): boolean => recognitionCtor() !== null
 export const canSpeak = (): boolean => typeof window !== "undefined" && "speechSynthesis" in window
 
-function pickVoice(): SpeechSynthesisVoice | undefined {
-  const voices = window.speechSynthesis.getVoices()
-  const rank = (v: SpeechSynthesisVoice): number => {
-    const lang = v.lang.replace("_", "-").toLowerCase()
-    const base = lang === "en-in" ? 0 : lang === "en-gb" ? 1 : lang === "en-us" ? 2 : lang.startsWith("en") ? 3 : 9
-    return base * 2 + (/google|samantha|natural|neural|veena|rishi/i.test(v.name) ? 0 : 1)
-  }
-  return [...voices].filter((v) => v.lang.toLowerCase().startsWith("en")).sort((a, b) => rank(a) - rank(b))[0]
+/** English voices available on this device, best sounding first. */
+export function listVoices(): SpeechSynthesisVoice[] {
+  if (!canSpeak()) return []
+  return window.speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith("en")).sort((a, b) => rankVoice(a.name, a.lang) - rankVoice(b.name, b.lang))
 }
 
-/** Splits into sentences, because some browsers stop a long utterance after about 15 seconds. */
-const sentences = (text: string): string[] => text.match(/[^.!?]+[.!?]*/g)?.map((s) => s.trim()).filter(Boolean) ?? [text]
+const VOICE_KEY = "rekrutly-voice"
+export function savedVoiceName(): string | null {
+  try { return sessionStorage.getItem(VOICE_KEY) } catch { return null }
+}
+export function saveVoiceName(name: string): void {
+  try { sessionStorage.setItem(VOICE_KEY, name) } catch { /* a private window: the choice just is not remembered */ }
+}
+
+function pickVoice(): SpeechSynthesisVoice | undefined {
+  const voices = listVoices()
+  const saved = savedVoiceName()
+  return voices.find((v) => v.name === saved) ?? voices[0]
+}
 
 let speaking = 0
 
-/** Reads the text aloud and resolves when it is finished (or after a safety timeout). Resolves at once if speech is unavailable. */
-export function speak(text: string): Promise<void> {
+export type SpeakOptions = {
+  /** Called as each sentence starts, so the screen can highlight what is being said. */
+  onSentence?: (index: number) => void
+  /** Called at each word the voice reaches, so the avatar's mouth can move with it. */
+  onWord?: () => void
+}
+
+/** Reads the text aloud, sentence by sentence, and resolves when finished (or after a safety timeout). Resolves at once if speech is unavailable. */
+export function speak(text: string, opts: SpeakOptions = {}): Promise<void> {
   if (!canSpeak()) return Promise.resolve()
   const synth = window.speechSynthesis
   synth.cancel()
   const token = ++speaking
   return new Promise((resolve) => {
-    const parts = sentences(text)
+    const shown = splitSentences(text)
+    const parts = shown.map((s) => spokenText(s))
     let finished = false
     const done = () => { if (!finished) { finished = true; resolve() } }
-    const safety = setTimeout(done, text.length * 110 + 5000)
+    const safety = setTimeout(done, text.length * 120 + 6000)
     const next = (i: number) => {
       if (token !== speaking || i >= parts.length) { clearTimeout(safety); return done() }
+      opts.onSentence?.(i)
       const u = new SpeechSynthesisUtterance(parts[i])
       const v = pickVoice()
       if (v) { u.voice = v; u.lang = v.lang } else u.lang = "en-IN"
-      u.rate = 0.97
-      u.onend = () => next(i + 1)
+      u.rate = 0.92
+      u.pitch = 1.05
+      u.volume = 1
+      u.onboundary = () => opts.onWord?.()
+      u.onend = () => setTimeout(() => next(i + 1), 160)
       u.onerror = () => next(i + 1)
       synth.speak(u)
     }
