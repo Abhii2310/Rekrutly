@@ -178,7 +178,14 @@ export function PortalApp({ token }: { token: string }) {
     )
   }
   if (load.name === "network") return <StateMessage title="We couldn't load this page.">Check your connection, then reload the page.</StateMessage>
-  if (load.name === "invalid") return <StateMessage title="This link isn't valid.">Check that you copied the whole link.</StateMessage>
+  if (load.name === "invalid") {
+    return (
+      <StateMessage title="This link isn't valid.">
+        Open the newest email from the hiring team and tap the button in it. If you copied the link, make sure you copied all of it. Ask them to send it again if it still fails.
+        <span className="t-footnote mt-4 block text-ink-3">Link check: {token.length} characters, expected 43.</span>
+      </StateMessage>
+    )
+  }
 
   const info = load.info
   if (info.state === "expired") return <StateMessage title="This link has expired.">Ask the hiring team for a new one.</StateMessage>

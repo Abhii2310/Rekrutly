@@ -5,7 +5,7 @@ import { env } from '@/lib/env';
 import { getDb } from '@/lib/db/server';
 import { sendEmail } from '@/lib/executor/email';
 import { logEvent } from '@/lib/events';
-import { firstNameOf, invitationText } from '@/lib/invitations/template';
+import { firstNameOf, invitationHtml, invitationText } from '@/lib/invitations/template';
 import { requireRecruiter } from '@/lib/security/require-recruiter';
 import { decryptToken } from '@/lib/security/tokens';
 
@@ -34,11 +34,12 @@ async function handlePOST(_request: Request, { params }: { params: Promise<{ id:
   if (inv.started_at || inv.status === 'submitted' || inv.status === 'revoked') return apiError('already_started', 'They already started, so there is nothing to resend.', 409);
   if (!inv.assessments) return apiError('not_found', 'Assessment not found.', 404);
 
+  const link = `${env.APP_URL}/a/${decryptToken(inv.token_encrypted)}`;
   const text = invitationText({
     firstName: firstNameOf(inv.candidates.full_name), role: inv.assessments.jobs?.title ?? 'open', durationMinutes: inv.assessments.duration_minutes,
-    link: `${env.APP_URL}/a/${decryptToken(inv.token_encrypted)}`, proctored: inv.assessments.proctored,
+    link, proctored: inv.assessments.proctored,
   });
-  const sent = await sendEmail({ to: inv.candidates.email, subject: text.subject, text: text.body, idempotencyKey: `${id}-${Date.now()}` });
+  const sent = await sendEmail({ to: inv.candidates.email, subject: text.subject, text: text.body, html: invitationHtml(text.body, link), idempotencyKey: `${id}-${Date.now()}` });
   const base = { runId: inv.assessments.run_id, jobId: inv.assessments.job_id, candidateId: inv.candidate_id };
   if (!sent.ok) {
     await db.from('invitations').update({ delivery_status: 'failed', delivery_error: sent.error.message }).eq('id', id);

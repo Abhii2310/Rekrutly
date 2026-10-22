@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getDb } from '@/lib/db/server';
 import { env, emailStatus, fromAddress } from '@/lib/env';
 import { logEvent } from '@/lib/events';
-import { invitationText, firstNameOf } from '@/lib/invitations/template';
+import { invitationHtml, invitationText, firstNameOf } from '@/lib/invitations/template';
 import { err, ok, type Result } from '@/lib/result';
 import { createInvitationToken, decryptToken } from '@/lib/security/tokens';
 import { assertTransition, type AssessmentStatus, type Stage } from '@/lib/status';
@@ -152,7 +152,7 @@ const sendInvitations: ActionDef<{ candidateIds: string[] }> = {
       if (!c?.email) continue;
       const link = `${env.APP_URL}/a/${decryptToken(r.token_encrypted)}`;
       const text = invitationText({ firstName: firstNameOf(c.full_name), role, durationMinutes: a.data.duration, link, proctored: a.data.proctored });
-      const res = await sendEmail({ to: c.email, subject: text.subject, text: text.body, idempotencyKey: r.id });
+      const res = await sendEmail({ to: c.email, subject: text.subject, text: text.body, html: invitationHtml(text.body, link), idempotencyKey: r.id });
       if (res.ok) {
         sent++;
         await db.from('invitations').update({ delivery_status: 'sent', delivery_error: null, ...(r.status === 'created' ? { status: 'sent' } : {}) }).eq('id', r.id);
